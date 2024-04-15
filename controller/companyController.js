@@ -3,10 +3,11 @@ const asyncHandler = require("../middleware/asyncHandler");
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
-    // const user = req.userId;
+    const user = req.userId;
     const data = {
       ...req.body,
-      photo: req.file?.filename ? req.file?.filename : "no photo.jpg"
+      companyCreater: user,
+      logo: req.file?.filename ? req.file?.filename : "no photo.jpg",
     };
     const text = await model.create(data);
     return res.status(200).json({ success: true, data: text });
@@ -19,10 +20,10 @@ exports.update = asyncHandler(async (req, res, next) => {
   try {
     const updatedData = {
       ...req.body,
-      photo: req.file?.filename
+      photo: req.file?.filename,
     };
     const text = await model.findByIdAndUpdate(req.params.id, updatedData, {
-      new: true
+      new: true,
     });
     return res.status(200).json({ success: true, data: text });
   } catch (error) {
@@ -33,7 +34,7 @@ exports.update = asyncHandler(async (req, res, next) => {
 exports.findDelete = asyncHandler(async (req, res, next) => {
   try {
     const text = await model.findByIdAndDelete(req.params.id, {
-      new: true
+      new: true,
     });
     return res.status(200).json({ success: true, data: text });
   } catch (error) {

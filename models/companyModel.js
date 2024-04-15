@@ -8,19 +8,28 @@ const companySchema = new Schema({
   logo: {
     type: String,
   },
+  phone: {
+    type: String,
+    required: [true, "Утасны дугаар заавал бичнэ үү!"],
+    maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
+  },
   description: {
     type: String,
     required: [true, "Компаний танилцууллага хоосон байж болохгүй"],
-    maxlength: [200, "Компаний танилцууллага   хамгийн уртдаа 300 тэмдэгт байна  сонгоно уу!"],
+    maxlength: [
+      200,
+      "Компаний танилцууллага   хамгийн уртдаа 300 тэмдэгт байна  сонгоно уу!",
+    ],
   },
   open: { type: String },
   close: { type: String },
-  code: {
-    type: Number
-  },
+
   companyCreater: {
     type: Schema.Types.ObjectId,
-    ref: "User"
+    ref: "User",
+  },
+  companyCode: {
+    type: Number,
   },
   createdAt: {
     type: Date,
