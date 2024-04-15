@@ -17,6 +17,8 @@ const customerRoutes = require("./routes/customerRoute.js");
 const invoiceRoute = require("./routes/invoiceRoute.js");
 const qpayRoute = require("./routes/qpayRoute.js");
 const companyRoute = require("./routes/companyRoute.js");
+const artistRoute = require("./routes/artistRoute.js");
+const customerOrderRoute = require("./routes/customerOrderRoute.js");
 const errorHandler = require("./middleware/error.js");
 connectDB();
 const app = express();
@@ -36,9 +38,10 @@ app.use("/api/v1/invoice", invoiceRoute);
 app.use("/api/v1/item", itemRoute);
 app.use("/api/v1/qpay", qpayRoute);
 app.use("/api/v1/company", companyRoute);
+app.use("/api/v1/artist", artistRoute);
+app.use("/api/v1/customerOrder", customerOrderRoute);
 
 // app.use("/api/v1/withdraw", withdrawRoute);
-
 // file upload limit gej oilgoson
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));

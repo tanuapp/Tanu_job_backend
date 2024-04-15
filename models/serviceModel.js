@@ -7,9 +7,13 @@ const fileSchema = new mongoose.Schema({
 
 const serviceSchema = new Schema({
   createUser: {
-    type : mongoose.Schema.Types.ObjectId ,
-    ref : "User"
-  }, 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
+  },
+  companyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Company",
+  },
   name: {
     type: String,
   },
@@ -42,4 +46,3 @@ const serviceSchema = new Schema({
 const Service = mongoose.model("Service", serviceSchema);
 
 module.exports = Service;
- 

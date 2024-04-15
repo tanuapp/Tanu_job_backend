@@ -10,7 +10,7 @@ const customerSchema = new Schema({
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
   password: {
-    type: String
+    type: String,
   },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
@@ -42,7 +42,6 @@ customerSchema.pre("findOneAndUpdate", async function (next) {
   if (!this._update.password) {
     return next();
   }
-
   const salt = await bcrypt.genSalt(10);
   this._update.password = await bcrypt.hash(this._update.password, salt);
   next();
