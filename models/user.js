@@ -8,25 +8,16 @@ const userSchema = new Schema({
     type: String,
     required: [true, "Нэр оруулна уу "],
   },
-
   phone: {
     type: String,
     required: [true, "Утасны дугаар заавал бичнэ үү!"],
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
-  location : { 
-    type : String,
+  location: {
+    type: String,
   },
-  about : { 
-    type : String,
-  },
-  openTime : {
-    type : String,
-  } ,
-  closeTime : {
-    type : String,
-  },
-  password: { 
+
+  password: {
     type: String,
     required: [true, "Нууц үг бичнэ үү"],
     minlength: [8, "Нууц үгийн урт хамгийн багадаа  8 тэмдэгт байна"],
@@ -43,9 +34,7 @@ const userSchema = new Schema({
     type: Date,
     default: Date.now,
   },
-  photo: {
-    type: String,
-  },
+
 });
 
 userSchema.pre("save", async function () {
