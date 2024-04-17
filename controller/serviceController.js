@@ -19,7 +19,6 @@ function calculateNumberOfServices(openTime, closeTime, currentTime) {
   return array;
 }
 
-
 exports.create = asyncHandler(async (req, res) => {
   try {
     const { open, close } = req.body;
@@ -113,7 +112,6 @@ exports.update = asyncHandler(async (req, res) => {
     res.status(500).json({ success: false, error: "Server Error" });
   }
 });
-
 
 exports.getCategorySortItem = asyncHandler(async (req, res, next) => {
   try {
@@ -227,17 +225,15 @@ exports.getSubcategorySortItem = asyncHandler(async (req, res, next) => {
   }
 });
 
-
 exports.myUserServiceAll = asyncHandler(async (req, res) => {
   try {
     console.log("req user --------", req.userId);
     const text = await Service.find({ createUser: req.userId });
-    return res.status(200).json({ data: text }); 
+    return res.status(200).json({ data: text });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-
 
 exports.findDelete = asyncHandler(async (req, res, next) => {
   try {
@@ -317,7 +313,8 @@ exports.getAll = asyncHandler(async (req, res) => {
     const data = await Service.find(query, select)
       .sort(sort)
       .skip(pagination.start - 1)
-      .limit(limit).populate("createUser")
+      .limit(limit)
+      .populate("createUser");
     return res
       .status(200)
       .json({ success: true, pagination: pagination, data: data });

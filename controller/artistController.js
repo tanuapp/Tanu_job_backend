@@ -15,6 +15,20 @@ exports.getAllUser = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.sortByArtist = asyncHandler(async (req, res, next) => {
+  try {
+    const total = await User.countDocuments();
+    const companyArtist = await User.find({ companyId: req.params.companyId });
+    res.status(200).json({
+      success: true,
+      count: total,
+      data: companyArtist,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 exports.createUser = asyncHandler(async (req, res, next) => {
   try {
     const existingUser = await User.findOne({ phone: req.body.phone });

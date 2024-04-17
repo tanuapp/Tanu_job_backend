@@ -10,16 +10,14 @@ const companySchema = new Schema({
   },
   phone: {
     type: String,
-    required: [true, "Утасны дугаар заавал бичнэ үү!"],
-    maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
+    // required: [true, "Утасны дугаар заавал бичнэ үү!"],
+    // maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
-  description: {
+  about: {
     type: String,
-    required: [true, "Компаний танилцууллага хоосон байж болохгүй"],
-    maxlength: [
-      200,
-      "Компаний танилцууллага   хамгийн уртдаа 300 тэмдэгт байна  сонгоно уу!",
-    ],
+  },
+  email: {
+    type: String,
   },
   open: { type: String },
   close: { type: String },
@@ -29,7 +27,7 @@ const companySchema = new Schema({
     ref: "User",
   },
   companyCode: {
-    type: Number,
+    type: String,
   },
   createdAt: {
     type: Date,

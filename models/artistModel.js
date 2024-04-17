@@ -8,6 +8,12 @@ const artistSchema = new Schema({
     type: String,
     required: [true, "Нэр оруулна уу "],
   },
+  email: {
+    type: String,
+  },
+  location: {
+    type: String,
+  },
   phone: {
     type: String,
     required: [true, "Утасны дугаар заавал бичнэ үү!"],
@@ -17,10 +23,7 @@ const artistSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Company",
   },
-  companyCode: {
-    type: Number,
-    required: [true, "Компаний код хоосон байж болохгүй"],
-  },
+
   password: {
     type: String,
     required: [true, "Нууц үг бичнэ үү"],
@@ -38,7 +41,6 @@ const artistSchema = new Schema({
     type: Date,
     default: Date.now,
   },
-
 });
 
 artistSchema.pre("save", async function () {
