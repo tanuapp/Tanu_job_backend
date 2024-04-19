@@ -7,6 +7,7 @@ const {
   detail,
   findDelete,
   getAll,
+  getUserCompany,
 } = require("../controller/companyController");
 const router = express.Router();
 const { sortByArtist } = require("../controller/artistController");
@@ -18,5 +19,6 @@ router
   .put(protect, upload.single("file"), update)
   .delete(protect, findDelete)
   .get(detail);
+router.route("/getCompanyUser").post(protect, getUserCompany);
 
 module.exports = router;
