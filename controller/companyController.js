@@ -7,7 +7,7 @@ exports.create = asyncHandler(async (req, res, next) => {
     const data = {
       ...req.body,
       companyCreater: user,
-      logo: req.file?.filename ? req.file?.filename : "no photo.jpg",
+      logo: req.file?.filename ? req.file?.filename : "Зураг хоосон",
     };
     const text = await model.create(data);
     return res.status(200).json({ success: true, data: text });
@@ -45,7 +45,9 @@ exports.findDelete = asyncHandler(async (req, res, next) => {
 exports.getUserCompany = asyncHandler(async (req, res) => {
   try {
     const user = req.userId;
-    const text = await model.find({ companyCreater: user });
+    const text = await model
+      .find({ companyCreater: user })
+      .populate("Category");
     return res.status(200).json({ success: true, data: text });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
