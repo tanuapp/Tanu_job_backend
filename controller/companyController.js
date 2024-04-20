@@ -4,11 +4,14 @@ const asyncHandler = require("../middleware/asyncHandler");
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     const user = req.userId;
+    const { SubCategory } = req.body;
+    console.log(SubCategory);
     const data = {
       ...req.body,
       companyCreater: user,
       logo: req.file?.filename ? req.file?.filename : "Зураг хоосон",
     };
+
     const text = await model.create(data);
     return res.status(200).json({ success: true, data: text });
   } catch (error) {
@@ -47,7 +50,8 @@ exports.getUserCompany = asyncHandler(async (req, res) => {
     const user = req.userId;
     const text = await model
       .find({ companyCreater: user })
-      .populate("Category");
+      .populate("Category")
+      .populate("SubCategory");
     return res.status(200).json({ success: true, data: text });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
