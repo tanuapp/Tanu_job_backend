@@ -1,4 +1,4 @@
- const express = require("express");
+const express = require("express");
 const upload = require("../middleware/fileUpload");
 
 const {
@@ -10,6 +10,9 @@ const {
 } = require("../controller/categoryController");
 const router = express.Router();
 const { getCategorySortItem } = require("../controller/serviceController");
+const {
+  getCategorySortBySubCategory,
+} = require("../controller/subcategoryController");
 
 router.route("/").post(upload.single("file"), create).get(getAll);
 
@@ -20,5 +23,6 @@ router
   .get(detail);
 
 router.route("/:category_id/item").get(getCategorySortItem);
+router.route("/:categoryId/Subcategory").get(getCategorySortBySubCategory);
 
 module.exports = router;

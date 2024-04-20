@@ -3,23 +3,27 @@ const { Schema } = mongoose;
 
 const subCatergorySchema = new Schema({
   subCatergoryName: {
-    type: String
+    type: String,
   },
   photo: {
-    type: String
+    type: String,
   },
-  catergory: {
+  Category: {
     type: Schema.Types.ObjectId,
-    ref: "Catergory"
+    ref: "Catergory",
   },
   createdAt: {
     type: Date,
-    default: Date.now
+    default: Date.now,
+  },
+  status: {
+    type: Boolean,
+    default: false,
   },
   updatedAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 module.exports = mongoose.model("SubCategory", subCatergorySchema);

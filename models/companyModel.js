@@ -26,10 +26,12 @@ const companySchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "User",
   },
+
   Category: {
     type: Schema.Types.ObjectId,
     ref: "Category",
   },
+
   companyCode: {
     type: String,
   },
