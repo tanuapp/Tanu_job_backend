@@ -19,6 +19,16 @@ exports.create = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.getSubCategoryByCompany = asyncHandler(async (req, res) => {
+  try {
+    const id = req.params.subcategory_id;
+    const text = await model.find({ SubCategory: id }).populate("SubCategory");
+    return res.status(200).json({ success: true, data: text });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 exports.update = asyncHandler(async (req, res, next) => {
   try {
     const updatedData = {
