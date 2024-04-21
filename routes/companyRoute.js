@@ -20,5 +20,4 @@ router
   .delete(protect, findDelete)
   .get(detail);
 router.route("/getCompanyUser").post(protect, getUserCompany);
-
 module.exports = router;
