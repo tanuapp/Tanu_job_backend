@@ -12,7 +12,7 @@ const {
 const router = express.Router();
 const { sortByArtist } = require("../controller/artistController");
 router.route("/").post(protect, upload.single("file"), create).get(getAll);
-router.route("/artistSorted/:companyId").get(sortByArtist);
+router.route("/:companyId/artistSorted").get(sortByArtist);
 
 router
   .route("/:id")

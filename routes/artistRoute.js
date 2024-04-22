@@ -16,7 +16,7 @@ const { myUserServiceAll } = require("../controller/serviceController");
 //"/api/v1/user"
 // protect, authorize("admin"),  nemeh
 
-router.route("/").get(getAllUser).post(upload.single("file"), createUser);
+router.route("/").get(getAllUser).post(protect, createUser);
 router
   .route("/:id")
   .put(upload.single("file"), protect, updateUser) // authorize("admin"), hassan

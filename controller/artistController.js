@@ -1,6 +1,7 @@
 const User = require("../models/artistModel");
+const Company = require("../models/companyModel");
 const asyncHandler = require("../middleware/asyncHandler");
-
+const mongoose = require("mongoose");
 exports.getAllUser = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await User.find();
@@ -17,20 +18,42 @@ exports.getAllUser = asyncHandler(async (req, res, next) => {
 
 exports.sortByArtist = asyncHandler(async (req, res, next) => {
   try {
+    const { companyId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(companyId)) {
+      return res.status(400).json({
+        success: false,
+        error: "Хүчинтэй компани ID биш",
+      });
+    }
+
     const total = await User.countDocuments();
-    const companyArtist = await User.find({ companyId: req.params.companyId });
+    const companyArtist = await User.find({ Company: companyId });
+
     res.status(200).json({
       success: true,
       count: total,
       data: companyArtist,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    if (error.name === "CastError") {
+      res.status(400).json({
+        success: false,
+        error: "ID-н алдаа",
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: "Серверийн алдаа: " + error.message,
+      });
+    }
   }
 });
 
 exports.createUser = asyncHandler(async (req, res, next) => {
   try {
+    const company = await Company.find({ companyCreater: req.userId });
+    console.log("asdubasdyubdasbyu", company[0]._id);
     const existingUser = await User.findOne({ phone: req.body.phone });
     if (existingUser) {
       return res.status(400).json({
@@ -41,6 +64,7 @@ exports.createUser = asyncHandler(async (req, res, next) => {
     const inputData = {
       ...req.body,
       photo: req.file?.filename ? req.file.filename : "no user photo",
+      Company: company[0]._id,
     };
     const user = await User.create(inputData);
     const token = user.getJsonWebToken();

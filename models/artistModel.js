@@ -14,12 +14,18 @@ const artistSchema = new Schema({
   location: {
     type: String,
   },
+  SubCategory: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "SubCategory",
+    },
+  ],
   phone: {
     type: String,
     required: [true, "Утасны дугаар заавал бичнэ үү!"],
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
-  companyId: {
+  Company: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Company",
   },

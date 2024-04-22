@@ -8,7 +8,7 @@ const fileSchema = new mongoose.Schema({
 const serviceSchema = new Schema({
   createUser: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
+    ref: "User",
   },
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -25,7 +25,7 @@ const serviceSchema = new Schema({
   description: {
     type: String,
     required: [true, "Description is required"],
-    maxlength: [80, "Description must be less than or equal to 80 characters"],
+    maxlength: [200, "Description must be less than or equal to 80 characters"],
   },
   price: {
     type: Number,
