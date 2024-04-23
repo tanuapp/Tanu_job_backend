@@ -50,6 +50,36 @@ exports.sortByArtist = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.getArtistCompany = asyncHandler(async (req, res, next) => {
+  try {
+    const total = await User.countDocuments();
+
+    // Retrieve company associated with the current user
+    const company = await Company.find({ companyCreater: req.userId });
+    console.log(company[0]._id);
+    if (!company) {
+      // If no company found, respond with a suitable message
+      return res.status(404).json({
+        success: false,
+        message: "Компани олдсонгүй",
+      });
+    }
+
+    const companyArtist = await User.find({ Company: company[0]._id });
+
+    res.status(200).json({
+      success: true,
+      count: total,
+      data: companyArtist,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: "Серверийн алдаа: " + error.message,
+    });
+  }
+});
+
 exports.createUser = asyncHandler(async (req, res, next) => {
   try {
     const company = await Company.find({ companyCreater: req.userId });

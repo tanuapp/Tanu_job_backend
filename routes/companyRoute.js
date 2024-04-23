@@ -10,7 +10,10 @@ const {
   getUserCompany,
 } = require("../controller/companyController");
 const router = express.Router();
-const { sortByArtist } = require("../controller/artistController");
+const {
+  sortByArtist,
+  getArtistCompany,
+} = require("../controller/artistController");
 router.route("/").post(protect, upload.single("file"), create).get(getAll);
 router.route("/:companyId/artistSorted").get(sortByArtist);
 
@@ -20,4 +23,5 @@ router
   .delete(protect, findDelete)
   .get(detail);
 router.route("/getCompanyUser").post(protect, getUserCompany);
+router.route("/getArtistCompany").post(protect, getArtistCompany);
 module.exports = router;

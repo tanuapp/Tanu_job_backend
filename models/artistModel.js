@@ -20,10 +20,16 @@ const artistSchema = new Schema({
       ref: "SubCategory",
     },
   ],
+  Service: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Service",
+    },
+  ],
+
   phone: {
     type: String,
     required: [true, "Утасны дугаар заавал бичнэ үү!"],
-    maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
   Company: {
     type: mongoose.Schema.Types.ObjectId,
