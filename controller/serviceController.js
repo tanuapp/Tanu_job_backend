@@ -1,8 +1,8 @@
 const asyncHandler = require("../middleware/asyncHandler");
 const paginate = require("../utils/pagination");
+const { companyIdFind } = require("../middleware/addTime");
 const Service = require("../models/serviceModel");
 const Item = require("../models/itemModel");
-
 function calculateNumberOfServices(openTime, closeTime, currentTime) {
   openTime = new Date(openTime);
   closeTime = new Date(closeTime);
@@ -19,10 +19,51 @@ function calculateNumberOfServices(openTime, closeTime, currentTime) {
   return array;
 }
 
+exports.getCompanyService = asyncHandler(async (req, res) => {
+  try {
+    const company = await companyIdFind(req.userId);
+
+    if (!company || company.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Company not found" });
+    }
+
+    const services = await Service.find({ companyId: company[0]._id });
+
+    if (services.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No services found for this company",
+      });
+    }
+
+    const servicesWithItems = await Promise.all(
+      services.map(async (service) => {
+        const items = await Item.find({ Service: service._id });
+        return {
+          ...service.toObject(),
+          items,
+        };
+      })
+    );
+
+    // Return the services with their respective items
+    return res.status(200).json({ success: true, data: servicesWithItems });
+  } catch (error) {
+    // Log the error and return a 500 status with the error message
+    console.error("Error fetching company services:", error);
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal server error" });
+  }
+});
+
 exports.create = asyncHandler(async (req, res) => {
   try {
-    const { open, close } = req.body;
-    console.log("req body ------------ ", open, close);
+    const company = await companyIdFind(req.userId);
+    console.log(company);
+    console.log("req body ------------ ", company[0].open, company[0].close);
     const currentDate = new Date();
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth() + 1;
@@ -31,8 +72,8 @@ exports.create = asyncHandler(async (req, res) => {
       day < 10 ? "0" : ""
     }${day}T`;
 
-    const openTime = date + open;
-    const closeTime = date + close;
+    const openTime = date + company[0].open;
+    const closeTime = date + company[0].close;
     const currentTime = 60;
 
     console.log("Number of times timekeeping services can be provided:");
@@ -59,6 +100,7 @@ exports.create = asyncHandler(async (req, res) => {
       ...req.body,
       createUser: user,
       files: uploadedFiles,
+      companyId: company[0]._id,
     };
     let newItem = await Service.create(input);
     console.log("new item ", newItem);

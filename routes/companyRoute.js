@@ -14,6 +14,7 @@ const {
   sortByArtist,
   getArtistCompany,
 } = require("../controller/artistController");
+const { getCompanyService } = require("../controller/serviceController");
 router.route("/").post(protect, upload.single("file"), create).get(getAll);
 router.route("/:companyId/artistSorted").get(sortByArtist);
 
@@ -24,4 +25,5 @@ router
   .get(detail);
 router.route("/getCompanyUser").post(protect, getUserCompany);
 router.route("/getArtistCompany").post(protect, getArtistCompany);
+router.route("/getCompanyService").post(protect, getCompanyService);
 module.exports = router;

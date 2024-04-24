@@ -1,3 +1,4 @@
+const CompanyModel = require("../models/companyModel");
 exports.addSeconds = (date, seconds) => {
   const newDate = new Date(date);
   newDate.setSeconds(newDate.getSeconds() + seconds);
@@ -30,4 +31,9 @@ exports.converToLocalTime = (serverDate) => {
     ":" +
     String(serverDate.getSeconds()).padStart(2, "0");
   return dateStr;
+};
+
+exports.companyIdFind = async (userId) => {
+  let company = await CompanyModel.find({ companyCreater: userId });
+  return company;
 };
