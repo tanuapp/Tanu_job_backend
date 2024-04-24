@@ -1,6 +1,6 @@
 express = require("express");
 const upload = require("../middleware/fileUpload");
-
+const { protect } = require("../middleware/protect");
 const {
   create,
   update,
@@ -13,7 +13,7 @@ const { getSubcategorySortItem } = require("../controller/serviceController");
 const { getSubCategoryByCompany } = require("../controller/companyController");
 // upload.single("file"),
 
-router.route("/").post(upload.single("file"), create).get(getAll);
+router.route("/").post(protect, upload.single("file"), create).get(getAll);
 router
   .route("/:id")
   .put(upload.single("file"), update)

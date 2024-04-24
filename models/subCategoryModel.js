@@ -12,6 +12,10 @@ const subCatergorySchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Catergory",
   },
+  Company: {
+    type: Schema.Types.ObjectId,
+    ref: "Company",
+  },
   createdAt: {
     type: Date,
     default: Date.now,
