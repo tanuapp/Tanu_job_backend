@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
+const fileSchema = new mongoose.Schema({
+  name: String,
+});
+
 const companySchema = new Schema({
   companyName: {
     type: String,
@@ -13,6 +17,7 @@ const companySchema = new Schema({
     // required: [true, "Утасны дугаар заавал бичнэ үү!"],
     // maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
+  files: [fileSchema],
   about: {
     type: String,
   },
@@ -40,7 +45,6 @@ const companySchema = new Schema({
       ref: "SubCategory",
     },
   ],
-
   companyCode: {
     type: String,
   },

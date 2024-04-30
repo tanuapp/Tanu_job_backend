@@ -11,7 +11,10 @@ const {
 
 const router = express.Router();
 
-const cpUploads = upload.fields([{ name: "files", maxCount: 16 }]);
+const cpUploads = upload.fields([
+  { name: "files", maxCount: 16 },
+  { name: "logo" },
+]);
 
 router.route("/").post(protect, cpUploads, create).get(getAll);
 router.route("/:id").put(cpUploads, update).delete(findDelete).get(detail);

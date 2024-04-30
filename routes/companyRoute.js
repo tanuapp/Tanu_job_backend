@@ -15,10 +15,11 @@ const {
   getArtistCompany,
 } = require("../controller/artistController");
 const { getCompanyService } = require("../controller/serviceController");
+const cpUploads = upload.fields([{ name: "files", maxCount: 16 }]);
 const {
   getCompanySubCategory,
 } = require("../controller/subcategoryController");
-router.route("/").post(protect, upload.single("file"), create).get(getAll);
+router.route("/").post(protect, cpUploads, create).get(getAll);
 router.route("/:companyId/artistSorted").get(sortByArtist);
 
 router

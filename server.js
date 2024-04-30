@@ -20,9 +20,16 @@ const companyRoute = require("./routes/companyRoute.js");
 const artistRoute = require("./routes/artistRoute.js");
 const customerOrderRoute = require("./routes/customerOrderRoute.js");
 const errorHandler = require("./middleware/error.js");
-connectDB();
 const app = express();
-app.use(cors());
+connectDB();
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+app.options("*", cors());
 app.use(logger);
 app.use(express.json());
 
