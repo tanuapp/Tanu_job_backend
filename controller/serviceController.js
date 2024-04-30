@@ -29,7 +29,9 @@ exports.getCompanyService = asyncHandler(async (req, res) => {
         .json({ success: false, message: "Company not found" });
     }
 
-    const services = await Service.find({ companyId: company[0]._id });
+    const services = await Service.find({ companyId: company[0]._id }).populate(
+      "SubCategory"
+    );
 
     if (services.length === 0) {
       return res.status(404).json({
@@ -47,7 +49,6 @@ exports.getCompanyService = asyncHandler(async (req, res) => {
         };
       })
     );
-
     // Return the services with their respective items
     return res.status(200).json({ success: true, data: servicesWithItems });
   } catch (error) {

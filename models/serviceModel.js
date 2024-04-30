@@ -17,7 +17,7 @@ const serviceSchema = new Schema({
   name: {
     type: String,
   },
-  Category: {
+  SubCategory: {
     type: Schema.Types.ObjectId,
     ref: "SubCategory",
   },

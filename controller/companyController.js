@@ -58,8 +58,8 @@ exports.update = asyncHandler(async (req, res, next) => {
     }
     const updatedData = {
       ...req.body,
-      logo: fileName1,
       files: uploadedFiles,
+      logo: fileName1,
     };
     const text = await model.findByIdAndUpdate(req.params.id, updatedData, {
       new: true,
