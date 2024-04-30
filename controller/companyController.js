@@ -44,9 +44,22 @@ exports.getSubCategoryByCompany = asyncHandler(async (req, res) => {
 
 exports.update = asyncHandler(async (req, res, next) => {
   try {
+    const fileName1 = req.files["logo"]
+      ? req.files["logo"][0].filename
+      : "no logo ?";
+    const uploadedFiles = [];
+
+    if (req.files && Array.isArray(req.files.files)) {
+      for (let i = 0; i < req.files.files.length; i++) {
+        uploadedFiles.push({ name: req.files.files[i].filename });
+      }
+    } else {
+      console.warn("req.files.files is not an array");
+    }
     const updatedData = {
       ...req.body,
-      photo: req.file?.filename,
+      logo: fileName1,
+      files: uploadedFiles,
     };
     const text = await model.findByIdAndUpdate(req.params.id, updatedData, {
       new: true,
