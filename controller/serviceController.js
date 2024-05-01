@@ -3,6 +3,8 @@ const paginate = require("../utils/pagination");
 const { companyIdFind } = require("../middleware/addTime");
 const Service = require("../models/serviceModel");
 const Item = require("../models/itemModel");
+const artistModel = require("../models/artistModel");
+const companyModel = require("../models/companyModel");
 function calculateNumberOfServices(openTime, closeTime, currentTime) {
   openTime = new Date(openTime);
   closeTime = new Date(closeTime);
@@ -21,16 +23,25 @@ function calculateNumberOfServices(openTime, closeTime, currentTime) {
 
 exports.getCompanyService = asyncHandler(async (req, res) => {
   try {
+    const company = await companyModel.findById(req.params.companyid);
+    console.log("compa-----------------", company);
     const services = await Service.find({
       companyId: req.params.companyid,
     });
+    const serviceIds = services.map((service) => service._id).filter(Boolean);
 
+    const serviceEs = await artistModel.find({
+      _id: { $in: serviceIds },
+    });
+
+    console.log("---------------------", serviceEs);
     if (services.length === 0) {
       return res.status(404).json({
         success: false,
         message: "No services found for this company",
       });
     }
+
     const servicesWithItems = await Promise.all(
       services.map(async (service) => {
         const items = await Item.find({ Service: service._id });
@@ -52,6 +63,7 @@ exports.getCompanyService = asyncHandler(async (req, res) => {
 
 exports.postCompanyService = asyncHandler(async (req, res) => {
   try {
+    const company = await companyIdFind(req.userId);
     if (!company || company.length === 0) {
       return res
         .status(404)
@@ -78,10 +90,8 @@ exports.postCompanyService = asyncHandler(async (req, res) => {
         };
       })
     );
-    // Return the services with their respective items
     return res.status(200).json({ success: true, data: servicesWithItems });
   } catch (error) {
-    // Log the error and return a 500 status with the error message
     console.error("Error fetching company services:", error);
     return res
       .status(500)
@@ -291,6 +301,15 @@ exports.getSubcategorySortItem = asyncHandler(async (req, res, next) => {
       count: text.length,
       data: text,
     });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+exports.getSubCategoryByService = asyncHandler(async (req, res, next) => {
+  try {
+    const data = await Service.find({ SubCategory: req.params.subcategory_id });
+    return res.status(200).json({ success: true, data: data });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
