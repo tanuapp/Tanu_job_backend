@@ -21,8 +21,37 @@ function calculateNumberOfServices(openTime, closeTime, currentTime) {
 
 exports.getCompanyService = asyncHandler(async (req, res) => {
   try {
-    const company = await companyIdFind(req.userId);
+    const services = await Service.find({
+      companyId: req.params.companyid,
+    });
 
+    if (services.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No services found for this company",
+      });
+    }
+    const servicesWithItems = await Promise.all(
+      services.map(async (service) => {
+        const items = await Item.find({ Service: service._id });
+        return {
+          ...service.toObject(),
+          items,
+        };
+      })
+    );
+
+    return res.status(200).json({ success: true, data: servicesWithItems });
+  } catch (error) {
+    console.error("Error fetching company services:", error);
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal server error" });
+  }
+});
+
+exports.postCompanyService = asyncHandler(async (req, res) => {
+  try {
     if (!company || company.length === 0) {
       return res
         .status(404)
@@ -59,7 +88,6 @@ exports.getCompanyService = asyncHandler(async (req, res) => {
       .json({ success: false, error: "Internal server error" });
   }
 });
-
 exports.create = asyncHandler(async (req, res) => {
   try {
     const company = await companyIdFind(req.userId);
