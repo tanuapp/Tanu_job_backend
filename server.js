@@ -19,6 +19,7 @@ const qpayRoute = require("./routes/qpayRoute.js");
 const companyRoute = require("./routes/companyRoute.js");
 const artistRoute = require("./routes/artistRoute.js");
 const customerOrderRoute = require("./routes/customerOrderRoute.js");
+const calendarRoute = require("./routes/calendarRoute.js");
 const errorHandler = require("./middleware/error.js");
 const app = express();
 connectDB();
@@ -47,6 +48,7 @@ app.use("/api/v1/qpay", qpayRoute);
 app.use("/api/v1/company", companyRoute);
 app.use("/api/v1/artist", artistRoute);
 app.use("/api/v1/customerOrder", customerOrderRoute);
+app.use("/api/v1/calendar", calendarRoute);
 
 // app.use("/api/v1/withdraw", withdrawRoute);
 // file upload limit gej oilgoson

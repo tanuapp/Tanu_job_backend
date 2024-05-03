@@ -20,6 +20,72 @@ function calculateNumberOfServices(openTime, closeTime, currentTime) {
   }
   return array;
 }
+exports.create = asyncHandler(async (req, res) => {
+  try {
+    const company = await companyIdFind(req.userId);
+    console.log(company);
+    console.log("req body ------------ ", company[0].open, company[0].close);
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth() + 1;
+    const day = currentDate.getDate();
+    const date = `${year}-${month < 10 ? "0" : ""}${month}-${
+      day < 10 ? "0" : ""
+    }${day}T`;
+
+    const openTime = date + company[0].open;
+    const closeTime = date + company[0].close;
+    const currentTime = 60;
+
+    console.log("Number of times timekeeping services can be provided:");
+    const itemArray = calculateNumberOfServices(
+      openTime,
+      closeTime,
+      currentTime
+    );
+    console.log("item array ---------------- ", itemArray);
+    const user = req.userId;
+    const uploadedFiles = [];
+
+    // Process uploaded files
+    if (req.files && Array.isArray(req.files.files)) {
+      for (let i = 0; i < req.files.files.length; i++) {
+        uploadedFiles.push({ name: req.files.files[i].filename });
+      }
+    } else {
+      console.warn("req.files.files is not an array");
+    }
+
+    // Create service
+    let input = {
+      ...req.body,
+      createUser: user,
+      files: uploadedFiles,
+      companyId: company[0]._id,
+    };
+    let newItem = await Service.create(input);
+    console.log("new item ", newItem);
+    // Create items associated with the service
+    const realArray = await Promise.all(
+      itemArray.map(async (timeString) => {
+        const item = await Item.create({
+          huwaari: timeString,
+          Service: newItem._id,
+        });
+        return item;
+      })
+    );
+    newItem = {
+      ...newItem.toObject(),
+      item: realArray,
+    };
+
+    return res.status(201).json({ data: newItem });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+});
 
 exports.getCompanyService = asyncHandler(async (req, res) => {
   try {
@@ -96,72 +162,6 @@ exports.postCompanyService = asyncHandler(async (req, res) => {
     return res
       .status(500)
       .json({ success: false, error: "Internal server error" });
-  }
-});
-exports.create = asyncHandler(async (req, res) => {
-  try {
-    const company = await companyIdFind(req.userId);
-    console.log(company);
-    console.log("req body ------------ ", company[0].open, company[0].close);
-    const currentDate = new Date();
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth() + 1;
-    const day = currentDate.getDate();
-    const date = `${year}-${month < 10 ? "0" : ""}${month}-${
-      day < 10 ? "0" : ""
-    }${day}T`;
-
-    const openTime = date + company[0].open;
-    const closeTime = date + company[0].close;
-    const currentTime = 60;
-
-    console.log("Number of times timekeeping services can be provided:");
-    const itemArray = calculateNumberOfServices(
-      openTime,
-      closeTime,
-      currentTime
-    );
-    console.log("item array ---------------- ", itemArray);
-    const user = req.userId;
-    const uploadedFiles = [];
-
-    // Process uploaded files
-    if (req.files && Array.isArray(req.files.files)) {
-      for (let i = 0; i < req.files.files.length; i++) {
-        uploadedFiles.push({ name: req.files.files[i].filename });
-      }
-    } else {
-      console.warn("req.files.files is not an array");
-    }
-
-    // Create service
-    let input = {
-      ...req.body,
-      createUser: user,
-      files: uploadedFiles,
-      companyId: company[0]._id,
-    };
-    let newItem = await Service.create(input);
-    console.log("new item ", newItem);
-    // Create items associated with the service
-    const realArray = await Promise.all(
-      itemArray.map(async (timeString) => {
-        const item = await Item.create({
-          huwaari: timeString,
-          Service: newItem._id,
-        });
-        return item;
-      })
-    );
-    newItem = {
-      ...newItem.toObject(),
-      item: realArray,
-    };
-
-    return res.status(201).json({ data: newItem });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, error: "Server Error" });
   }
 });
 

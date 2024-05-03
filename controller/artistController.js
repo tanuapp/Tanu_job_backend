@@ -15,7 +15,26 @@ exports.getAllUser = asyncHandler(async (req, res, next) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+exports.myService = asyncHandler(async (req, res) => {
+  try {
+    const artist = req.userId;
+    const services = await User.findById(artist).populate("Service");
 
+    if (services.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No services found for this company",
+      });
+    }
+
+    return res.status(200).json({ success: true, data: services });
+  } catch (error) {
+    console.error("Error fetching company services:", error);
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal server error" });
+  }
+});
 exports.sortByArtist = asyncHandler(async (req, res, next) => {
   try {
     const { companyId } = req.params;
@@ -112,7 +131,7 @@ exports.Login = asyncHandler(async (req, res, next) => {
   try {
     const { phone, password } = req.body;
 
-    const userphone = await user.find({ phone: phone });
+    const userphone = await User.find({ phone: phone });
 
     if (!userphone) {
       return res
