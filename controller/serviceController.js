@@ -89,11 +89,12 @@ exports.create = asyncHandler(async (req, res) => {
 
 exports.getCompanyService = asyncHandler(async (req, res) => {
   try {
-    const company = await companyModel.findById(req.params.companyid);
-    console.log("compa-----------------", company);
     const services = await Service.find({
       companyId: req.params.companyid,
     });
+
+    const company = await companyModel.findById(req.params.companyid);
+
     const serviceIds = services.map((service) => service._id).filter(Boolean);
 
     const serviceEs = await artistModel.find({
@@ -114,6 +115,7 @@ exports.getCompanyService = asyncHandler(async (req, res) => {
         return {
           ...service.toObject(),
           items,
+          company,
         };
       })
     );
