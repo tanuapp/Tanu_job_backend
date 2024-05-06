@@ -1,6 +1,7 @@
 const model = require("../models/companyModel");
 const asyncHandler = require("../middleware/asyncHandler");
-
+const artistModel = require("../models/artistModel");
+const serviceModel = require("../models/serviceModel");
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     const user = req.userId;
@@ -104,9 +105,33 @@ exports.detail = asyncHandler(async (req, res, next) => {
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
     const total = await model.countDocuments();
-    const text = await model.find().populate("Category");
-    return res.status(200).json({ success: true, total: total, data: text });
+
+    const mainData = await model
+      .find()
+      .populate("Category")
+      .populate("SubCategory");
+
+    const mainDataIds = mainData.map((data) => data._id);
+
+    const artists = await artistModel.find({ Company: { $in: mainDataIds } });
+    const services = await serviceModel.find({
+      companyId: { $in: mainDataIds },
+    });
+
+    return res.status(200).json({
+      success: true,
+      total: total,
+      data: {
+        main: mainData,
+        artists,
+        services,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error("Error fetching data in getAll:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 });
