@@ -4,8 +4,6 @@ const asyncHandler = require("../middleware/asyncHandler");
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     const user = req.userId;
-    const { SubCategory } = req.body;
-    console.log(SubCategory);
     const fileName1 = req.files["logo"]
       ? req.files["logo"][0].filename
       : "no logo ?";
