@@ -19,8 +19,8 @@ const {
   getCompanyService,
 } = require("../controller/serviceController");
 const cpUploads = upload.fields([
-  { name: "files", maxCount: 16 },
-  { name: "logo", maxCount: 1 },
+  { name: "files", maxCount: 10 },
+  { name: "logo" },
 ]);
 const {
   getCompanySubCategory,

@@ -5,9 +5,7 @@ const serviceModel = require("../models/serviceModel");
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     const user = req.userId;
-    const fileName1 = req.files["logo"]
-      ? req.files["logo"][0].filename
-      : "no logo ?";
+
     const uploadedFiles = [];
 
     if (req.files && Array.isArray(req.files.files)) {
@@ -21,7 +19,6 @@ exports.create = asyncHandler(async (req, res, next) => {
       ...req.body,
       companyCreater: user,
       files: uploadedFiles,
-      logo: fileName1,
     };
 
     const text = await model.create(data);
