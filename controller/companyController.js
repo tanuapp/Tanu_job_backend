@@ -2,12 +2,12 @@ const model = require("../models/companyModel");
 const asyncHandler = require("../middleware/asyncHandler");
 const artistModel = require("../models/artistModel");
 const serviceModel = require("../models/serviceModel");
+
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     const user = req.userId;
-
     const uploadedFiles = [];
-
+    console.log(req.body);
     if (req.files && Array.isArray(req.files.files)) {
       for (let i = 0; i < req.files.files.length; i++) {
         uploadedFiles.push({ name: req.files.files[i].filename });

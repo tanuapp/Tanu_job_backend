@@ -12,6 +12,13 @@ const customerSchema = new Schema({
   password: {
     type: String,
   },
+  status: {
+    type: Boolean,
+    default: false,
+  },
+  fname: String,
+  lName: String,
+  email: String,
   resetPasswordToken: String,
   resetPasswordExpire: Date,
   createdAt: {
