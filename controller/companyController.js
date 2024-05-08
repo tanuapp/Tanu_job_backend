@@ -79,9 +79,8 @@ exports.findDelete = asyncHandler(async (req, res, next) => {
 
 exports.getUserCompany = asyncHandler(async (req, res) => {
   try {
-    const user = req.userId;
     const text = await model
-      .find({ companyCreater: user })
+      .find({ companyCreater: req.userId })
       .populate("Category")
       .populate("SubCategory");
     return res.status(200).json({ success: true, data: text });

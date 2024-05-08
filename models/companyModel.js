@@ -32,13 +32,10 @@ const companySchema = new Schema({
     ref: "User",
   },
 
-  Category: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "Category",
-    },
-  ],
-
+  Category: {
+    type: Schema.Types.ObjectId,
+    ref: "Category",
+  },
   SubCategory: [
     {
       type: Schema.Types.ObjectId,
