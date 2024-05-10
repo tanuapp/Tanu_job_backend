@@ -29,7 +29,7 @@ exports.getCompanySubCategory = asyncHandler(async (req, res) => {
         .json({ success: false, message: "Company not found" });
     }
 
-    const data = await subCategoryModel.find({ _id: company[0].Category });
+    const data = await subCategoryModel.find({ Category: company[0].Category });
     console.log(data);
 
     return res.status(200).json({ success: true, data: data });
