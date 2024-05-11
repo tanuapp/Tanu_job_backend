@@ -1,13 +1,14 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
+const fileSchema = new mongoose.Schema({
+  name: String,
+});
 
 const subCatergorySchema = new Schema({
   subCatergoryName: {
     type: String,
   },
-  photo: {
-    type: String,
-  },
+  files: [fileSchema],
   Category: {
     type: Schema.Types.ObjectId,
     ref: "Catergory",

@@ -15,8 +15,8 @@ const {
 } = require("../controller/serviceController");
 const { getSubCategoryByCompany } = require("../controller/companyController");
 // upload.single("file"),
-
-router.route("/").post(protect, upload.single("file"), create).get(getAll);
+const cpUploads = upload.fields([{ name: "files", maxCount: 10 }]);
+router.route("/").post(protect, cpUploads, create).get(getAll);
 router
   .route("/:id")
   .put(upload.single("file"), update)

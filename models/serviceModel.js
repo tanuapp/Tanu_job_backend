@@ -24,8 +24,6 @@ const serviceSchema = new Schema({
   files: [fileSchema],
   description: {
     type: String,
-    required: [true, "Description is required"],
-    maxlength: [200, "Description must be less than or equal to 80 characters"],
   },
   price: {
     type: Number,
