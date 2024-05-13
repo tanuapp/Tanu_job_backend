@@ -14,6 +14,7 @@ const artistSchema = new Schema({
   location: {
     type: String,
   },
+  photo: String,
   SubCategory: [
     {
       type: Schema.Types.ObjectId,

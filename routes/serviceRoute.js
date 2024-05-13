@@ -17,7 +17,7 @@ const cpUploads = upload.fields([
   { name: "logo" },
 ]);
 
-router.route("/").post(protect, cpUploads, create).get(getAll);
+router.route("/").post(protect, upload.single("file"), create).get(getAll);
 router.route("/myService").get(protect, myService);
 router.route("/:id").put(cpUploads, update).delete(findDelete).get(detail);
 

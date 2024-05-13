@@ -23,8 +23,6 @@ function calculateNumberOfServices(openTime, closeTime, currentTime) {
 exports.create = asyncHandler(async (req, res) => {
   try {
     const company = await companyIdFind(req.userId);
-    console.log(company);
-    console.log("req body ------------ ", company[0].open, company[0].close);
     const currentDate = new Date();
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth() + 1;
@@ -37,35 +35,21 @@ exports.create = asyncHandler(async (req, res) => {
     const closeTime = date + company[0].close;
     const currentTime = 60;
 
-    console.log("Number of times timekeeping services can be provided:");
     const itemArray = calculateNumberOfServices(
       openTime,
       closeTime,
       currentTime
     );
-    console.log("item array ---------------- ", itemArray);
     const user = req.userId;
-    const uploadedFiles = [];
 
-    // Process uploaded files
-    if (req.files && Array.isArray(req.files.files)) {
-      for (let i = 0; i < req.files.files.length; i++) {
-        uploadedFiles.push({ name: req.files.files[i].filename });
-      }
-    } else {
-      console.warn("req.files.files is not an array");
-    }
-
-    // Create service
+    console.log("req file ---------------------------", req.file?.filename);
     let input = {
       ...req.body,
       createUser: user,
-      files: uploadedFiles,
+      photo: req.file?.filename ? req.file?.filename : "no photo.jpg",
       companyId: company[0]._id,
     };
     let newItem = await Service.create(input);
-    console.log("new item ", newItem);
-    // Create items associated with the service
     const realArray = await Promise.all(
       itemArray.map(async (timeString) => {
         const item = await Item.create({
