@@ -114,14 +114,39 @@ exports.getAll = asyncHandler(async (req, res, next) => {
       companyId: { $in: mainDataIds },
     });
 
+    // Create a map of companyId to artists and services
+    const artistsMap = mainDataIds.reduce((acc, id) => {
+      acc[id] = [];
+      return acc;
+    }, {});
+
+    const servicesMap = { ...artistsMap };
+
+    artists.forEach((artist) => {
+      if (artistsMap[artist.Company]) {
+        artistsMap[artist.Company].push(artist);
+      }
+    });
+
+    services.forEach((service) => {
+      if (servicesMap[service.companyId]) {
+        servicesMap[service.companyId].push(service);
+      }
+    });
+
+    // Embed artists and services into the mainData
+    const enrichedMainData = mainData.map((company) => {
+      return {
+        ...company.toObject(),
+        artists: artistsMap[company._id] || [],
+        services: servicesMap[company._id] || [],
+      };
+    });
+
     return res.status(200).json({
       success: true,
       total: total,
-      data: {
-        main: mainData,
-        artists,
-        services,
-      },
+      data:enrichedMainData
     });
   } catch (error) {
     console.error("Error fetching data in getAll:", error);
@@ -131,3 +156,38 @@ exports.getAll = asyncHandler(async (req, res, next) => {
     });
   }
 });
+
+
+// exports.getAll = asyncHandler(async (req, res, next) => {
+//   try {
+//     const total = await model.countDocuments();
+
+//     const mainData = await model
+//       .find()
+//       .populate("Category")
+//       .populate("SubCategory");
+
+//     const mainDataIds = mainData.map((data) => data._id);
+
+//     const artists = await artistModel.find({ Company: { $in: mainDataIds } });
+//     const services = await serviceModel.find({
+//       companyId: { $in: mainDataIds },
+//     });
+
+//     return res.status(200).json({
+//       success: true,
+//       total: total,
+//       data: {
+//         main: mainData,
+//         artists,
+//         services,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error fetching data in getAll:", error);
+//     return res.status(500).json({
+//       success: false,
+//       error: error.message,
+//     });
+//   }
+// });

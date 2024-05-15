@@ -46,7 +46,7 @@ exports.create = asyncHandler(async (req, res) => {
     let input = {
       ...req.body,
       createUser: user,
-      photo: req.file?.filename ? req.file?.filename : "no photo.jpg",
+      photo: req.file ? req.file?.filename : "no photo.jpg",
       companyId: company[0]._id,
     };
     let newItem = await Service.create(input);
