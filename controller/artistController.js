@@ -102,7 +102,6 @@ exports.getArtistCompany = asyncHandler(async (req, res, next) => {
 exports.createUser = asyncHandler(async (req, res, next) => {
   try {
     const company = await Company.find({ companyCreater: req.userId });
-    console.log("asdubasdyubdasbyu", company[0]._id);
     const existingUser = await User.findOne({ phone: req.body.phone });
     if (existingUser) {
       return res.status(400).json({
@@ -110,6 +109,7 @@ exports.createUser = asyncHandler(async (req, res, next) => {
         error: "Утасны дугаар бүртгэлтэй байна",
       });
     }
+    console.log(req.files);
     const inputData = {
       ...req.body,
       photo: req.file?.filename ? req.file.filename : "no user photo",

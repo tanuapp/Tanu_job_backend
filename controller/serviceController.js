@@ -153,20 +153,9 @@ exports.postCompanyService = asyncHandler(async (req, res) => {
 
 exports.update = asyncHandler(async (req, res) => {
   try {
-    const uploadedFiles = req.files && req.files.files ? [] : null;
-    if (uploadedFiles) {
-      if (Array.isArray(req.files.files)) {
-        for (let i = 0; i < req.files.files.length; i++) {
-          uploadedFiles.push({ name: req.files.files[i].filename });
-        }
-      } else {
-        console.warn("req.files.files is not an array");
-      }
-    }
-
     const input = {
       ...req.body,
-      files: uploadedFiles || [],
+      photo: req?.file?.filename,
     };
 
     const newItem = await Service.findByIdAndUpdate(req.params.id, input, {
