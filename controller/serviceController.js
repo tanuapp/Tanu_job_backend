@@ -375,11 +375,30 @@ exports.getAll = asyncHandler(async (req, res) => {
       name: { $regex: search, $options: "i" },
     };
     const pagination = await paginate(page, limit, Service, query);
-    const data = await Service.find(query, select)
+
+    let data = await Service.find(query, select)
       .sort(sort)
       .skip(pagination.start - 1)
       .limit(limit)
-      .populate("createUser");
+      .populate("createUser")
+      .populate("companyId")
+      .populate("SubCategory");
+
+    data = await Promise.all(
+      data.map(async (service) => {
+        const items = await Item.find({ Service: service._id });
+        const artists = await artistModel.find({
+          Service: { $in: service._id },
+        });
+
+        return {
+          ...service.toObject(),
+          items,
+          artists,
+        };
+      })
+    );
+
     return res
       .status(200)
       .json({ success: true, pagination: pagination, data: data });
