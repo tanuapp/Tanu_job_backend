@@ -379,10 +379,7 @@ exports.getAll = asyncHandler(async (req, res) => {
     let data = await Service.find(query, select)
       .sort(sort)
       .skip(pagination.start - 1)
-      .limit(limit)
-      .populate("createUser")
-      .populate("companyId")
-      .populate("SubCategory");
+      .limit(limit);
 
     data = await Promise.all(
       data.map(async (service) => {
