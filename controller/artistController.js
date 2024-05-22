@@ -103,13 +103,22 @@ exports.createUser = asyncHandler(async (req, res, next) => {
   try {
     const company = await Company.find({ companyCreater: req.userId });
     const existingUser = await User.findOne({ phone: req.body.phone });
+    const exinstingEmail = await User.findOne({ email: req.body.email });
+
     if (existingUser) {
       return res.status(400).json({
         success: false,
         error: "Утасны дугаар бүртгэлтэй байна",
       });
     }
+    if (exinstingEmail) {
+      return res.status(400).json({
+        success: false,
+        error: "И-мэйл бүртгэлтэй байна",
+      });
+    }
     console.log(req.files);
+
     const inputData = {
       ...req.body,
       photo: req.file?.filename ? req.file.filename : "no user photo",
