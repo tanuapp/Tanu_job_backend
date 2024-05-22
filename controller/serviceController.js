@@ -33,7 +33,7 @@ exports.create = asyncHandler(async (req, res) => {
 
     const openTime = date + company[0].open;
     const closeTime = date + company[0].close;
-    const currentTime = 60;
+    const { currentTime } = req.body;
 
     const itemArray = calculateNumberOfServices(
       openTime,
@@ -42,7 +42,7 @@ exports.create = asyncHandler(async (req, res) => {
     );
     const user = req.userId;
 
-    console.log("req file ---------------------------", req.file?.filename);
+    console.log("req file ---------------------------", req.file);
     let input = {
       ...req.body,
       createUser: user,
