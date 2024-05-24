@@ -35,6 +35,18 @@ exports.myService = asyncHandler(async (req, res) => {
       .json({ success: false, error: "Internal server error" });
   }
 });
+
+exports.serviceSortByArtist = asyncHandler(async (req, res) => {
+  const serviceId = req.params._id;
+  const artist = await User.find({
+    Service: { $in: serviceId },
+  });
+  res.status(200).json({
+    success: true,
+    data: artist,
+  });
+});
+
 exports.sortByArtist = asyncHandler(async (req, res, next) => {
   try {
     const { companyId } = req.params;

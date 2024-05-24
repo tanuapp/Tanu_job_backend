@@ -1,15 +1,15 @@
 const mongoose = require("mongoose");
 
 const calendarSchema = new mongoose.Schema({
-  alertrtist: {
+  Artist: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Artist",
   },
-  service: {
+  Service: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Service",
   },
-  customer: {
+  Customer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Customer",
   },

@@ -24,8 +24,8 @@ exports.create = asyncHandler(async (req, res, next) => {
     // const newEnd =
     //   now.getFullYear() + "-" + getMonth(now) + `-0${now.getDay(now)}T${end}`;
 
-    const newStart = "2024-05-11T12:30:00";
-    const newEnd = "2024-05-11T12:30:00";
+    const newStart = "2024-05-25T12:30:00";
+    const newEnd = "2024-05-25T12:30:00";
 
     console.log("log-------", newStart, newEnd);
     const data = {
