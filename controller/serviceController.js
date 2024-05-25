@@ -314,11 +314,13 @@ exports.findDelete = asyncHandler(async (req, res, next) => {
 exports.detail = asyncHandler(async (req, res, next) => {
   try {
     let text = await Service.findById(req.params.id);
+    let artist = await artistModel.find({ Service: req.params.id });
     let item = await Item.find({ Service: text._id });
     console.log("----------- item ", item);
     text = {
       ...text.toObject(),
       item,
+      artist,
     };
     return res.status(200).json({ success: true, data: text });
   } catch (error) {
