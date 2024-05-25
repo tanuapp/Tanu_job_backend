@@ -1,14 +1,9 @@
 const axios = require("axios");
 const asyncHandler = require("../middleware/asyncHandler.js");
 const invoiceModel = require("../models/invoiceModel.js");
+const Calendar = require("../models/calendarModel.js");
 const qpay = require("../middleware/qpay");
 const userModel = require("../models/customerModel.js");
-const myLessonModel = require("../models/itemModel.js");
-const {
-  addSeconds,
-  addMinute,
-  addMonths,
-} = require("../middleware/addTime.js");
 
 exports.createqpay = asyncHandler(async (req, res) => {
   try {
@@ -100,7 +95,15 @@ exports.callback = asyncHandler(async (req, res, next) => {
         message: "Invoice not found",
       });
     }
-    const { qpay_invoice_id, _id, courseId } = record[0];
+    const {
+      qpay_invoice_id,
+      _id,
+      courseId,
+      Artist,
+      Customer,
+      Service,
+      tsagAwah,
+    } = record[0];
     console.log("course array  :", courseId);
     console.log(record[0]);
 
@@ -138,6 +141,14 @@ exports.callback = asyncHandler(async (req, res, next) => {
         { status: true },
         { new: true }
       );
+      let input = {
+        Artist,
+        Customer,
+        Service,
+        start: tsagAwah,
+      };
+      const calendar = await Calendar.create(input);
+      console.log(calendar);
       // const endDate = addMonths(new Date(), 3);
       // const endDateStr = endDate.toISOString().slice(0, 10);
 
