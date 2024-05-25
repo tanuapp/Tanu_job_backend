@@ -9,6 +9,10 @@ const invoiceSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Customer",
   },
+  Service: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Service",
+  },
   tsagAwah: {
     type: String,
   },
