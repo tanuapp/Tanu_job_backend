@@ -48,7 +48,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
     };
     const invoiceLine = {
       tax_product_code: `${randomToo}`,
-      line_description: `Tanusoft`,
+      line_description: `Мөнх-Эрдэнэ`,
       line_quantity: 1,
       line_unit_price: 1,
     };

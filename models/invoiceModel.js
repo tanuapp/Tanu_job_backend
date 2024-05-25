@@ -1,15 +1,17 @@
 const mongoose = require("mongoose");
 
 const invoiceSchema = new mongoose.Schema({
-  status: {
-    type: Boolean,
-    default: false,
+  Artist: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Artist",
   },
-  customer: {
+  Customer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Customer",
   },
-
+  tsagAwah: {
+    type: String,
+  },
   sender_invoice_id: {
     type: String,
   },
@@ -17,6 +19,10 @@ const invoiceSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  status: {
+    type: Boolean,
+    default: false,
   },
 });
 
