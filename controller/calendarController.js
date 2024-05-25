@@ -1,10 +1,11 @@
 const model = require("../models/calendarModel");
 const ItemModel = require("../models/itemModel");
 const asyncHandler = require("../middleware/asyncHandler");
+const { companyIdFind } = require("../middleware/addTime");
+const serviceModel = require("../models/serviceModel");
 
-const now = new Date(); // Initialize `now` before it's used
+const now = new Date();
 
-// Helper function to get the month in two-digit format
 const getMonth = (dt, add = 0) => {
   let month = dt.getMonth() + 1 + add;
   return month < 10 ? "0" + month : month.toString();
@@ -12,7 +13,7 @@ const getMonth = (dt, add = 0) => {
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
-    const { start, end } = req.body;
+    const { start, end, Service } = req.body;
     // console.log(start, end);
     // const user = req.userId;
     // -01T
@@ -24,6 +25,12 @@ exports.create = asyncHandler(async (req, res, next) => {
     // const newEnd =
     //   now.getFullYear() + "-" + getMonth(now) + `-0${now.getDay(now)}T${end}`;
 
+    const service = await serviceModel
+      .findById(Service)
+      .populate("SubCategory");
+
+    const { companyId } = service;
+
     const newStart = "2024-05-25T12:30:00";
     const newEnd = "2024-05-25T12:30:00";
 
@@ -32,6 +39,7 @@ exports.create = asyncHandler(async (req, res, next) => {
       ...req.body,
       start: newStart,
       end: newEnd,
+      Company: companyId,
     };
     const text = await model.create(data);
     return res.status(200).json({ success: true, text });
@@ -61,6 +69,62 @@ exports.artistServiceSort = asyncHandler(async (req, res) => {
       return res.status(404).json({
         success: false,
         error: "No data found matching the provided Service and Artist.",
+      });
+    }
+
+    // Return the found data
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    // Handling unexpected server errors
+    res.status(500).json({
+      success: false,
+      error: "An error occurred while retrieving data.",
+      details: error.message,
+    });
+  }
+});
+
+exports.calendarSortByCompany = asyncHandler(async (req, res) => {
+  try {
+    // Ensure userId is provided
+    if (!req.userId) {
+      return res.status(400).json({
+        success: false,
+        error: "User ID is required.",
+      });
+    }
+
+    // Find company by user ID
+    const companyFind = await companyIdFind(req.userId);
+
+    // Ensure company was found
+    if (companyFind.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "No company found for the provided user ID.",
+      });
+    }
+    console.log(companyFind);
+    const query = {
+      Company: companyFind[0]._id,
+    };
+
+    // Find matching records in the model
+    const data = await model
+      .find(query)
+      .populate("Artist")
+      .populate("Service")
+      .populate("Customer")
+      .populate("Company");
+
+    // Ensure data was found
+    if (data.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "No data found matching the provided Company.",
       });
     }
 
