@@ -22,9 +22,12 @@ exports.create = asyncHandler(async (req, res, next) => {
 exports.update = asyncHandler(async (req, res, next) => {
   try {
     const user = req.userId;
+    const company = await companyIdFind(user);
+    console.log(company);
     const data = {
       ...req.body,
       CreateUser: user,
+      Company: company[0]._id,
     };
     const text = await model.findByIdAndUpdate(req.params.id, data, {
       new: true,
