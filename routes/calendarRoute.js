@@ -8,7 +8,9 @@ const {
   findDelete,
   getAll,
   artistServiceSort,
+  calendarSortByCompany,
 } = require("../controller/calendarController");
+const { protect } = require("../middleware/protect");
 const router = express.Router();
 // const { getSubcategorySortItem } = require("../controller/serviceController");
 
@@ -21,6 +23,7 @@ router
   .delete(findDelete)
   .get(detail);
 router.route("/selectOption").post(artistServiceSort);
+router.route("/company").post(protect, calendarSortByCompany);
 
 // router.route("/:subcategory_id/item").get(getSubcategorySortItem);
 
