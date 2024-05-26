@@ -12,6 +12,10 @@ const locationSchema = new mongoose.Schema({
     type: String,
   },
   Longitude: String,
+  status: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const Location = mongoose.model("Location", locationSchema);
