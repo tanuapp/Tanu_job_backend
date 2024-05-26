@@ -13,8 +13,9 @@ const locationSchema = new mongoose.Schema({
   },
   Longitude: String,
   status: {
-    type: Boolean,
-    default: false,
+    type: String,
+    enum: ["acitve", "offline"],
+    default: "offline",
   },
 });
 
