@@ -9,9 +9,9 @@ const locationSchema = new mongoose.Schema({
     ref: "User",
   },
   Latitude: {
-    type: String,
+    type: Number,
   },
-  Longitude: String,
+  Longitude: Number,
   status: {
     type: String,
     enum: ["acitve", "offline"],
