@@ -38,6 +38,17 @@ exports.update = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.companyLocation = asyncHandler(async (req, res) => {
+  try {
+    const user = req.userId;
+    const company = await companyIdFind(user);
+    const text = await model.find({ Company: company[0]._id });
+    return res.status(200).json({ success: true, data: text });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 exports.findDelete = asyncHandler(async (req, res, next) => {
   try {
     const text = await model.findByIdAndDelete(req.params.id, {
