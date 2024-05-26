@@ -35,7 +35,7 @@ exports.update = asyncHandler(async (req, res, next) => {
       Company: company[0]._id,
     };
 
-    const updatedDocument = await model.find(
+    const updatedDocument = await model.findOneAndUpdate(
       { Company: company[0]._id },
       data,
       {
