@@ -13,11 +13,8 @@ const router = express.Router();
 const { getCategorySortItem } = require("../controller/serviceController");
 const { protect } = require("../middleware/protect");
 
-router.route("/").post(protect, create).get(getAll);
-router
-  .route("/companyLocation")
-  .post(protect, companyLocation)
-  .put(protect, update);
+router.route("/").post(protect, create).get(getAll).put(protect, update);
+router.route("/companyLocation").post(protect, companyLocation);
 
 router.route("/:id").put(protect, update).delete(findDelete).get(detail);
 
