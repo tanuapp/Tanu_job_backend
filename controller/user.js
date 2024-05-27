@@ -1,7 +1,7 @@
 const User = require("../models/user");
 const asyncHandler = require("../middleware/asyncHandler");
 const user = require("../models/user");
-
+const artistModel = require("../models/artistModel");
 exports.getAllUser = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await User.find();
@@ -19,10 +19,17 @@ exports.getAllUser = asyncHandler(async (req, res, next) => {
 exports.createUser = asyncHandler(async (req, res, next) => {
   try {
     const existingUser = await User.findOne({ phone: req.body.phone });
+    const existingEmail = await User.findOne({ email: req.body.email });
     if (existingUser) {
       return res.status(400).json({
         success: false,
         error: "Утасны дугаар бүртгэлтэй байна",
+      });
+    }
+    if (existingEmail) {
+      return res.status(400).json({
+        success: false,
+        error: "И-мэйл хаяг бүртгэлтэй байна",
       });
     }
     const inputData = {
@@ -45,41 +52,41 @@ exports.Login = asyncHandler(async (req, res, next) => {
   try {
     const { phone, password } = req.body;
 
-    const userphone = await user.find({ phone: phone });
-
-    if (!userphone) {
-      return res
-        .status(404)
-        .json({ success: falce, message: "Утасны дугаар бүртгэлгүй байна " });
-    }
-
     if (!phone || !password) {
       return res.status(400).json({
         success: false,
-        msg: "Утасны дугаар  болон нууц үгээ оруулна уу!",
-      });
-    } else {
-      const user = await User.findOne({ phone }).select("+password");
-      if (!user) {
-        return res.status(400).json({
-          success: false,
-          msg: "Утасны дугаар  эсвэл нууц үг буруу байна!",
-        });
-      }
-      const isPasswordValid = await user.checkPassword(password);
-      if (!isPasswordValid) {
-        return res.status(400).json({
-          success: false,
-          msg: "Утасны дугаар  эсвэл нууц үг буруу байна!",
-        });
-      }
-      const token = user.getJsonWebToken();
-      res.status(200).json({
-        success: true,
-        token,
-        data: user,
+        message: "Утасны дугаар болон нууц үгээ оруулна уу!",
       });
     }
+
+    // Try to find the user in both User and Artist collections
+    const user = await User.findOne({ phone }).select("+password");
+    const artist = await artistModel.findOne({ phone }).select("+password");
+
+    const account = user || artist; // If user is found, account will be user. If not, it will be artist
+
+    if (!account) {
+      return res.status(404).json({
+        success: false,
+        message: "Утасны дугаар бүртгэлгүй байна",
+      });
+    }
+
+    const isPasswordValid = await account.checkPassword(password);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        success: false,
+        message: "Утасны дугаар эсвэл нууц үг буруу байна!",
+      });
+    }
+
+    const token = account.getJsonWebToken();
+    res.status(200).json({
+      success: true,
+      token,
+      data: account,
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

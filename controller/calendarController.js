@@ -31,8 +31,8 @@ exports.create = asyncHandler(async (req, res, next) => {
 
     const { companyId } = service;
 
-    const newStart = `2024-05-10T${start}`;
-    const newEnd = "2024-05-10T12:30:00";
+    const newStart = `2024-05-27T${start}`;
+    const newEnd = "2024-05-27T12:30:00";
 
     console.log("log-------", newStart, newEnd);
     const data = {
