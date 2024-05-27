@@ -53,10 +53,14 @@ exports.artistServiceSort = asyncHandler(async (req, res) => {
     // Extracting Service and Artist from request body
     const { Service, Artist } = req.body;
 
-    const query = {
-      Service,
-      Artist,
-    };
+    // Building query object based on the presence of Service and Artist
+    const query = {};
+    if (Service) {
+      query.Service = Service;
+    }
+    if (Artist) {
+      query.Artist = Artist;
+    }
 
     // Find matching records in the model
     const data = await model
@@ -68,7 +72,7 @@ exports.artistServiceSort = asyncHandler(async (req, res) => {
     if (data.length === 0) {
       return res.status(404).json({
         success: false,
-        error: "No data found matching the provided Service and Artist.",
+        error: "No data found matching the provided criteria.",
       });
     }
 
