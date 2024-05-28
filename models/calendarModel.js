@@ -18,10 +18,10 @@ const calendarSchema = new mongoose.Schema({
     ref: "Customer",
   },
   start: {
-    type: Date,
+    type: String,
   },
   end: {
-    type: Date,
+    type: String,
   },
   className: {
     type: String,
