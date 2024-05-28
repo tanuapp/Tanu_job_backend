@@ -97,16 +97,8 @@ exports.callback = asyncHandler(async (req, res, next) => {
         message: "Invoice not found",
       });
     }
-    const {
-      qpay_invoice_id,
-      _id,
-      courseId,
-      Artist,
-      Customer,
-      Service,
-      tsagAwah,
-    } = record[0];
-    console.log("course array  :", courseId);
+    const { qpay_invoice_id, _id, Artist, Customer, Service, tsagAwah } =
+      record[0];
     console.log(record[0]);
 
     const rentId = _id;
@@ -154,39 +146,7 @@ exports.callback = asyncHandler(async (req, res, next) => {
       const calendar = await Calendar.create(input);
 
       console.log(calendar);
-      // const endDate = addMonths(new Date(), 3);
-      // const endDateStr = endDate.toISOString().slice(0, 10);
-
-      // // my lesson ruu course iig  nemeh
-      // record[0].courseId.map(async (item, i) => {
-      //     let myLessAddCourse = await myLessonModel.create({
-      //         createUser: req.userId,
-      //         courseId: item?._id,
-      //         duusahHugatsaa: endDateStr
-      //     });
-
-      //     console.log("created my course", myLessAddCourse);
-
-      //     //  1 min daraa ustgahaar testlly
-      //     // const targetDate = new Date();
-      //     // targetDate.setMonth(targetDate.getMonth() + 3);
-
-      //     // 3n sar bolgoj solino
-
-      //     let targetDate = new Date();
-      //     targetDate.setMonth(targetDate.getMonth() + 3);
-
-      //     setTimeout(async () => {
-      //         try {
-      //             await myLessonModel.deleteOne({ _id: myLessAddCourse._id });
-      //             console.log("Deleted my course after timeout");
-      //         } catch (error) {
-      //             console.error("Error deleting my course after timeout:", error);
-      //         }
-      //     }, delay);
-
-      // });
-
+      c;
       return res.status(200).json({
         success: true,
         message: "Төлөлт амжилттай",

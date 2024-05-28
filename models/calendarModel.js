@@ -17,11 +17,6 @@ const calendarSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Customer",
   },
-  status: {
-    type: String,
-    enum: ["primary", "success", "danger"],
-    default: "primary",
-  },
   start: {
     type: Date,
   },
@@ -30,6 +25,8 @@ const calendarSchema = new mongoose.Schema({
   },
   className: {
     type: String,
+    enum: ["primary", "success", "danger"],
+    default: "primary",
   },
 });
 
