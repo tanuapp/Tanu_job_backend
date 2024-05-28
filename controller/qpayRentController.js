@@ -86,7 +86,6 @@ exports.callback = asyncHandler(async (req, res, next) => {
     const qpay_token = await qpay.makeRequest();
     const { access_token } = qpay_token;
     var sender_invoice_no = req.params.id;
-    console.log(sender_invoice_no);
     const record = await invoiceModel.find({
       sender_invoice_id: sender_invoice_no,
     });
@@ -146,7 +145,6 @@ exports.callback = asyncHandler(async (req, res, next) => {
       const calendar = await Calendar.create(input);
 
       console.log(calendar);
-      c;
       return res.status(200).json({
         success: true,
         message: "Төлөлт амжилттай",
