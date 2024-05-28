@@ -4,6 +4,8 @@ const invoiceModel = require("../models/invoiceModel.js");
 const Calendar = require("../models/calendarModel.js");
 const qpay = require("../middleware/qpay");
 const userModel = require("../models/customerModel.js");
+const companyModel = require("../models/companyModel.js");
+const serviceModel = require("../models/serviceModel.js");
 
 exports.createqpay = asyncHandler(async (req, res) => {
   try {
@@ -141,13 +143,16 @@ exports.callback = asyncHandler(async (req, res, next) => {
         { status: true },
         { new: true }
       );
+      const Company = await serviceModel.findById(Service);
       let input = {
         Artist,
         Customer,
         Service,
         start: tsagAwah,
+        Company: Company.companyId,
       };
       const calendar = await Calendar.create(input);
+
       console.log(calendar);
       // const endDate = addMonths(new Date(), 3);
       // const endDateStr = endDate.toISOString().slice(0, 10);

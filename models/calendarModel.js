@@ -18,8 +18,9 @@ const calendarSchema = new mongoose.Schema({
     ref: "Customer",
   },
   status: {
-    type: Boolean,
-    default: false,
+    type: String,
+    enum: ["primary", "success", "danger"],
+    default: "primary",
   },
   start: {
     type: Date,
