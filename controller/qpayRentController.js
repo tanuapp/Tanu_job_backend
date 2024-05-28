@@ -6,6 +6,7 @@ const qpay = require("../middleware/qpay");
 const userModel = require("../models/customerModel.js");
 const companyModel = require("../models/companyModel.js");
 const serviceModel = require("../models/serviceModel.js");
+const customerOrder = require("../models/cusstomerOrderModel.js");
 
 exports.createqpay = asyncHandler(async (req, res) => {
   try {
@@ -143,8 +144,13 @@ exports.callback = asyncHandler(async (req, res, next) => {
         Company: Company.companyId,
       };
       const calendar = await Calendar.create(input);
-
-      console.log(calendar);
+      console.log("Календарт амжилтттай нэмлээ", calendar);
+      const orderAddToCustomer = await customerOrder.create({
+        Customer: Customer,
+        ognoo: tsagAwah,
+        Service: Service,
+      });
+      console.log("Миний захиалгад ажилттай  нэмэгдлээ", orderAddToCustomer);
       return res.status(200).json({
         success: true,
         message: "Төлөлт амжилттай",

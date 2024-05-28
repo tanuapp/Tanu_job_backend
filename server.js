@@ -48,9 +48,9 @@ app.use("/api/v1/item", itemRoute);
 app.use("/api/v1/qpay", qpayRoute);
 app.use("/api/v1/company", companyRoute);
 app.use("/api/v1/artist", artistRoute);
-app.use("/api/v1/customerOrder", customerOrderRoute);
 app.use("/api/v1/calendar", calendarRoute);
 app.use("/api/v1/location", locationRoute);
+app.use("/api/v1/customerOrder", customerOrderRoute);
 
 // app.use("/api/v1/withdraw", withdrawRoute);
 // file upload limit gej oilgoson

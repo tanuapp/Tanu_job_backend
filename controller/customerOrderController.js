@@ -6,8 +6,7 @@ exports.create = asyncHandler(async (req, res, next) => {
     const customer = req.userId;
     const data = {
       ...req.body,
-      orderCustomer: customer,
-
+      Customer: customer,
     };
     const text = await model.create(data);
     return res.status(200).json({ success: true, data: text });
@@ -16,25 +15,32 @@ exports.create = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.customerOrder = asyncHandler(async (req, res, next) => {
+  try {
+    const text = await model.find({ Customer: req.userId }).populate("Service");
+    return res.status(200).json({ success: true, data: text });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 exports.update = asyncHandler(async (req, res, next) => {
   try {
     const updatedData = {
       ...req.body,
-      photo: req.file?.filename
+      photo: req.file?.filename,
     };
     const text = await model.findByIdAndUpdate(req.params.id, updatedData, {
-      new: true
+      new: true,
     });
     return res.status(200).json({ success: true, data: text });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-
 exports.findDelete = asyncHandler(async (req, res, next) => {
   try {
     const text = await model.findByIdAndDelete(req.params.id, {
-      new: true
+      new: true,
     });
     return res.status(200).json({ success: true, data: text });
   } catch (error) {
@@ -63,16 +69,14 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 exports.getOrderCustomer = asyncHandler(async (req, res, next) => {
   try {
     const customer = req.userId;
-    const orders = await model
-      .find({ orderCustomer: customer })
-      .populate({
-        path: 'item',
-        select: '_id huwaari status Service',
-        populate: {
-          path: 'Service',
-          select: 'name',
-        },
-      });
+    const orders = await model.find({ orderCustomer: customer }).populate({
+      path: "item",
+      select: "_id huwaari status Service",
+      populate: {
+        path: "Service",
+        select: "name",
+      },
+    });
 
     return res.status(200).json({ success: true, data: orders });
   } catch (error) {

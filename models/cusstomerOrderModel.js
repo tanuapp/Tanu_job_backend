@@ -2,13 +2,16 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const customerOrderchema = new Schema({
-  orderCustomer: {
+  Customer: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Customer"
+    ref: "Customer",
   },
-  item: {
-    type: Schema.Types.ObjectId,
-    ref: "Item"
+  Service: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Customer",
+  },
+  ognoo: {
+    type: String,
   },
   createdAt: {
     type: Date,

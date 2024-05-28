@@ -6,19 +6,20 @@ const serviceModel = require("../models/serviceModel");
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     const user = req.userId;
-    const uploadedFiles = [];
-    console.log(req.body);
-    if (req.files && Array.isArray(req.files.files)) {
-      for (let i = 0; i < req.files.files.length; i++) {
-        uploadedFiles.push({ name: req.files.files[i].filename });
-      }
-    } else {
-      console.warn("req.files.files is not an array");
-    }
+    // const uploadedFiles = [];
+    // console.log(req.body);
+    // if (req.files && Array.isArray(req.files.files)) {
+    //   for (let i = 0; i < req.files.files.length; i++) {
+    //     uploadedFiles.push({ name: req.files.files[i].filename });
+    //   }
+    // } else {
+    //   console.warn("req.files.files is not an array");
+    // }
     const data = {
       ...req.body,
       companyCreater: user,
-      files: uploadedFiles,
+      logo: req.file?.filename,
+      // files: uploadedFiles,
     };
 
     const text = await model.create(data);
@@ -40,22 +41,22 @@ exports.getSubCategoryByCompany = asyncHandler(async (req, res) => {
 
 exports.update = asyncHandler(async (req, res, next) => {
   try {
-    const fileName1 = req.files["logo"]
-      ? req.files["logo"][0].filename
-      : "no logo ?";
-    const uploadedFiles = [];
+    // const fileName1 = req.files["logo"]
+    //   ? req.files["logo"][0].filename
+    //   : "no logo ?";
+    // const uploadedFiles = [];
 
-    if (req.files && Array.isArray(req.files.files)) {
-      for (let i = 0; i < req.files.files.length; i++) {
-        uploadedFiles.push({ name: req.files.files[i].filename });
-      }
-    } else {
-      console.warn("req.files.files is not an array");
-    }
+    // if (req.files && Array.isArray(req.files.files)) {
+    //   for (let i = 0; i < req.files.files.length; i++) {
+    //     uploadedFiles.push({ name: req.files.files[i].filename });
+    //   }
+    // } else {
+    //   console.warn("req.files.files is not an array");
+    // }
     const updatedData = {
       ...req.body,
       files: uploadedFiles,
-      logo: fileName1,
+      logo: req.file?.filename,
     };
     const text = await model.findByIdAndUpdate(req.params.id, updatedData, {
       new: true,
@@ -146,7 +147,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
     return res.status(200).json({
       success: true,
       total: total,
-      data:enrichedMainData
+      data: enrichedMainData,
     });
   } catch (error) {
     console.error("Error fetching data in getAll:", error);
@@ -156,7 +157,6 @@ exports.getAll = asyncHandler(async (req, res, next) => {
     });
   }
 });
-
 
 // exports.getAll = asyncHandler(async (req, res, next) => {
 //   try {
