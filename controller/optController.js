@@ -1,8 +1,9 @@
 const { default: axios } = require("axios");
 const asyncHandler = require("../middleware/asyncHandler");
 const user = require("../models/user");
-const { addSeconds } = require("../middleware/addTime");
+const user_verfyModel = require("../models/user_verfyModel");
 
+const { addSeconds } = require("../middleware/addTime");
 exports.opt = asyncHandler(async (req, res, next) => {
   try {
     const { phone } = req.body;
