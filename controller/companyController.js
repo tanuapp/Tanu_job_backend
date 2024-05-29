@@ -2,7 +2,7 @@ const model = require("../models/companyModel");
 const asyncHandler = require("../middleware/asyncHandler");
 const artistModel = require("../models/artistModel");
 const serviceModel = require("../models/serviceModel");
-const loctionModel = require("../models/locationModel");
+const locationModel = require("../models/locationModel");
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
@@ -102,53 +102,30 @@ exports.detail = asyncHandler(async (req, res, next) => {
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
     const total = await model.countDocuments();
-    const mainData = await model
-      .find()
-      .populate("Category")
-      .populate("SubCategory");
+    const mainData = await model.find().populate("Category");
 
-    const mainDataIds = mainData.map((data) => data._id);
+    const companyId = mainData.map((service) => service._id).filter(Boolean);
 
-    const artists = await artistModel.find({ Company: { $in: mainDataIds } });
-    const location = await loctionModel.find({ Company: { $in: mainDataIds } });
-    const services = await serviceModel.find({
-      companyId: { $in: mainDataIds },
+    const location = await locationModel.find({
+      Company: { $in: companyId },
     });
 
-    // Create a map of companyId to artists and services
-    const artistsMap = mainDataIds.reduce((acc, id) => {
-      acc[id] = [];
-      return acc;
-    }, {});
-
-    const servicesMap = { ...artistsMap };
-
-    artists.forEach((artist) => {
-      if (artistsMap[artist.Company]) {
-        artistsMap[artist.Company].push(artist);
-      }
-    });
-
-    services.forEach((service) => {
-      if (servicesMap[service.companyId]) {
-        servicesMap[service.companyId].push(service);
-      }
-    });
-
-    // Embed artists and services into the mainData
-    const enrichedMainData = mainData.map((company) => {
-      return {
-        ...company.toObject(),
-        artists: artistsMap[company._id] || [],
-        services: servicesMap[company._id] || [],
-        location,
-      };
-    });
+    const servicesWithItems = await Promise.all(
+      mainData.map(async (service) => {
+        const serviceLocations = location.filter((loc) =>
+          loc.Company.equals(service._id)
+        );
+        return {
+          ...service.toObject(),
+          location: serviceLocations,
+        };
+      })
+    );
 
     return res.status(200).json({
       success: true,
       total: total,
-      data: enrichedMainData,
+      data: servicesWithItems,
     });
   } catch (error) {
     console.error("Error fetching data in getAll:", error);
