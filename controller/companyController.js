@@ -117,7 +117,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
         );
         return {
           ...service.toObject(),
-          location: serviceLocations,
+          location: serviceLocations[0],
         };
       })
     );
