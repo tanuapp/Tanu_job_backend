@@ -102,6 +102,7 @@ exports.detail = asyncHandler(async (req, res, next) => {
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
     const total = await model.countDocuments();
+
     const mainData = await model.find().populate("Category");
 
     const companyId = mainData.map((service) => service._id).filter(Boolean);

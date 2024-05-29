@@ -89,7 +89,7 @@ exports.detail = asyncHandler(async (req, res, next) => {
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
     const total = await model.countDocuments();
-    const text = await model.find();
+    const text = await model.find().populate("Company");
     return res.status(200).json({ success: true, total: total, data: text });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
