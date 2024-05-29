@@ -2,6 +2,7 @@ const model = require("../models/companyModel");
 const asyncHandler = require("../middleware/asyncHandler");
 const artistModel = require("../models/artistModel");
 const serviceModel = require("../models/serviceModel");
+const loctionModel = require("../models/locationModel");
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
@@ -101,7 +102,6 @@ exports.detail = asyncHandler(async (req, res, next) => {
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
     const total = await model.countDocuments();
-
     const mainData = await model
       .find()
       .populate("Category")
@@ -110,6 +110,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
     const mainDataIds = mainData.map((data) => data._id);
 
     const artists = await artistModel.find({ Company: { $in: mainDataIds } });
+    const location = await loctionModel.find({ Company: { $in: mainDataIds } });
     const services = await serviceModel.find({
       companyId: { $in: mainDataIds },
     });
@@ -140,6 +141,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
         ...company.toObject(),
         artists: artistsMap[company._id] || [],
         services: servicesMap[company._id] || [],
+        location,
       };
     });
 
