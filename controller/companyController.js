@@ -19,7 +19,7 @@ exports.create = asyncHandler(async (req, res, next) => {
     const data = {
       ...req.body,
       companyCreater: user,
-      logo: req.file?.filename,
+      // logo: req.file?.filename,
       // files: uploadedFiles,
     };
 
