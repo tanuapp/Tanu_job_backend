@@ -40,7 +40,6 @@ const artistSchema = new Schema({
   password: {
     type: String,
     required: [true, "Нууц үг бичнэ үү"],
-    minlength: [8, "Нууц үгийн урт хамгийн багадаа  8 тэмдэгт байна"],
     select: false,
   },
   role: {
