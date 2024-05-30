@@ -47,13 +47,9 @@ exports.create = asyncHandler(async (req, res, next) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-
 exports.artistServiceSort = asyncHandler(async (req, res) => {
   try {
-    // Extracting Service and Artist from request body
     const { Service, Artist } = req.body;
-
-    // Building query object based on the presence of Service and Artist
     const query = {};
     if (Service) {
       query.Service = Service;
@@ -62,27 +58,30 @@ exports.artistServiceSort = asyncHandler(async (req, res) => {
       query.Artist = Artist;
     }
 
-    // Find matching records in the model
     const data = await model
       .find(query)
       .populate("Artist")
       .populate("Service")
       .populate("Customer");
 
-    if (data.length === 0) {
+    let p = data.map((item) => ({
+      ...item.toObject(),
+      serviceName: item.Service ? item.Service.name : "fsdfsd",
+      customerPhone: item.Customer ? item.Customer.phone : "ffgh",
+    }));
+
+    if (p.length === 0) {
       return res.status(404).json({
         success: false,
         error: "No data found matching the provided criteria.",
       });
     }
 
-    // Return the found data
     res.status(200).json({
       success: true,
-      data,
+      data: p,
     });
   } catch (error) {
-    // Handling unexpected server errors
     res.status(500).json({
       success: false,
       error: "An error occurred while retrieving data.",
@@ -123,6 +122,15 @@ exports.calendarSortByCompany = asyncHandler(async (req, res) => {
       .populate("Service")
       .populate("Customer")
       .populate("Company");
+    console.log("DFgdg");
+
+    const p = {
+      ...data,
+      serviceName: data.Service.name,
+      customerPhone: data.Customer.phone,
+    };
+
+    console.log(p);
 
     // Ensure data was found
     if (data.length === 0) {
@@ -135,7 +143,7 @@ exports.calendarSortByCompany = asyncHandler(async (req, res) => {
     // Return the found data
     res.status(200).json({
       success: true,
-      data,
+      data: p,
     });
   } catch (error) {
     // Handling unexpected server errors
