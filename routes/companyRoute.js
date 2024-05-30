@@ -25,7 +25,7 @@ const cpUploads = upload.fields([
 const {
   getCompanySubCategory,
 } = require("../controller/subcategoryController");
-router.route("/").post(protect, cpUploads, create).get(getAll);
+router.route("/").post(protect, upload.single("file"), create).get(getAll);
 router.route("/:companyId/artistSorted").get(sortByArtist);
 
 router
