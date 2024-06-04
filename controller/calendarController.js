@@ -92,14 +92,6 @@ exports.artistServiceSort = asyncHandler(async (req, res) => {
 
 exports.calendarSortByCompany = asyncHandler(async (req, res) => {
   try {
-    // Ensure userId is provided
-    if (!req.userId) {
-      return res.status(400).json({
-        success: false,
-        error: "User ID is required.",
-      });
-    }
-
     // Find company by user ID
     const companyFind = await companyIdFind(req.userId);
 
@@ -122,15 +114,6 @@ exports.calendarSortByCompany = asyncHandler(async (req, res) => {
       .populate("Service")
       .populate("Customer")
       .populate("Company");
-    console.log("DFgdg");
-
-    const p = {
-      ...data,
-      serviceName: data.Service.name,
-      customerPhone: data.Customer.phone,
-    };
-
-    console.log(p);
 
     // Ensure data was found
     if (data.length === 0) {
@@ -143,7 +126,7 @@ exports.calendarSortByCompany = asyncHandler(async (req, res) => {
     // Return the found data
     res.status(200).json({
       success: true,
-      data: p,
+      data: data,
     });
   } catch (error) {
     // Handling unexpected server errors
