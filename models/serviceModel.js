@@ -26,6 +26,11 @@ const serviceSchema = new Schema({
   description: {
     type: String,
   },
+  status: {
+    type: String,
+    enum: ["active", "offline"],
+    default: "offline",
+  },
   price: {
     type: Number,
   },

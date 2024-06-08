@@ -24,6 +24,7 @@ const invoiceSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  price: String,
   status: {
     type: Boolean,
     default: false,

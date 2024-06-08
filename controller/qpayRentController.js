@@ -7,7 +7,8 @@ const userModel = require("../models/customerModel.js");
 const companyModel = require("../models/companyModel.js");
 const serviceModel = require("../models/serviceModel.js");
 const customerOrder = require("../models/cusstomerOrderModel.js");
-
+const khan = require("../middleware/khaan");
+const uniqid = require("uniqid");
 exports.createqpay = asyncHandler(async (req, res) => {
   try {
     const customer = await userModel.findById(req.userId);
@@ -47,7 +48,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
     const invoiceLine = {
       tax_product_code: `${randomToo}`,
       line_description: `Мөнх-Эрдэнэ`,
-      line_quantity: 1,
+      line_quantity: 10,
       line_unit_price: 1,
     };
     invoice.lines.push(invoiceLine);
@@ -68,6 +69,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
         {
           sender_invoice_id: sender_invoice_no,
           qpay_invoice_id: response.data.invoice_id,
+          price: invoiceLine.line_quantity,
         },
         { new: true }
       );
@@ -97,7 +99,7 @@ exports.callback = asyncHandler(async (req, res, next) => {
         message: "Invoice not found",
       });
     }
-    const { qpay_invoice_id, _id, Artist, Customer, Service, tsagAwah } =
+    const { qpay_invoice_id, _id, Artist, Customer, Service, tsagAwah, price } =
       record[0];
     console.log(record[0]);
 
@@ -141,16 +143,45 @@ exports.callback = asyncHandler(async (req, res, next) => {
         Customer,
         Service,
         start: tsagAwah,
-        Company: Company.companyId,
+        Company: Company?.companyId,
       };
       const calendar = await Calendar.create(input);
-      console.log("Календарт амжилтттай нэмлээ", calendar);
+
       const orderAddToCustomer = await customerOrder.create({
         Customer: Customer,
         ognoo: tsagAwah,
         Service: Service,
       });
       console.log("Миний захиалгад ажилттай  нэмэгдлээ", orderAddToCustomer);
+
+      var khan_token = await khan.makeRequest();
+      const header = {
+        headers: {
+          Authorization: "Bearer " + khan_token.access_token,
+          "Content-Type": "application/json",
+        },
+      };
+      const transferid = uniqid();
+      const mnaiOrlogo = price / 10;
+      const companyOrlogo = price - mnaiOrlogo;
+      const reqBody = {
+        fromAccount: "5037820742",
+        toAccount: "5075778806",
+        toCurrency: "MNT",
+        amount: companyOrlogo,
+        description: "2024-06-08 орлого",
+        currency: "MNT",
+        loginName: "info.tanullc@gmail.com",
+        tranPassword: "lol1234MOLL$$",
+        transferid: transferid,
+      };
+
+      const domesticRes = await axios.post(
+        process.env.khanUrl + `transfer/domestic`,
+        reqBody,
+        header
+      );
+
       return res.status(200).json({
         success: true,
         message: "Төлөлт амжилттай",

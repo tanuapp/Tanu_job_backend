@@ -9,8 +9,8 @@ async function token() {
       {
         auth: {
           username: process.env.QpayUserName,
-          password: process.env.QpayPassword
-        }
+          password: process.env.QpayPassword,
+        },
       }
     )
     .then((res) => {
@@ -54,16 +54,16 @@ const makeRequest = async () => {
     // );
     const response = await axios.post(
       "https://api.khanbank.com/v1/auth/token?grant_type=client_credentials",
-     {},
-     {
-       headers: {
-         "Content-Type": "application/x-www-form-urlencoded",
-         Authorization: `Basic ${btoa(
-           "5JOUr2z5Shg2JcMLEdb3azL2M4HnqGRa" + ":" + "Di8951oq4ES3LqlG"
-         )}`
-       }
-     }
-   );
+      {},
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Basic ${btoa(
+            "5JOUr2z5Shg2JcMLEdb3azL2M4HnqGRa" + ":" + "Di8951oq4ES3LqlG"
+          )}`,
+        },
+      }
+    );
     if (response.status === 200) {
       // response - object, eg { status: 200, message: 'OK' }
       return response.data;

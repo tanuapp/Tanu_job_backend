@@ -24,6 +24,7 @@
     "path": "^0.12.7"
   },
   "devDependencies": {
-    "nodemon": "^2.0.22"
+    "nodemon": "^2.0.22",
+    "uniqid": "^5.4.0"
   }
 }
