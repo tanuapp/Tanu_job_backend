@@ -170,3 +170,20 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 //     });
 //   }
 // });
+exports.sortBySubCategory = asyncHandler(async (req, res) => {
+  try {
+    const subCatId = req.params.sub_id;
+    const companies = await model.find({ SubCategory: { $in: [subCatId] } });
+
+    if (!companies || companies.length === 0) {
+      return res.status(404).json({
+        error: "Companies not found for the specified subcategory ID",
+      });
+    }
+
+    return res.status(200).json({ companies });
+  } catch (error) {
+    console.error("Error sorting companies by subcategory:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});

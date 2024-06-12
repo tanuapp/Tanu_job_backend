@@ -8,6 +8,7 @@ const {
   findDelete,
   getAll,
   getUserCompany,
+  sortBySubCategory,
 } = require("../controller/companyController");
 const router = express.Router();
 const {
@@ -38,4 +39,6 @@ router.route("/getArtistCompany").post(protect, getArtistCompany);
 router.route("/getCompanyService").post(protect, postCompanyService);
 router.route("/:companyid/service").get(getCompanyService);
 router.route("/getCompanySubCategory").post(protect, getCompanySubCategory);
+router.route("/sortBySubCategory/:sub_id").post(sortBySubCategory);
+
 module.exports = router;
