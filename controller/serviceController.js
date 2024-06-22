@@ -5,6 +5,7 @@ const Service = require("../models/serviceModel");
 const Item = require("../models/itemModel");
 const artistModel = require("../models/artistModel");
 const companyModel = require("../models/companyModel");
+
 function calculateNumberOfServices(openTime, closeTime, currentTime) {
   openTime = new Date(openTime);
   closeTime = new Date(closeTime);
