@@ -13,18 +13,15 @@ exports.protect = asyncHandler(async (req, res, next) => {
       });
     }
     const token = req.headers.authorization.split(" ")[1];
-
-    // Check if the token exists
     if (!token) {
       return res.status(400).json({
         success: false,
         msg: "Токен хоосон байна",
       });
     }
-    // Verify the token and extract user information
     const tokenObj = jwt.verify(token, process.env.JWT_SECRET);
     console.log(tokenObj);
-    req.userId = tokenObj.Id; // Change "Id" to "id" for consistency
+    req.userId = tokenObj.Id;
     req.userRole = tokenObj.role;
     next();
   } catch (error) {
