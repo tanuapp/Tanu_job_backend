@@ -33,6 +33,7 @@ exports.get = asyncHandler(async (req, res, next) => {
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
+    console.log(req.body);
     const body = {
       ...req.body,
       fileURL: req.files.fileURL ? req.files.fileURL[0].filename : "",
