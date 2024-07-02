@@ -36,15 +36,15 @@ const journalistSchema = new Schema({
   },
 });
 
-userSchema.pre("save", async function () {
+journalistSchema.pre("save", async function () {
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
-userSchema.methods.checkPassword = async function (pass) {
+journalistSchema.methods.checkPassword = async function (pass) {
   return await bcrypt.compare(pass, this.password);
 };
 
-userSchema.methods.getJsonWebToken = function () {
+journalistSchema.methods.getJsonWebToken = function () {
   let token = jwt.sign(
     { Id: this._id, role: this.role },
     process.env.JWT_SECRET,
@@ -54,7 +54,7 @@ userSchema.methods.getJsonWebToken = function () {
   );
   return token;
 };
-userSchema.pre("findOneAndUpdate", async function (next) {
+journalistSchema.pre("findOneAndUpdate", async function (next) {
   if (!this._update.password) {
     return next();
   }
