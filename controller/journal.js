@@ -29,7 +29,7 @@ exports.get = asyncHandler(async (req, res, next) => {
     journal.reels = reels;
     res.status(200).json({
       success: true,
-      data: single,
+      data: journal,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
