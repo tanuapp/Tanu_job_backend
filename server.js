@@ -22,6 +22,8 @@ const customerOrderRoute = require("./routes/customerOrderRoute.js");
 const calendarRoute = require("./routes/calendarRoute.js");
 const locationRoute = require("./routes/locationRoute.js");
 const journalRoute = require("./routes/journal.js");
+const reelRoute = require("./routes/reel.js");
+const journalTypeRoute = require("./routes/journalType.js");
 const errorHandler = require("./middleware/error.js");
 const app = express();
 connectDB();
@@ -52,6 +54,8 @@ app.use("/api/v1/artist", artistRoute);
 app.use("/api/v1/calendar", calendarRoute);
 app.use("/api/v1/location", locationRoute);
 app.use("/api/v1/customerOrder", customerOrderRoute);
+app.use("/api/v1/journaltype", journalTypeRoute);
+app.use("/api/v1/reel", reelRoute);
 
 app.use("/api/v1/journal", journalRoute);
 

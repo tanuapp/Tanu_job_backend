@@ -9,32 +9,17 @@ const {
   get,
   getAll,
   update,
-} = require("../controller/journal");
+} = require("../controller/journalType");
 
 //"/api/v1/user"
 // protect, authorize("admin"),  nemeh
 
-router
-  .route("/")
-  .get(getAll)
-  .post(
-    upload.fields([
-      { name: "fileURL", maxCount: 1 },
-      { name: "photo", maxCount: 1 },
-    ]),
-    create
-  );
+router.route("/").get(getAll).post(upload.single("file"), create);
 
 router
   .route("/:id")
   .get(get)
   .delete(deleteModel)
-  .put(
-    upload.fields([
-      { name: "fileURL", maxCount: 1 },
-      { name: "photo", maxCount: 1 },
-    ]),
-    update
-  );
+  .put(upload.single("file"), update);
 
 module.exports = router;
