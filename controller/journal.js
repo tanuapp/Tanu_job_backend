@@ -19,9 +19,14 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 
 exports.get = asyncHandler(async (req, res, next) => {
   try {
-    let single = await Model.findById(req.params.id);
+    const journal = await Model.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { views: 1 } },
+      { new: true }
+    );
+
     const reels = await Reel.find({ journal: req.params.id });
-    single.reels = reels;
+    journal.reels = reels;
     res.status(200).json({
       success: true,
       data: single,
