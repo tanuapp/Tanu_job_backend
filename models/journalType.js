@@ -6,6 +6,10 @@ const journalTypeSchema = new Schema({
     type: String,
     required: true,
   },
+  journal: {
+    type: mongoose.Types.ObjectId,
+    ref: "Journal",
+  },
   photo: {
     type: String,
   },
