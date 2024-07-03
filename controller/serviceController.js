@@ -41,6 +41,7 @@ exports.create = asyncHandler(async (req, res) => {
       closeTime,
       currentTime
     );
+    console.log("---------------------- this item array", itemArray);
     const user = req.userId;
 
     console.log("req file ---------------------------", req.file);
@@ -60,10 +61,13 @@ exports.create = asyncHandler(async (req, res) => {
         return item;
       })
     );
+    console.log(realArray);
     newItem = {
       ...newItem.toObject(),
       item: realArray,
     };
+
+    console.log("---------------", newItem);
 
     return res.status(201).json({ data: newItem });
   } catch (error) {

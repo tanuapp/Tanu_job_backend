@@ -31,6 +31,13 @@ const serviceSchema = new Schema({
     enum: ["active", "offline"],
     default: "offline",
   },
+  artist: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Artist",
+    },
+  ],
+
   price: {
     type: Number,
   },

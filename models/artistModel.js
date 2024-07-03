@@ -3,6 +3,19 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { Schema } = mongoose;
 
+const itemSchema = new mongoose.Schema({
+  huwaari: {
+    type: String,
+  },
+  status: {
+    type: Boolean,
+    default: false,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
 const artistSchema = new Schema({
   name: {
     type: String,
@@ -27,7 +40,7 @@ const artistSchema = new Schema({
       ref: "Service",
     },
   ],
-
+  item: [itemSchema],
   phone: {
     type: String,
     required: [true, "Утасны дугаар заавал бичнэ үү!"],
