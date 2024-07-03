@@ -94,11 +94,8 @@ exports.getCompanyService = asyncHandler(async (req, res) => {
     const services = await Service.find({
       companyId: req.params.companyid,
     });
-
     const company = await companyModel.findById(req.params.companyid);
-
     const serviceIds = services.map((service) => service._id).filter(Boolean);
-
     const serviceEs = await artistModel.find({
       _id: { $in: serviceIds },
     });
@@ -377,25 +374,33 @@ exports.getAll = asyncHandler(async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const sort = req.query.sort;
-    const select = req.query.select;
+    const sort = req.query.sort || "-createdAt";
+    const select = req.query.select
+      ? req.query.select.split(",").join(" ")
+      : "";
     const search = req.query.search || "";
+
     const query = {
       name: { $regex: search, $options: "i" },
     };
+
     const pagination = await paginate(page, limit, Service, query);
 
     let data = await Service.find(query, select)
       .sort(sort)
       .skip(pagination.start - 1)
-      .limit(limit);
+      .limit(limit)
+      .populate("companyId", "name") // Adjust fields as needed
+      .populate("artist"); // Adjust fields as needed
 
     data = await Promise.all(
       data.map(async (service) => {
-        const items = await Item.find({ Service: service._id });
-        const artists = await artistModel.find({
-          Service: { $in: service._id },
-        });
+        const items = await Item.find({ service: service._id }).lean();
+        const artists = await artistModel
+          .find({
+            _id: { $in: service.artist },
+          })
+          .lean();
 
         return {
           ...service.toObject(),
@@ -405,9 +410,11 @@ exports.getAll = asyncHandler(async (req, res) => {
       })
     );
 
-    return res
-      .status(200)
-      .json({ success: true, pagination: pagination, data: data });
+    return res.status(200).json({
+      success: true,
+      pagination: pagination,
+      data: data,
+    });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
   }
