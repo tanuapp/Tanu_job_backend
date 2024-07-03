@@ -9,8 +9,8 @@ const companyModel = require("../models/companyModel");
 function calculateNumberOfServices(openTime, closeTime, currentTime) {
   openTime = new Date(openTime);
   closeTime = new Date(closeTime);
-  let totalOperationalTime = (closeTime - openTime) / (1000 * 60);
-  let numberOfServices = Math.ceil(totalOperationalTime / currentTime);
+  const totalOperationalTime = (closeTime - openTime) / (1000 * 60); // Convert time to minutes
+  const numberOfServices = Math.ceil(totalOperationalTime / currentTime);
   const array = [];
   for (let i = 0; i < numberOfServices; i++) {
     const serviceTime = new Date(
@@ -21,54 +21,67 @@ function calculateNumberOfServices(openTime, closeTime, currentTime) {
   }
   return array;
 }
+
 exports.create = asyncHandler(async (req, res) => {
   try {
     const company = await companyIdFind(req.userId);
+    console.log("company", company);
+    if (!company || company.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Company not found" });
+    }
+
     const currentDate = new Date();
     const year = currentDate.getFullYear();
-    const month = currentDate.getMonth() + 1;
-    const day = currentDate.getDate();
-    const date = `${year}-${month < 10 ? "0" : ""}${month}-${
-      day < 10 ? "0" : ""
-    }${day}T`;
+    const month = (currentDate.getMonth() + 1).toString().padStart(2, "0");
+    const day = currentDate.getDate().toString().padStart(2, "0");
+    const date = `${year}-${month}-${day}T`;
 
     const openTime = date + company[0].open;
     const closeTime = date + company[0].close;
-    const { currentTime } = req.body;
+    const { currentTime, artist } = req.body;
 
+    if (!currentTime || isNaN(currentTime) || currentTime <= 0) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid service interval time" });
+    }
+    console.log("times ", openTime, closeTime, currentTime);
     const itemArray = calculateNumberOfServices(
       openTime,
       closeTime,
       currentTime
     );
     console.log("---------------------- this item array", itemArray);
-    const user = req.userId;
 
+    const user = req.userId;
     console.log("req file ---------------------------", req.file);
-    let input = {
+
+    const input = {
       ...req.body,
       createUser: user,
-      photo: req.file ? req.file?.filename : "no photo.jpg",
+      photo: req.file ? req.file.filename : "no photo.jpg",
       companyId: company[0]._id,
     };
+
     let newItem = await Service.create(input);
-    const realArray = await Promise.all(
-      itemArray.map(async (timeString) => {
-        const item = await Item.create({
-          huwaari: timeString,
-          Service: newItem._id,
-        });
-        return item;
+
+    const updatedArtists = await Promise.all(
+      artist.map(async (artistId) => {
+        return await artistModel.findByIdAndUpdate(
+          artistId,
+          {
+            $push: {
+              item: { $each: itemArray.map((huwaari) => ({ huwaari })) },
+            },
+          },
+          { new: true, useFindAndModify: false }
+        );
       })
     );
-    console.log(realArray);
-    newItem = {
-      ...newItem.toObject(),
-      item: realArray,
-    };
 
-    console.log("---------------", newItem);
-
+    console.log("artist updated", updatedArtists);
     return res.status(201).json({ data: newItem });
   } catch (error) {
     console.error(error);
@@ -97,17 +110,6 @@ exports.getCompanyService = asyncHandler(async (req, res) => {
         message: "No services found for this company",
       });
     }
-
-    const servicesWithItems = await Promise.all(
-      services.map(async (service) => {
-        const items = await Item.find({ Service: service._id });
-        return {
-          ...service.toObject(),
-          items,
-          company,
-        };
-      })
-    );
 
     return res.status(200).json({ success: true, data: servicesWithItems });
   } catch (error) {
