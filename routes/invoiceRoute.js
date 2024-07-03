@@ -14,11 +14,7 @@ const { protect } = require("../middleware/protect");
 
 router.route("/").post(protect, create).get(getAll);
 
-router
-  .route("/:id")
-  .put(update)
-  .delete(findDelete)
-  .get(detail);
+router.route("/:id").put(update).delete(findDelete).get(detail);
 
 // router.route("/:category_id/item").get(getCategorySortItem);
 
