@@ -1,7 +1,9 @@
 const User = require("../models/user");
 const asyncHandler = require("../middleware/asyncHandler");
 const user = require("../models/user");
+const customer = require("../models/customerModel");
 const artistModel = require("../models/artistModel");
+const jwt = require("jsonwebtoken");
 exports.getAllUser = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await User.find();
@@ -131,6 +133,32 @@ exports.deleteUser = async function deleteUser(req, res, next) {
       msg: "Ажилттай усгагдлаа",
       data: deletePost,
     });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.sessionCheck = async function deleteUser(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader.startsWith("Bearer ")
+      ? authHeader.slice(7, authHeader.length)
+      : null;
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await customer.findById(decoded.Id);
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        msg: "Хэрэглэгч олдсонгүй",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      data: user,
+      token,
+    });
+    console.log(decoded);
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
