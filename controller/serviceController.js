@@ -315,20 +315,63 @@ exports.findDelete = asyncHandler(async (req, res, next) => {
   }
 });
 
-exports.detail = asyncHandler(async (req, res, next) => {
+const enrichServiceData = async (service) => {
+  const items = await Item.find({ service: service._id }).lean();
+  const artists = await artistModel
+    .find({ _id: { $in: service.artist } })
+    .lean();
+  return {
+    ...service.toObject(),
+    items,
+    artists,
+  };
+};
+
+// exports.detail = asyncHandler(async (req, res, next) => {
+//   try {
+//     let text = await Service.findById(req.params.id);
+//     let artist = await artistModel.find({ Service: req.params.id });
+//     let item = await Item.find({ Service: text._id });
+//     console.log("----------- item ", item);
+//     text = {
+//       ...text.toObject(),
+//       item,
+//       artist,
+//     };
+//     return res.status(200).json({ success: true, data: text });
+//   } catch (error) {
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// });
+
+exports.detail = asyncHandler(async (req, res) => {
   try {
-    let text = await Service.findById(req.params.id);
-    let artist = await artistModel.find({ Service: req.params.id });
-    let item = await Item.find({ Service: text._id });
-    console.log("----------- item ", item);
-    text = {
-      ...text.toObject(),
-      item,
-      artist,
-    };
-    return res.status(200).json({ success: true, data: text });
+    const serviceId = req.params.id;
+
+    // Find the service by ID and populate company and artist details
+    let service = await Service.findById(serviceId).populate(
+      "companyId",
+      "name"
+    );
+
+    // If service not found, return 404
+    if (!service) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Service not found" });
+    }
+
+    // Enrich service with related items and artists
+    service = await enrichServiceData(service);
+
+    // Return the enriched service details
+    return res.status(200).json({
+      success: true,
+      data: service,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    // Handle any errors
+    return res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -390,8 +433,8 @@ exports.getAll = asyncHandler(async (req, res) => {
       .sort(sort)
       .skip(pagination.start - 1)
       .limit(limit)
-      .populate("companyId", "name") // Adjust fields as needed
-      .populate("artist"); // Adjust fields as needed
+      .populate("companyId", "name")
+      .populate("artist");
 
     data = await Promise.all(
       data.map(async (service) => {
