@@ -433,7 +433,6 @@ exports.getAll = asyncHandler(async (req, res) => {
       .sort(sort)
       .skip(pagination.start - 1)
       .limit(limit)
-      .populate("companyId", "name")
       .populate("artist");
 
     data = await Promise.all(
