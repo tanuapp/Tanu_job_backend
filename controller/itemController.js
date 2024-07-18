@@ -1,10 +1,26 @@
 const model = require("../models/itemModel");
-
+const Orders = require("../models/cusstomerOrderModel");
 const asyncHandler = require("../middleware/asyncHandler");
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
+    const data = {
+      ...req.body,
+      photo: req.file?.filename ? req.file?.filename : "no photo.jpg",
+    };
+    const text = await model.create(data);
+    return res.status(200).json({ success: true, data: text });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+exports.checkAndReturnItems = asyncHandler(async (req, res, next) => {
+  try {
     // const user = req.userId;
+    const { artist_id, date } = req.body;
+    const order = Orders.find();
+
     const data = {
       ...req.body,
       photo: req.file?.filename ? req.file?.filename : "no photo.jpg",

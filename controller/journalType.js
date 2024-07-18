@@ -1,4 +1,5 @@
 const Model = require("../models/journalType");
+const Journal = require("../models/journal");
 const asyncHandler = require("../middleware/asyncHandler");
 const mongoose = require("mongoose");
 
@@ -34,8 +35,22 @@ exports.create = asyncHandler(async (req, res, next) => {
       ...req.body,
       photo: req.file ? req.file.filename : "",
     };
+    const { journal } = req.body;
+
+    // Find the journal by ID
+    const jour = await Journal.findById(journal);
+    if (!jour) {
+      return res.status(400).json({
+        success: false,
+        msg: "Baihgui bn",
+      });
+    }
 
     const create = await Model.create(body);
+    jour.journalType.push(create._id);
+
+    // Save the updated journal
+    await jour.save();
     res.status(200).json({
       success: true,
       data: create,

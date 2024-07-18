@@ -5,7 +5,7 @@ const mongoose = require("mongoose");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    const all = await Model.find();
+    const all = await Model.find().populate("reels").populate("journalType");
     const total = await Model.countDocuments();
     res.status(200).json({
       success: true,

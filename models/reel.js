@@ -16,6 +16,7 @@ const reelSchema = new Schema({
   journal: {
     type: mongoose.Types.ObjectId,
     ref: "Journal",
+    required: true,
   },
 });
 
