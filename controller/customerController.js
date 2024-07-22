@@ -62,13 +62,13 @@ exports.Login = asyncHandler(async (req, res, next) => {
           msg: "Утасны дугаар  эсвэл нууц үг буруу байна!",
         });
       }
-      const isPasswordValid = await customer.checkPassword(password);
-      if (!isPasswordValid) {
-        return res.status(400).json({
-          success: false,
-          msg: "Утасны дугаар  эсвэл нууц үг буруу байна!",
-        });
-      }
+      // const isPasswordValid = await customer.checkPassword(password);
+      // if (!isPasswordValid) {
+      //   return res.status(400).json({
+      //     success: false,
+      //     msg: "Утасны дугаар  эсвэл нууц үг буруу байна!",
+      //   });
+      // }
       const token = customer.getJsonWebToken();
       res.status(200).json({
         success: true,

@@ -69,14 +69,16 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 exports.getOrderCustomer = asyncHandler(async (req, res, next) => {
   try {
     const customer = req.userId;
-    const orders = await model.find({ orderCustomer: customer }).populate({
-      path: "item",
-      select: "_id huwaari status Service",
-      populate: {
-        path: "Service",
-        select: "name",
-      },
-    });
+    console.log(customer)
+    const orders = await model.find({ Customer: customer }).populate("Service")
+    // .populate({
+    //   path: "item",
+    //   select: "_id huwaari status Service",
+    //   populate: {
+    //     path: "Service",
+    //     select: "name",
+    //   },
+    // });
 
     return res.status(200).json({ success: true, data: orders });
   } catch (error) {

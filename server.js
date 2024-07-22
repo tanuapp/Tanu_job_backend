@@ -25,6 +25,7 @@ const journalRoute = require("./routes/journal.js");
 const reelRoute = require("./routes/reel.js");
 const journalTypeRoute = require("./routes/journalType.js");
 const journalistTypeRoute = require("./routes/journalist.js");
+const munkhuRoute=require("./routes/test-munhu.route.js")
 const errorHandler = require("./middleware/error.js");
 const app = express();
 connectDB();
@@ -60,6 +61,7 @@ app.use("/api/v1/reel", reelRoute);
 
 app.use("/api/v1/journal", journalRoute);
 app.use("/api/v1/journalist", journalistTypeRoute);
+app.use("/api/v1/munku",munkhuRoute)
 
 // app.use("/api/v1/withdraw", withdrawRoute);
 // file upload limit gej oilgoson
