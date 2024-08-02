@@ -73,7 +73,7 @@ exports.artistServiceSort = asyncHandler(async (req, res) => {
     if (p.length === 0) {
       return res.status(404).json({
         success: false,
-        error: "No data found matching the provided criteria.",
+        msg: "No data found matching the provided criteria.",
       });
     }
 
@@ -95,14 +95,16 @@ exports.calendarSortByCompany = asyncHandler(async (req, res) => {
     // Find company by user ID
     const companyFind = await companyIdFind(req.userId);
 
+    console.log("company created by user:",companyFind)
+
     // Ensure company was found
     if (companyFind.length === 0) {
       return res.status(404).json({
         success: false,
-        error: "No company found for the provided user ID.",
+        msg: "No company found for the provided user ID.",
       });
     }
-    console.log(companyFind);
+    console.log("company find:",companyFind);
     const query = {
       Company: companyFind[0]._id,
     };
@@ -117,9 +119,9 @@ exports.calendarSortByCompany = asyncHandler(async (req, res) => {
 
     // Ensure data was found
     if (data.length === 0) {
-      return res.status(404).json({
+      return res.status(204).json({
         success: false,
-        error: "No data found matching the provided Company.",
+        msg: "No data found matching the provided Company.",
       });
     }
 
