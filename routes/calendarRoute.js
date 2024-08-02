@@ -23,7 +23,7 @@ router
   .delete(findDelete)
   .get(detail);
 router.route("/selectOption").post(artistServiceSort);
-router.route("/company").post(protect, calendarSortByCompany);
+router.route("/company").post(protect,calendarSortByCompany);
 
 // router.route("/:subcategory_id/item").get(getSubcategorySortItem);
 

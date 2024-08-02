@@ -26,7 +26,9 @@ const cpUploads = upload.fields([
 const {
   getCompanySubCategory,
 } = require("../controller/subcategoryController");
-router.route("/").post(protect, upload.single("file"), create).get(getAll);
+
+// router.route("/").post(upload.single("file"), create).get(getAll);
+router.route("/").post(protect,create).get(getAll);
 router.route("/:companyId/artistSorted").get(sortByArtist);
 
 router
@@ -37,7 +39,7 @@ router
 router.route("/getCompanyUser").post(protect, getUserCompany);
 router.route("/getArtistCompany").post(protect, getArtistCompany);
 router.route("/getCompanyService").post(protect, postCompanyService);
-router.route("/:companyid/service").get(getCompanyService);
+router.route("/:companyid/service").post(getCompanyService);
 router.route("/getCompanySubCategory").post(protect, getCompanySubCategory);
 router.route("/sortBySubCategory/:sub_id").post(sortBySubCategory);
 

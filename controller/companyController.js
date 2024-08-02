@@ -7,6 +7,7 @@ const locationModel = require("../models/locationModel");
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     const user = req.userId;
+
     // const uploadedFiles = [];
     // console.log(req.body);
     // if (req.files && Array.isArray(req.files.files)) {
@@ -41,6 +42,8 @@ exports.getSubCategoryByCompany = asyncHandler(async (req, res) => {
 });
 
 exports.update = asyncHandler(async (req, res, next) => {
+  console.log("update company body:",req.body)
+  console.log("update company logo:",req.file)
   try {
     // const fileName1 = req.files["logo"]
     //   ? req.files["logo"][0].filename
@@ -53,17 +56,17 @@ exports.update = asyncHandler(async (req, res, next) => {
     //   }
     // } else {
     //   console.warn("req.files.files is not an array");
-    // }
+    // // }
     const updatedData = {
       ...req.body,
-      logo: req.file?.filename,
+      logo: req.file ? req.file.filename : "no photo.png",
     };
     const text = await model.findByIdAndUpdate(req.params.id, updatedData, {
       new: true,
     });
     return res.status(200).json({ success: true, data: text });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, msg: error.message });
   }
 });
 

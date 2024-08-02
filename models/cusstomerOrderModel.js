@@ -8,7 +8,7 @@ const customerOrderchema = new Schema({
   },
   Service: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Customer",
+    ref: "Service",
   },
   ognoo: {
     type: String,

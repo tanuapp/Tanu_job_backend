@@ -22,9 +22,9 @@ exports.createUser = asyncHandler(async (req, res, next) => {
   try {
     const existingUser = await User.findOne({ phone: req.body.phone });
     if (existingUser) {
-      return res.status(400).json({
+      return res.status(409).json({
         success: false,
-        error: "Утасны дугаар бүртгэлтэй байна",
+        msg: "Утасны дугаар бүртгэлтэй байна",
       });
     }
 
@@ -40,7 +40,7 @@ exports.createUser = asyncHandler(async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, msg: error.message });
   }
 });
 
@@ -51,7 +51,7 @@ exports.Login = asyncHandler(async (req, res, next) => {
     if (!phone || !password) {
       return res.status(400).json({
         success: false,
-        message: "Утасны дугаар болон нууц үгээ оруулна уу!",
+        msg: "Утасны дугаар болон нууц үгээ оруулна уу!",
       });
     }
 
@@ -64,7 +64,7 @@ exports.Login = asyncHandler(async (req, res, next) => {
     if (!account) {
       return res.status(404).json({
         success: false,
-        message: "Утасны дугаар бүртгэлгүй байна",
+        msg: "Утасны дугаар бүртгэлгүй байна",
       });
     }
 
@@ -73,7 +73,7 @@ exports.Login = asyncHandler(async (req, res, next) => {
     if (!isPasswordValid) {
       return res.status(400).json({
         success: false,
-        message: "Утасны дугаар эсвэл нууц үг буруу байна!",
+        msg: "Утасны дугаар эсвэл нууц үг буруу байна!",
       });
     }
 

@@ -23,7 +23,7 @@ exports.myService = asyncHandler(async (req, res) => {
     if (services.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "No services found for this company",
+        msg: "No services found for this company",
       });
     }
 
@@ -54,7 +54,7 @@ exports.sortByArtist = asyncHandler(async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(companyId)) {
       return res.status(400).json({
         success: false,
-        error: "Хүчинтэй компани ID биш",
+        msg: "Хүчинтэй компани ID биш",
       });
     }
 
@@ -70,12 +70,12 @@ exports.sortByArtist = asyncHandler(async (req, res, next) => {
     if (error.name === "CastError") {
       res.status(400).json({
         success: false,
-        error: "ID-н алдаа",
+        msg: "ID-н алдаа",
       });
     } else {
       res.status(500).json({
         success: false,
-        error: "Серверийн алдаа: " + error.message,
+        msg: "Серверийн алдаа: " + error.message,
       });
     }
   }
@@ -92,7 +92,7 @@ exports.getArtistCompany = asyncHandler(async (req, res, next) => {
       // If no company found, respond with a suitable message
       return res.status(404).json({
         success: false,
-        message: "Компани олдсонгүй",
+        msg: "Компани олдсонгүй",
       });
     }
 

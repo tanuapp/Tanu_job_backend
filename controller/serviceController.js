@@ -25,11 +25,11 @@ function calculateNumberOfServices(openTime, closeTime, currentTime) {
 exports.create = asyncHandler(async (req, res) => {
   try {
     const company = await companyIdFind(req.userId);
-    console.log("company", company);
+    // console.log("company", company);
     if (!company || company.length === 0) {
       return res
         .status(404)
-        .json({ success: false, error: "Company not found" });
+        .json({ success: false, msg: "Company not found" });
     }
 
     const currentDate = new Date();
@@ -45,47 +45,47 @@ exports.create = asyncHandler(async (req, res) => {
     if (!currentTime || isNaN(currentTime) || currentTime <= 0) {
       return res
         .status(400)
-        .json({ success: false, error: "Invalid service interval time" });
+        .json({ success: false, msg: "Invalid service interval time" });
     }
-    console.log("times ", openTime, closeTime, currentTime);
     const itemArray = calculateNumberOfServices(
       openTime,
       closeTime,
       currentTime
     );
-    console.log("---------------------- this item array", itemArray);
 
     const user = req.userId;
-    console.log("req file ---------------------------", req.file);
 
     const input = {
       ...req.body,
       createUser: user,
       photo: req.file ? req.file.filename : "no photo.jpg",
       companyId: company[0]._id,
+      artist:req.body.artists
     };
+
+    // return res.status(201).json({ data: req.body.artists });
 
     let newItem = await Service.create(input);
 
-    const updatedArtists = await Promise.all(
-      artist.map(async (artistId) => {
-        return await artistModel.findByIdAndUpdate(
-          artistId,
-          {
-            $push: {
-              item: { $each: itemArray.map((huwaari) => ({ huwaari })) },
-            },
-          },
-          { new: true, useFindAndModify: false }
-        );
-      })
-    );
+    // const updatedArtists = await Promise.all(
+    //   artist?.map(async (artistId) => {
+    //     return await artistModel.findByIdAndUpdate(
+    //       artistId,
+    //       {
+    //         $push: {
+    //           item: { $each: itemArray.map((huwaari) => ({ huwaari })) },
+    //         },
+    //       },
+    //       { new: true, useFindAndModify: false }
+    //     );
+    //   })
+    // );
 
-    console.log("artist updated", updatedArtists);
+    // console.log("artist updated", updatedArtists);
     return res.status(201).json({ data: newItem });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, error: "Server Error" });
+    res.status(500).json({ success: false, error: error });
   }
 });
 
@@ -93,8 +93,8 @@ exports.getCompanyService = asyncHandler(async (req, res) => {
   try {
     const services = await Service.find({
       companyId: req.params.companyid,
-    });
-    const company = await companyModel.findById(req.params.companyid);
+    })
+    // const company = await companyModel.findById(req.params.companyid);
     const serviceIds = services.map((service) => service._id).filter(Boolean);
     const serviceEs = await artistModel.find({
       _id: { $in: serviceIds },
@@ -102,13 +102,14 @@ exports.getCompanyService = asyncHandler(async (req, res) => {
 
     console.log("---------------------", serviceEs);
     if (services.length === 0) {
-      return res.status(404).json({
+      return res.status(204).json({
         success: false,
-        message: "No services found for this company",
+        msg: "No services found for this company",
       });
     }
 
-    return res.status(200).json({ success: true, data: servicesWithItems });
+    // return res.status(200).json({ success: true, data: servicesWithItems });
+    return res.status(200).json({ success: true, data: services });
   } catch (error) {
     console.error("Error fetching company services:", error);
     return res
@@ -123,30 +124,30 @@ exports.postCompanyService = asyncHandler(async (req, res) => {
     if (!company || company.length === 0) {
       return res
         .status(404)
-        .json({ success: false, message: "Company not found" });
+        .json({ success: false, msg: "Company not found" });
     }
 
-    const services = await Service.find({ companyId: company[0]._id }).populate(
-      "SubCategory"
-    );
+    const services = await Service.find({ companyId: company[0]._id })
+      .populate("SubCategory")
+      .populate("artist")
 
     if (services.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "No services found for this company",
+        msg: "No services found for this company",
       });
     }
 
-    const servicesWithItems = await Promise.all(
-      services.map(async (service) => {
-        const items = await Item.find({ Service: service._id });
-        return {
-          ...service.toObject(),
-          items,
-        };
-      })
-    );
-    return res.status(200).json({ success: true, data: servicesWithItems });
+    // const servicesWithItems = await Promise.all(
+    //   services.map(async (service) => {
+    //     const items = await Item.find({ Service: service._id });
+    //     return {
+    //       ...service.toObject(),
+    //       items,
+    //     };
+    //   })
+    // );
+    return res.status(200).json({ success: true, data: services });
   } catch (error) {
     console.error("Error fetching company services:", error);
     return res
@@ -156,10 +157,12 @@ exports.postCompanyService = asyncHandler(async (req, res) => {
 });
 
 exports.update = asyncHandler(async (req, res) => {
+  console.log("update file:",req.file)
   try {
     const input = {
       ...req.body,
-      photo: req?.file?.filename,
+      photo: req.file ? req.file.filename : "no photo1.jpg",
+      artist:req.body.artists!=undefined ? req.body.artists : []
     };
 
     const newItem = await Service.findByIdAndUpdate(req.params.id, input, {
@@ -169,7 +172,7 @@ exports.update = asyncHandler(async (req, res) => {
     res.status(201).json({ success: true, data: newItem });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, error: "Server Error" });
+    res.status(500).json({ success: false, msg: "Server Error" });
   }
 });
 

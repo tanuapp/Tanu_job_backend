@@ -40,6 +40,10 @@ app.options(cors());
 app.use(logger);
 app.use(express.json());
 
+app.get('/', (req, res) => {
+  res.send('Changed ee2345678')
+});
+
 // api handaltuud
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/customer", customerRoutes);
