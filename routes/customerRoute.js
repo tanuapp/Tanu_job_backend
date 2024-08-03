@@ -7,6 +7,7 @@ const {
   Login,
   getAllUser,
   updateUser,
+  getMe,
   deleteUser,
   userDetail,
 } = require("../controller/customerController");
@@ -14,6 +15,7 @@ const router = express.Router();
 
 //"/api/v1/user"
 // protect, authorize("admin"),  nemeh
+router.route("/getMe").get(getMe);
 router.route("/").get(getAllUser).post(upload.single("file"), createUser);
 router
   .route("/:id")

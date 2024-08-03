@@ -1,5 +1,6 @@
 const User = require("../models/customerModel");
 const asyncHandler = require("../middleware/asyncHandler");
+const jwt = require("jsonwebtoken");
 
 exports.getAllUser = asyncHandler(async (req, res, next) => {
   try {
@@ -125,6 +126,33 @@ exports.deleteUser = async function deleteUser(req, res, next) {
       success: true,
       msg: "Ажилттай усгагдлаа",
       data: deletePost,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.getMe = async function getMe(req, res, next) {
+  try {
+    if (!req.headers.authorization) {
+      return res.status(401).json({
+        success: false,
+        msg: "Та эхлээд нэвтрэнэ үү ",
+      });
+    }
+    const token = req.headers.authorization.split(" ")[1];
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        msg: "Токен хоосон байна",
+      });
+    }
+    const tokenObj = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = tokenObj.Id;
+    const user = await User.findById(tokenObj.Id);
+    return res.status(200).json({
+      success: true,
+      data: user,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
