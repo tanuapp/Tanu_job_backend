@@ -11,7 +11,7 @@ const subCatergorySchema = new Schema({
   files: [fileSchema],
   Category: {
     type: Schema.Types.ObjectId,
-    ref: "Catergory",
+    ref: "Category",
   },
   Company: {
     type: Schema.Types.ObjectId,

@@ -6,6 +6,7 @@ const { companyIdFind } = require("../middleware/addTime");
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
+    console.log("body:",req.body)
     const data = {
       ...req.body,
       photo: req.file?.filename ? req.file?.filename : "no photo.jpg",
@@ -102,7 +103,7 @@ exports.userCompanySubCategory = asyncHandler(async (req, res, next) => {
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
     const total = await subCategoryModel.countDocuments();
-    const data = await subCategoryModel.find();
+    const data = await subCategoryModel.find().populate("Category");
     return res.status(200).json({ success: true, total: total, data });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

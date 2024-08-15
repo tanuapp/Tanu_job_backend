@@ -1,6 +1,7 @@
 const express = require("express");
 const upload = require("../middleware/fileUpload");
 const { protect } = require("../middleware/protect");
+const { authorize } = require("../middleware/protect");
 const {
   create,
   update,
@@ -34,7 +35,7 @@ router.route("/:companyId/artistSorted").get(sortByArtist);
 router
   .route("/:id")
   .put(protect, upload.single("file"), update)
-  .delete(protect, findDelete)
+  .delete(protect,authorize("admin"),findDelete)
   .get(detail);
 router.route("/getCompanyUser").post(protect, getUserCompany);
 router.route("/getArtistCompany").post(protect, getArtistCompany);

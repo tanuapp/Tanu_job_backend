@@ -20,14 +20,21 @@ const cpUploads = upload.fields([
   { name: "logo" },
 ]);
 
-router.route("/").post(protect, upload.single("file"), create).get(getAll);
-router.route("/myService").get(protect, myService);
+router.route("/")
+  .post(protect, upload.single("file"), create)
+  .get(getAll);
+
+router.route("/myService")
+  .get(protect, myService);
+
 router
   .route("/:id")
   .put(upload.single("file"), update)
   .delete(findDelete)
   .get(detail);
-router.route("/:id/artist").get(serviceSortByArtist);
+
+router.route("/:id/artist")
+  .get(serviceSortByArtist);
 
 // router.route("/:user_id").get( protect , userService);
 module.exports = router;

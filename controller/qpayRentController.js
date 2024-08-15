@@ -13,6 +13,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
   try {
     const customer = await userModel.findById(req.userId);
     const qpay_token = await qpay.makeRequest();
+    console.log("qpay token:",qpay_token)
     const { phone } = customer;
 
     const currentDateTime = new Date();

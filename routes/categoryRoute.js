@@ -1,6 +1,7 @@
 const express = require("express");
 const upload = require("../middleware/fileUpload");
 const { protect } = require("../middleware/protect");
+const { authorize }=require("../middleware/protect")
 const {
   create,
   update,
@@ -15,12 +16,12 @@ const {
   userCompanySubCategory,
 } = require("../controller/subcategoryController");
 
-router.route("/").post(upload.single("file"), create).get(getAll);
+router.route("/").post(protect,authorize("admin"),upload.single("file"), create).get(getAll);
 
 router
   .route("/:id")
-  .put(upload.single("file"), update)
-  .delete(findDelete)
+  .put(protect,authorize("admin"),upload.single("file"), update)
+  .delete(protect,authorize("admin"),findDelete)
   .get(detail);
 
 router.route("/:category_id/item").get(getCategorySortItem);
