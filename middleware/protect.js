@@ -65,6 +65,12 @@ exports.getMe = asyncHandler(async (req, res, next) => {
 exports.authorize = (...roles) => {
   return (req, res, next) => {
     // Check if the user role is included in the allowed roles
+    if(!req.userRole){
+      return res.status(401).json({
+        success: false,
+        msg: "Токен хоосон байна.!",
+      });
+    }
     if (!roles.includes(req.userRole)) {
       return res.status(403).json({
         success: false,

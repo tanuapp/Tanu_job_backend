@@ -132,7 +132,7 @@ exports.postCompanyService = asyncHandler(async (req, res) => {
       .populate("artist")
 
     if (services.length === 0) {
-      return res.status(404).json({
+      return res.status(204).json({
         success: false,
         msg: "No services found for this company",
       });
