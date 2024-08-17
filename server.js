@@ -5,7 +5,7 @@ const logger = require("./middleware/logger.js");
 dotenv.config({ path: "./config/config.env" });
 const connectDB = require("./db");
 const bodyParser = require("body-parser");
-
+const admin = require("firebase-admin");
 //router routes import
 const userRoutes = require("./routes/user");
 const serviceRoute = require("./routes/serviceRoute.js");
@@ -25,7 +25,7 @@ const journalRoute = require("./routes/journal.js");
 const reelRoute = require("./routes/reel.js");
 const journalTypeRoute = require("./routes/journalType.js");
 const journalistTypeRoute = require("./routes/journalist.js");
-const munkhuRoute=require("./routes/test-munhu.route.js")
+const munkhuRoute = require("./routes/test-munhu.route.js");
 const errorHandler = require("./middleware/error.js");
 const app = express();
 connectDB();
@@ -40,8 +40,8 @@ app.options(cors());
 app.use(logger);
 app.use(express.json());
 
-app.get('/', (req, res) => {
-  res.send('Changed ee2345678')
+admin.initializeApp({
+  credential: admin.credential.cert(require("./serviceAccountKey.json")),
 });
 
 // api handaltuud
@@ -65,7 +65,7 @@ app.use("/api/v1/reel", reelRoute);
 
 app.use("/api/v1/journal", journalRoute);
 app.use("/api/v1/journalist", journalistTypeRoute);
-app.use("/api/v1/munku",munkhuRoute)
+app.use("/api/v1/munku", munkhuRoute);
 
 // app.use("/api/v1/withdraw", withdrawRoute);
 // file upload limit gej oilgoson

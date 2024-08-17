@@ -21,6 +21,7 @@ const customerSchema = new Schema({
   email: String,
   resetPasswordToken: String,
   resetPasswordExpire: Date,
+  firebase_token: String,
   createdAt: {
     type: Date,
     default: Date.now,

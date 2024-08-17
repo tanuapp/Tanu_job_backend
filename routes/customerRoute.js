@@ -10,12 +10,18 @@ const {
   getMe,
   deleteUser,
   userDetail,
+  sendMassNotification,
+  sendNotificationToUsers,
+  updateUserFCM,
 } = require("../controller/customerController");
 const router = express.Router();
 
 //"/api/v1/user"
 // protect, authorize("admin"),  nemeh
 router.route("/getMe").get(getMe);
+router.route("/fcm").post(updateUserFCM);
+router.route("/notification/mass").post(sendMassNotification);
+router.route("/notification/specific").post(sendNotificationToUsers);
 router.route("/").get(getAllUser).post(upload.single("file"), createUser);
 router
   .route("/:id")

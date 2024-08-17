@@ -1,6 +1,7 @@
 const User = require("../models/customerModel");
 const asyncHandler = require("../middleware/asyncHandler");
 const jwt = require("jsonwebtoken");
+const admin = require("firebase-admin");
 
 exports.getAllUser = asyncHandler(async (req, res, next) => {
   try {
@@ -34,6 +35,68 @@ exports.createUser = asyncHandler(async (req, res, next) => {
       success: true,
       token,
       data: user,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+exports.sendMassNotification = asyncHandler(async (req, res, next) => {
+  try {
+    const users = await User.find();
+
+    const { title, body } = req.body;
+
+    users.map(async (list) => {
+      const message = {
+        notification: {
+          title: title,
+          body: body,
+        },
+        token: list.firebase_token, // The device token
+      };
+      const response = await admin.messaging().send(message);
+    });
+
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+exports.sendNotificationToUsers = asyncHandler(async (req, res, next) => {
+  try {
+    const { title, body, user } = req.body;
+    const userFind = await User.findById(user);
+    const message = {
+      notification: {
+        title: title,
+        body: body,
+      },
+      token: userFind.firebase_token, // The device token
+    };
+    const response = await admin.messaging().send(message);
+
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+exports.updateUserFCM = asyncHandler(async (req, res, next) => {
+  try {
+    const { user, token } = req.body;
+    const userFind = await User.findById(user);
+
+    userFind.firebase_token = token;
+    await userFind.save();
+
+    res.status(200).json({
+      success: true,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
