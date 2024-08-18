@@ -50,8 +50,11 @@ app.use(express.json());
 AWS.config.update({
   region: "ap-south-1",
   credentials: {
-    accessKeyId: "AKIAXEVXYPLF5W5B6EHK",
-    secretAccessKey: "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",
+    // accessKeyId: "AKIAXEVXYPLF5W5B6EHK",
+
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    // secretAccessKey: "vG1NG4r2Nx7ZCQmYRQPdpF/Fz2AOddT8/NZyuFJY",
+    secretAccessKey: process.env.AWS_SECRET_KEY,
   },
 });
 
