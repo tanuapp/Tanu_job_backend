@@ -27,6 +27,7 @@ const journalTypeRoute = require("./routes/journalType.js");
 const journalistTypeRoute = require("./routes/journalist.js");
 const munkhuRoute = require("./routes/test-munhu.route.js");
 const errorHandler = require("./middleware/error.js");
+
 const app = express();
 connectDB();
 app.use(
