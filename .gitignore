@@ -61,5 +61,3 @@ coverage/
 # Yarn Integrity file
 .yarn-integrity
 " >> .gitignore
-
-serviceAccountKey.json

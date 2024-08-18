@@ -6,6 +6,7 @@ dotenv.config({ path: "./config/config.env" });
 const connectDB = require("./db");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
+const AWS = require("aws-sdk");
 
 //router routes import
 const userRoutes = require("./routes/user");
@@ -46,42 +47,26 @@ app.options(cors());
 app.use(logger);
 app.use(express.json());
 
+AWS.config.update({
+  region: "app-south-1",
+  credentials: {
+    accessKeyId: "",
+    secretAccessKey: "",
+  },
+});
+const secretsManager = new AWS.SecretsManager();
 const secret_name = "tanu/orderTime";
 
-const client = new SecretsManagerClient({
-  region: "eu-north-1",
+secretsManager.getSecretValue({ SecretId: secret_name }, (err, data) => {
+  if (err) {
+    console.error(`Error retrieving secret: ${err}`);
+  } else {
+    // Parse and use the secret data
+    const secretData = JSON.parse(data.SecretString);
+    console.log("Secret Data:", secretData);
+  }
 });
 
-async function initializeFirebase() {
-  let response;
-  try {
-    response = await client.send(
-      new GetSecretValueCommand({
-        SecretId: secret_name,
-        VersionStage: "AWSCURRENT", // VersionStage defaults to AWSCURRENT if unspecified
-      })
-    );
-  } catch (error) {
-    // Handle error as needed
-    console.error("Error retrieving secret:", error);
-    throw error;
-  }
-
-  const secret = response.SecretString;
-  console.log(secret);
-
-  // Since the secret is stored as plain text, parse it as JSON
-  const serviceAccount = JSON.parse(secret);
-
-  // Initialize Firebase Admin SDK with the parsed secret
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-
-  console.log("Firebase initialized successfully");
-}
-
-initializeFirebase().catch(console.error);
 // api handaltuud
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/customer", customerRoutes);
