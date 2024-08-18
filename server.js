@@ -48,24 +48,39 @@ app.use(logger);
 app.use(express.json());
 
 AWS.config.update({
-  region: "app-south-1",
+  region: "ap-south-1",
   credentials: {
-    accessKeyId: "",
-    secretAccessKey: "",
+    accessKeyId: "AKIAXEVXYPLF5W5B6EHK",
+    secretAccessKey: "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",
   },
 });
-const secretsManager = new AWS.SecretsManager();
-const secret_name = "tanu/orderTime";
 
-secretsManager.getSecretValue({ SecretId: secret_name }, (err, data) => {
-  if (err) {
-    console.error(`Error retrieving secret: ${err}`);
-  } else {
-    // Parse and use the secret data
-    const secretData = JSON.parse(data.SecretString);
-    console.log("Secret Data:", secretData);
+const secretsManager = new AWS.SecretsManager();
+const secret_name = "tanu/order";
+
+async function initializeFirebase() {
+  try {
+    const data = await secretsManager
+      .getSecretValue({ SecretId: secret_name })
+      .promise();
+
+    if (data.SecretString) {
+      const serviceAccount = JSON.parse(data.SecretString);
+
+      // Initialize Firebase Admin SDK
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+
+      console.log("Firebase initialized successfully");
+    }
+  } catch (err) {
+    console.error("Error retrieving secret or initializing Firebase:", err);
   }
-});
+}
+
+// Initialize Firebase after fetching the secret
+initializeFirebase();
 
 // api handaltuud
 app.use("/api/v1/user", userRoutes);
