@@ -1,4 +1,5 @@
 const model = require("../models/catergoryModel");
+const submodel = require("../models/subCategoryModel");
 const asyncHandler = require("../middleware/asyncHandler");
 
 exports.create = asyncHandler(async (req, res, next) => {
@@ -54,7 +55,23 @@ exports.getAll = asyncHandler(async (req, res, next) => {
   try {
     const total = await model.countDocuments();
     const text = await model.find();
-    return res.status(200).json({ success: true, total: total, data: text });
+    const sub = await submodel.find();
+    const list = [];
+
+    text.map((cat) => {
+      // Ensure `cat._id` is an ObjectId
+      const catId = cat._id.toString();
+
+      // Ensure `el.Category` is also an ObjectId
+      let p = sub.filter((el) => el.Category.toString() === catId);
+
+      list.push({
+        ...cat._doc,
+        children: p,
+      });
+    });
+
+    return res.status(200).json({ success: true, total: total, data: list });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
