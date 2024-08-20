@@ -1,7 +1,5 @@
 const model = require("../models/companyModel");
 const asyncHandler = require("../middleware/asyncHandler");
-const artistModel = require("../models/artistModel");
-const serviceModel = require("../models/serviceModel");
 const locationModel = require("../models/locationModel");
 
 exports.create = asyncHandler(async (req, res, next) => {
@@ -42,8 +40,8 @@ exports.getSubCategoryByCompany = asyncHandler(async (req, res) => {
 });
 
 exports.update = asyncHandler(async (req, res, next) => {
-  console.log("update company body:",req.body)
-  console.log("update company logo:",req.file)
+  console.log("update company body:", req.body);
+  console.log("update company logo:", req.file);
   try {
     // const fileName1 = req.files["logo"]
     //   ? req.files["logo"][0].filename
