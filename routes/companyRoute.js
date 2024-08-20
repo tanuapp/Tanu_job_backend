@@ -10,6 +10,7 @@ const {
   getAll,
   getUserCompany,
   sortBySubCategory,
+  getCompanyArtist,
 } = require("../controller/companyController");
 const router = express.Router();
 const {
@@ -29,13 +30,14 @@ const {
 } = require("../controller/subcategoryController");
 
 // router.route("/").post(upload.single("file"), create).get(getAll);
-router.route("/").post(protect,create).get(getAll);
+router.route("/artist/:id").get(getCompanyArtist);
+router.route("/").post(protect, create).get(getAll);
 router.route("/:companyId/artistSorted").get(sortByArtist);
 
 router
   .route("/:id")
   .put(protect, upload.single("file"), update)
-  .delete(protect,authorize("admin"),findDelete)
+  .delete(protect, authorize("admin"), findDelete)
   .get(detail);
 router.route("/getCompanyUser").post(protect, getUserCompany);
 router.route("/getArtistCompany").post(protect, getArtistCompany);
