@@ -7,6 +7,8 @@ const connectDB = require("./db");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
 const AWS = require("aws-sdk");
+const { createServer } = require("http"); // Import createServer from http module
+const { Server } = require("socket.io"); // Import Server from socket.io
 
 //router routes import
 const userRoutes = require("./routes/user");
@@ -29,12 +31,16 @@ const journalTypeRoute = require("./routes/journalType.js");
 const journalistTypeRoute = require("./routes/journalist.js");
 const munkhuRoute = require("./routes/test-munhu.route.js");
 const errorHandler = require("./middleware/error.js");
-const {
-  SecretsManagerClient,
-  GetSecretValueCommand,
-} = require("@aws-sdk/client-secrets-manager");
 
 const app = express();
+const httpServer = createServer(app); // Create the HTTP server using Express
+const io = new Server(httpServer, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+
 connectDB();
 app.use(
   cors({
@@ -117,8 +123,23 @@ app.use("/uploads", express.static(__dirname + "/public/uploads")); // Server up
 // global алдаа шалгах  function
 app.use(errorHandler);
 
+io.on("connection", (socket) => {
+  console.log("A user connected");
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected");
+  });
+
+  // Example of listening for a custom event
+  socket.on("message", (data) => {
+    console.log("Message received:", data);
+    // Emit a message back to the client
+    socket.emit("message", "Hello from server");
+  });
+});
+
 // exporess server ajiluulah
-const server = app.listen(
+const server = httpServer.listen(
   process.env.PORT,
   console.log(`Express server is running on port ${process.env.PORT}`)
 );

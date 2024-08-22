@@ -9,18 +9,17 @@ const journalSchema = new Schema({
   photo: {
     type: String,
   },
-  fileURL: {
-    type: String,
-  },
-  journalType: {
-    type: [mongoose.Types.ObjectId],
-    ref: "JournalType",
-  },
-  reels: {
-    type: [mongoose.Types.ObjectId],
-    ref: "Reel",
-  },
+  pages: [
+    {
+      categoryName: String,
+      fileURL: String,
+    },
+  ],
   isSpecial: {
+    type: Boolean,
+    default: false,
+  },
+  status: {
     type: Boolean,
     default: false,
   },
