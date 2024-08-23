@@ -12,6 +12,7 @@ const { Server } = require("socket.io"); // Import Server from socket.io
 
 //router routes import
 const userRoutes = require("./routes/user");
+const newJournalRoutes = require("./routes/newJournal.js");
 const serviceRoute = require("./routes/serviceRoute.js");
 const categoryRoute = require("./routes/categoryRoute.js");
 const subcategoryRoute = require("./routes/subcategoryRoute.js");
@@ -113,6 +114,7 @@ app.use("/api/v1/reel", reelRoute);
 app.use("/api/v1/journal", journalRoute);
 app.use("/api/v1/journalist", journalistTypeRoute);
 app.use("/api/v1/munku", munkhuRoute);
+app.use("/api/v1/newjournal", newJournalRoutes);
 
 // app.use("/api/v1/withdraw", withdrawRoute);
 // file upload limit gej oilgoson
