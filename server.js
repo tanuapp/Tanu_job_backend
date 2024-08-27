@@ -17,6 +17,8 @@ const subDistrictRoute = require("./routes/subdistrict.js");
 const areaRoute = require("./routes/area.js");
 //
 const userRoutes = require("./routes/user");
+
+const namRoutes = require("./routes/nam.js");
 const newJournalRoutes = require("./routes/newJournal.js");
 const serviceRoute = require("./routes/serviceRoute.js");
 const categoryRoute = require("./routes/categoryRoute.js");
@@ -118,6 +120,7 @@ app.post(
 );
 // api handaltuud
 app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/nam", namRoutes);
 app.use("/api/v1/customer", customerRoutes);
 app.use("/api/v1/service", serviceRoute);
 app.use("/api/v1/category", categoryRoute);
