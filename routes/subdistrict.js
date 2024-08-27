@@ -6,6 +6,7 @@ const {
   deleteModel,
   getAllModel,
   getModel,
+  generateHoroo,
   updateModel,
 } = require("../controller/subdistrict");
 const router = express.Router();

@@ -17,6 +17,7 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
 
 exports.createModel = asyncHandler(async (req, res, next) => {
   try {
+    const { horoo } = req.body;
     const result = await Model.create({
       ...req.body,
     });

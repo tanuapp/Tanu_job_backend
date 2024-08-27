@@ -15,6 +15,60 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.generateHoroo = asyncHandler(async (req, res, next) => {
+  try {
+    const { horoo, subdistrict } = req.body;
+    for (let i = 1; i <= horoo; i++) {
+      await Model.create({
+        subdistrict,
+        name: `${i} хороо`,
+      });
+    }
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+exports.generateSum = asyncHandler(async (req, res, next) => {
+  try {
+    const sumuud = [
+      "Батноров",
+      "Батширээт",
+      "Баян-Адарга",
+      "Баянмөнх",
+      "Баян-Овоо",
+      "Баянхутаг",
+      "Биндэр",
+      "Бор-Өндөр",
+      "Галшар",
+      "Дадал",
+      "Дархан",
+      "Дэлгэрхаан",
+      "Жаргалтхаан",
+      "Мөрөн",
+      "Норовлин",
+      "Өмнөдэлгэр",
+      "Хэрлэн",
+      "Цэнхэрмандал",
+    ];
+    const { subdistrict } = req.body;
+    sumuud.map(async (list, index) => {
+      await Model.create({
+        name: list,
+        subdistrict,
+      });
+    });
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 exports.createModel = asyncHandler(async (req, res, next) => {
   try {
     const result = await Model.create({
