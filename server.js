@@ -11,6 +11,11 @@ const { createServer } = require("http"); // Import createServer from http modul
 const { Server } = require("socket.io"); // Import Server from socket.io
 
 //router routes import
+
+const districtRoute = require("./routes/district.js");
+const subDistrictRoute = require("./routes/subdistrict.js");
+const areaRoute = require("./routes/area.js");
+//
 const userRoutes = require("./routes/user");
 const newJournalRoutes = require("./routes/newJournal.js");
 const serviceRoute = require("./routes/serviceRoute.js");
@@ -115,12 +120,13 @@ app.use("/api/v1/journal", journalRoute);
 app.use("/api/v1/journalist", journalistTypeRoute);
 app.use("/api/v1/munku", munkhuRoute);
 app.use("/api/v1/newjournal", newJournalRoutes);
+app.use("/api/v1/district", districtRoute);
+app.use("/api/v1/subdistrict", subDistrictRoute);
+app.use("/api/v1/area", areaRoute);
 
-// app.use("/api/v1/withdraw", withdrawRoute);
-// file upload limit gej oilgoson
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));
-app.use("/uploads", express.static(__dirname + "/public/uploads")); // Server uploaded files
+app.use("/uploads", express.static(__dirname + "/public/uploads"));
 
 // global алдаа шалгах  function
 app.use(errorHandler);
