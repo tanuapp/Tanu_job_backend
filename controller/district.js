@@ -17,12 +17,13 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
 
 exports.createModel = asyncHandler(async (req, res, next) => {
   try {
-    const res = await Model.create({
+    const result = await Model.create({
       ...req.body,
     });
+
     res.status(200).json({
       success: true,
-      data: res,
+      data: result,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
