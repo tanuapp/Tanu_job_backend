@@ -37,6 +37,8 @@ const journalTypeRoute = require("./routes/journalType.js");
 const journalistTypeRoute = require("./routes/journalist.js");
 const munkhuRoute = require("./routes/test-munhu.route.js");
 const errorHandler = require("./middleware/error.js");
+const upload = require("./middleware/fileUpload.js");
+const asyncHandler = require("./middleware/asyncHandler.js");
 
 const app = express();
 const httpServer = createServer(app); // Create the HTTP server using Express
@@ -97,6 +99,23 @@ async function initializeFirebase() {
 // Initialize Firebase after fetching the secret
 initializeFirebase();
 
+app.post(
+  "/api/v1/upload",
+  upload.single("upload"), // Use "upload" as field name to match CKEditor simpleUpload default
+  asyncHandler((req, res, next) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    // File has been uploaded, construct the file URL
+    const fileUrl = `/uploads/${req.file.filename}`;
+
+    // Send the URL back to CKEditor in the expected format
+    res.status(200).json({
+      url: fileUrl,
+    });
+  })
+);
 // api handaltuud
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/customer", customerRoutes);
