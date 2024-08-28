@@ -110,7 +110,7 @@ app.post(
     }
 
     // File has been uploaded, construct the file URL
-    const fileUrl = `/uploads/${req.file.filename}`;
+    const fileUrl = `https://order.tanuweb.cloud/uploads/${req.file.filename}`;
 
     // Send the URL back to CKEditor in the expected format
     res.status(200).json({
