@@ -7,10 +7,12 @@ const {
   getAllModel,
   getModel,
   generateHoroo,
+  generateSum,
   updateModel,
 } = require("../controller/subdistrict");
 const router = express.Router();
 
+router.route("/sum").get(generateSum);
 router.route("/").post(createModel).get(getAllModel);
 router.route("/:id").put(updateModel).delete(deleteModel).get(getModel);
 

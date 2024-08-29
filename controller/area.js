@@ -15,6 +15,34 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.clearModel = asyncHandler(async (req, res, next) => {
+  try {
+    const toDel = [
+      "66cd23af4aec91dde0b4fc08",
+      "66cd23bc4aec91dde0b4fc0a",
+      "66cd23c74aec91dde0b4fc0c",
+      "66cd23d14aec91dde0b4fc0e",
+      "66cd23d64aec91dde0b4fc10",
+      "66cd23df4aec91dde0b4fc12",
+      "66cd23e54aec91dde0b4fc14",
+      "66cd23fc4aec91dde0b4fc16",
+      "66cd24064aec91dde0b4fc18",
+    ];
+    const allUser = await Model.find();
+
+    allUser.map(async (list) => {
+      if (!toDel.includes(list.subdistrict)) {
+        await Model.findByIdAndDelete(list._id);
+      }
+    });
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 exports.generateHoroo = asyncHandler(async (req, res, next) => {
   try {
     const { horoo, subdistrict } = req.body;
