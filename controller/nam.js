@@ -73,7 +73,6 @@ exports.generateNam = asyncHandler(async (req, res, next) => {
 exports.createModel = asyncHandler(async (req, res, next) => {
   try {
     const result = await Model.create({
-      logo: req.file ? req.file.filename : "",
       ...req.body,
     });
     res.status(200).json({
@@ -88,6 +87,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
 exports.updateModel = asyncHandler(async (req, res, next) => {
   try {
     const result = await Model.findByIdAndUpdate(req.params.id, {
+      logo: req.file ? req.file.filename : "",
       ...req.body,
     });
     res.status(200).json({
