@@ -6,7 +6,8 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
     const data = await Model.find()
       .populate("district")
       .populate("nam")
-      .populate("subDistrict");
+      .populate("subDistrict")
+      .populate("area");
 
     res.status(200).json({
       success: true,
@@ -36,7 +37,6 @@ exports.getModel = asyncHandler(async (req, res, next) => {
 exports.updateModel = asyncHandler(async (req, res, next) => {
   try {
     const data = await Model.findById(req.params.id);
-    console.log(data);
     const sliderImg = req.files.sliderImg
       ? req.files.sliderImg.map((file) => file.filename)
       : data.sliderImg;
