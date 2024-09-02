@@ -3,7 +3,10 @@ const asyncHandler = require("../middleware/asyncHandler");
 
 exports.getAllModel = asyncHandler(async (req, res, next) => {
   try {
-    const data = await Model.find();
+    const data = await Model.find()
+      .populate("district")
+      .populate("nam")
+      .populate("subDistrict");
 
     res.status(200).json({
       success: true,
