@@ -5,6 +5,7 @@ const NamSchema = new mongoose.Schema({
   name: {
     type: String,
   },
+  logo: String,
   createdAt: {
     type: Date,
     default: Date.now,

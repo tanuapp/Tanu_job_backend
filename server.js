@@ -114,7 +114,7 @@ app.post(
 
     // Send the URL back to CKEditor in the expected format
     res.status(200).json({
-      url: fileUrl,
+      link: fileUrl,
     });
   })
 );
