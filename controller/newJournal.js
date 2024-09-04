@@ -22,7 +22,7 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
 });
 exports.getModel = asyncHandler(async (req, res, next) => {
   try {
-    const data = await Model.findById(req.params.id);
+    const data = await Model.findById(req.params.id).populate("nam");
     res.status(200).json({
       success: true,
       data,
