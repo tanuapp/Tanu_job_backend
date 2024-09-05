@@ -54,6 +54,8 @@ exports.updateModel = asyncHandler(async (req, res, next) => {
       bodyImages,
       profile,
       audio,
+      desc1,
+      desc2,
     };
 
     const newEntry = await Model.findByIdAndUpdate(req.params.id, newEntryData);
