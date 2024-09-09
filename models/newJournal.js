@@ -2,6 +2,13 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const newJournalSchema = new Schema({
+  model: {
+    type: String,
+  },
+  status: {
+    type: Boolean,
+    default: false,
+  },
   desc1: {
     type: String,
   },

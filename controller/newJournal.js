@@ -48,8 +48,6 @@ exports.updateModel = asyncHandler(async (req, res, next) => {
       : data.profile;
     const audio = req.files.audio ? req.files.audio[0].filename : data.audio;
 
-    console.log(req.body?.desc1);
-
     const newEntryData = {
       ...req.body,
       sliderImg,
