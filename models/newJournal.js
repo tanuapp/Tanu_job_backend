@@ -2,6 +2,9 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const newJournalSchema = new Schema({
+  facebook: String,
+  instagram: String,
+  twitter: String,
   model: {
     type: String,
   },
