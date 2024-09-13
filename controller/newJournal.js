@@ -1,5 +1,6 @@
 const Model = require("../models/newJournal");
 const asyncHandler = require("../middleware/asyncHandler");
+var slugify = require("slugify");
 
 exports.getAllModel = asyncHandler(async (req, res, next) => {
   try {
@@ -88,6 +89,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
       bodyImages,
       profile,
       audio,
+      slug: slugify(req.body.name),
     };
 
     // Save new entry to the database

@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
-const slugify = require("mongoose-simple-slugify");
 
 const newJournalSchema = new Schema({
   facebook: String,
@@ -43,7 +42,6 @@ const newJournalSchema = new Schema({
     ref: "Nam",
   },
   slug: {
-    source: "name",
     type: String,
     unique: true,
   },
@@ -51,6 +49,6 @@ const newJournalSchema = new Schema({
     type: Date,
     default: Date.now,
   },
-}).plugin(slugify);
+});
 
 module.exports = mongoose.model("NewJournal", newJournalSchema);
