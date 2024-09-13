@@ -39,7 +39,9 @@ exports.getModel = asyncHandler(async (req, res, next) => {
 });
 exports.updateModel = asyncHandler(async (req, res, next) => {
   try {
-    const data = await Model.findById(req.params.id);
+    const data = await Model.findOne({
+      slug: req.params.id,
+    });
     const sliderImg = req.files.sliderImg
       ? req.files.sliderImg.map((file) => file.filename)
       : data.sliderImg;
