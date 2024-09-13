@@ -51,6 +51,6 @@ const newJournalSchema = new Schema({
     type: Date,
     default: Date.now,
   },
-});
+}).plugin(slugify);
 
 module.exports = mongoose.model("NewJournal", newJournalSchema);
