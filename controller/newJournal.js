@@ -55,6 +55,7 @@ exports.updateModel = asyncHandler(async (req, res, next) => {
       bodyImages,
       profile,
       audio,
+      slug: slugify(req.body.name || data.slug),
     };
 
     const newEntry = await Model.findByIdAndUpdate(req.params.id, newEntryData);
