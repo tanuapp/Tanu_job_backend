@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
+const slugify = require("mongoose-simple-slugify");
 
 const newJournalSchema = new Schema({
   facebook: String,
@@ -41,7 +42,11 @@ const newJournalSchema = new Schema({
     type: mongoose.Types.ObjectId,
     ref: "Nam",
   },
-
+  slug: {
+    source: "name",
+    type: String,
+    unique: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
