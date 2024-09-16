@@ -62,7 +62,12 @@ exports.updateModel = asyncHandler(async (req, res, next) => {
       slug: slugify(req.body.name || data.slug),
     };
 
-    const newEntry = await Model.findByIdAndUpdate(req.params.id, newEntryData);
+    const newEntry = await Model.findOneAndUpdate(
+      {
+        slug: req.params.id,
+      },
+      newEntryData
+    );
     res.status(200).json({
       success: true,
       data: newEntry,
