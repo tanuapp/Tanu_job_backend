@@ -41,6 +41,7 @@ const newJournalSchema = new Schema({
     type: mongoose.Types.ObjectId,
     ref: "Nam",
   },
+  textcolor: String,
   slug: {
     type: String,
     unique: true,

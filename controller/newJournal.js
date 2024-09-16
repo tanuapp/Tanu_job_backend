@@ -82,7 +82,6 @@ exports.updateModel = asyncHandler(async (req, res, next) => {
 
 exports.createModel = asyncHandler(async (req, res, next) => {
   try {
-    // Extract uploaded files' paths
     const sliderImg = req.files.sliderImg
       ? req.files.sliderImg.map((file) => file.filename)
       : [];
@@ -102,7 +101,6 @@ exports.createModel = asyncHandler(async (req, res, next) => {
       slug: slugify(req.body.name),
     };
 
-    // Save new entry to the database
     const newEntry = await Model.create(newEntryData);
 
     res.status(200).json({
@@ -118,7 +116,6 @@ exports.createModel = asyncHandler(async (req, res, next) => {
 });
 exports.deleteModel = asyncHandler(async (req, res, next) => {
   try {
-    // Save new entry to the database
     const newEntry = await Model.findByIdAndDelete(req.params.id);
     res.status(200).json({
       success: true,
