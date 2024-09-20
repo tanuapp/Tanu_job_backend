@@ -2,7 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const logger = require("./middleware/logger.js");
-dotenv.config({ path: "./config/config.env" });
+dotenv.config({ path: ".env" });
 const connectDB = require("./db");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
