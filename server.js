@@ -6,44 +6,32 @@ dotenv.config({ path: ".env" });
 const connectDB = require("./db");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
+
+// AWS SECRET for firebase json
 const AWS = require("aws-sdk");
-const { createServer } = require("http"); // Import createServer from http module
-const { Server } = require("socket.io"); // Import Server from socket.io
 
-//router routes import
+// Socket
+const { createServer } = require("http");
+const { Server } = require("socket.io");
 
-const districtRoute = require("./routes/district.js");
-const subDistrictRoute = require("./routes/subdistrict.js");
-const areaRoute = require("./routes/area.js");
-//
-const userRoutes = require("./routes/user");
-
-const namRoutes = require("./routes/nam.js");
-const newJournalRoutes = require("./routes/newJournal.js");
-const serviceRoute = require("./routes/serviceRoute.js");
-const categoryRoute = require("./routes/categoryRoute.js");
-const subcategoryRoute = require("./routes/subcategoryRoute.js");
-const itemRoute = require("./routes/itemRoute.js");
-const optRoute = require("./routes/optRoute.js");
-const customerRoutes = require("./routes/customerRoute.js");
-const invoiceRoute = require("./routes/invoiceRoute.js");
-const qpayRoute = require("./routes/qpayRoute.js");
-const companyRoute = require("./routes/companyRoute.js");
-const artistRoute = require("./routes/artistRoute.js");
-const customerOrderRoute = require("./routes/customerOrderRoute.js");
-const calendarRoute = require("./routes/calendarRoute.js");
-const locationRoute = require("./routes/locationRoute.js");
-const journalRoute = require("./routes/journal.js");
-const reelRoute = require("./routes/reel.js");
-const journalTypeRoute = require("./routes/journalType.js");
-const journalistTypeRoute = require("./routes/journalist.js");
-const munkhuRoute = require("./routes/test-munhu.route.js");
+//Global Error Handler
 const errorHandler = require("./middleware/error.js");
-const upload = require("./middleware/fileUpload.js");
-const asyncHandler = require("./middleware/asyncHandler.js");
 
+//Routes
+const categoryRoutes = require("./routes/category.js");
+const userRoutes = require("./routes/user.js");
+const companyRoutes = require("./routes/company.js");
+const serviceRoutes = require("./routes/service.js");
+const appointmentRoutes = require("./routes/appointment.js");
+const scheduleRoutes = require("./routes/schedule.js");
+const artistRoutes = require("./routes/artist.js");
+const customerRoutes = require("./routes/customer.js");
+const qpayRoutes = require("./routes/qpay.js");
+const invoiceRoutes = require("./routes/invoice.js");
+
+//Server configuration for socket
 const app = express();
-const httpServer = createServer(app); // Create the HTTP server using Express
+const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: "*",
@@ -51,7 +39,11 @@ const io = new Server(httpServer, {
   },
 });
 
+//DB connection
 connectDB();
+
+app.set("io", io);
+//CORS
 app.use(
   cors({
     origin: "*",
@@ -63,13 +55,11 @@ app.options(cors());
 app.use(logger);
 app.use(express.json());
 
+//AWS SECRET
 AWS.config.update({
   region: "ap-south-1",
   credentials: {
-    // accessKeyId: "AKIAXEVXYPLF5W5B6EHK",
-
     accessKeyId: process.env.AWS_ACCESS_KEY,
-    // secretAccessKey: "vG1NG4r2Nx7ZCQmYRQPdpF/Fz2AOddT8/NZyuFJY",
     secretAccessKey: process.env.AWS_SECRET_KEY,
   },
 });
@@ -77,6 +67,7 @@ AWS.config.update({
 const secretsManager = new AWS.SecretsManager();
 const secret_name = "tanu/order";
 
+//FIREBASE
 async function initializeFirebase() {
   try {
     const data = await secretsManager
@@ -98,53 +89,18 @@ async function initializeFirebase() {
   }
 }
 
-// Initialize Firebase after fetching the secret
 initializeFirebase();
 
-app.post(
-  "/api/v1/upload",
-  upload.single("upload"), // Use "upload" as field name to match CKEditor simpleUpload default
-  asyncHandler((req, res, next) => {
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
-
-    // File has been uploaded, construct the file URL
-    const fileUrl = `https://order.tanuweb.cloud/uploads/${req.file.filename}`;
-
-    // Send the URL back to CKEditor in the expected format
-    res.status(200).json({
-      link: fileUrl,
-    });
-  })
-);
-// api handaltuud
+app.use("/api/v1/category", categoryRoutes);
+app.use("/api/v1/company", companyRoutes);
 app.use("/api/v1/user", userRoutes);
-app.use("/api/v1/nam", namRoutes);
+app.use("/api/v1/service", serviceRoutes);
+app.use("/api/v1/appointment", appointmentRoutes);
+app.use("/api/v1/schedule", scheduleRoutes);
 app.use("/api/v1/customer", customerRoutes);
-app.use("/api/v1/service", serviceRoute);
-app.use("/api/v1/category", categoryRoute);
-app.use("/api/v1/subcategory", subcategoryRoute);
-app.use("/api/v1/opt", optRoute);
-app.use("/api/v1/item", itemRoute);
-app.use("/api/v1/invoice", invoiceRoute);
-app.use("/api/v1/item", itemRoute);
-app.use("/api/v1/qpay", qpayRoute);
-app.use("/api/v1/company", companyRoute);
-app.use("/api/v1/artist", artistRoute);
-app.use("/api/v1/calendar", calendarRoute);
-app.use("/api/v1/location", locationRoute);
-app.use("/api/v1/customerOrder", customerOrderRoute);
-app.use("/api/v1/journaltype", journalTypeRoute);
-app.use("/api/v1/reel", reelRoute);
-
-app.use("/api/v1/journal", journalRoute);
-app.use("/api/v1/journalist", journalistTypeRoute);
-app.use("/api/v1/munku", munkhuRoute);
-app.use("/api/v1/newjournal", newJournalRoutes);
-app.use("/api/v1/district", districtRoute);
-app.use("/api/v1/subdistrict", subDistrictRoute);
-app.use("/api/v1/area", areaRoute);
+app.use("/api/v1/qpay", qpayRoutes);
+app.use("/api/v1/artist", artistRoutes);
+app.use("/api/v1/invoice", invoiceRoutes);
 
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));

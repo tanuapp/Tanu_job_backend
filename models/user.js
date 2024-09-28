@@ -3,24 +3,37 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Schema } = mongoose;
 
-const customerSchema = new Schema({
+const userSchema = new Schema({
   phone: {
     type: String,
     required: [true, "Утасны дугаар заавал бичнэ үү!"],
+    unique: [true, "Утасны дугаар бүртгэлтэй байна"],
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
   password: {
     type: String,
   },
-  photo: String,
   pin: String,
   status: {
     type: Boolean,
     default: false,
   },
+  companyId: {
+    type: Schema.Types.ObjectId,
+    ref: "Company",
+  },
   first_name: String,
+  role: {
+    type: Number,
+    // 0 = Tanu super admin, 1 = Tanu ded admin, 2 = Baiguullagiin Admin, 3 = Baiguullagiin ded admin
+    enum: [0, 1, 2, 3],
+    default: 2,
+  },
   last_name: String,
-  email: String,
+  email: {
+    type: String,
+    unique: true,
+  },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
   createdAt: {
@@ -29,17 +42,17 @@ const customerSchema = new Schema({
   },
 });
 
-customerSchema.pre("save", async function () {
+userSchema.pre("save", async function () {
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
-customerSchema.methods.checkPassword = async function (pass) {
+userSchema.methods.checkPassword = async function (pass) {
   return await bcrypt.compare(pass, this.password);
 };
 
-customerSchema.methods.getJsonWebToken = function () {
+userSchema.methods.getJsonWebToken = function () {
   let token = jwt.sign(
-    { Id: this._id, phone: this.phone },
+    { Id: this._id, phone: this.phone, role: this.role },
     process.env.JWT_SECRET,
     {
       expiresIn: process.env.JWT_EXPIREDIN,
@@ -47,7 +60,7 @@ customerSchema.methods.getJsonWebToken = function () {
   );
   return token;
 };
-customerSchema.pre("findOneAndUpdate", async function (next) {
+userSchema.pre("findOneAndUpdate", async function (next) {
   if (!this._update.password) {
     return next();
   }
@@ -56,4 +69,4 @@ customerSchema.pre("findOneAndUpdate", async function (next) {
   next();
 });
 
-module.exports = mongoose.model("Customer", customerSchema);
+module.exports = mongoose.model("User", userSchema);

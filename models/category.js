@@ -1,11 +1,12 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
-const CategorySchema = new mongoose.Schema({
+const categorySchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true, // Ensure the category name is required
+    required: true,
   },
+  photo: String,
   parent: {
     type: Schema.Types.ObjectId,
     ref: "Category",
@@ -17,4 +18,13 @@ const CategorySchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Category", CategorySchema);
+categorySchema.virtual("children", {
+  ref: "Category",
+  localField: "_id",
+  foreignField: "parent",
+});
+
+categorySchema.set("toObject", { virtuals: true });
+categorySchema.set("toJSON", { virtuals: true });
+
+module.exports = mongoose.model("Category", categorySchema);

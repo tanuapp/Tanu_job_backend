@@ -1,45 +1,50 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const { Schema } = mongoose;
 
-const ServiceSchema = new mongoose.Schema({
-  salon_id: {
+const serviceSchema = new Schema({
+  service_name: {
+    type: String,
+    required: true,
+  },
+  companyId: {
     type: Schema.Types.ObjectId,
     ref: "Company",
   },
-  category_id: {
+  artistId: {
+    type: [Schema.Types.ObjectId],
+    ref: "Company",
+    default: [],
+  },
+  categoryId: {
     type: Schema.Types.ObjectId,
     ref: "Category",
   },
-  name: {
-    type: String,
-  },
-  duration: {
+  views: {
     type: Number,
+    default: 0,
   },
-  description: {
+  done: {
+    type: Number,
+    default: 0,
+  },
+  description: String,
+  price: {
+    type: Number,
+    required: true,
+  },
+  photo: {
     type: String,
+  },
+  status: {
+    type: Boolean,
+    default: false,
   },
   createdAt: {
     type: Date,
     default: Date.now,
   },
-  updatedAt: {
-    type: [Date],
-    default: [],
-  },
 });
 
-// Pre-save middleware (for create or update using `save`)
-ServiceSchema.pre("save", function (next) {
-  this.updatedAt.push(Date.now()); // Add current timestamp to updatedAt array
-  next();
-});
-
-// Pre-update middleware (for update operations using `findOneAndUpdate`)
-ServiceSchema.pre("findOneAndUpdate", function (next) {
-  this._update.$push = this._update.$push || {}; // Ensure $push operator exists
-  this._update.$push.updatedAt = Date.now(); // Add current timestamp to updatedAt array
-  next();
-});
-
-module.exports = mongoose.model("Service", ServiceSchema);
+module.exports = mongoose.model("Service", serviceSchema);

@@ -1,37 +1,54 @@
 const mongoose = require("mongoose");
+const CompanyCounter = require("./companyCounter");
 const { Schema } = mongoose;
 
-const CompanySchema = new mongoose.Schema({
-  name: {
-    type: String,
-  },
-  latitude: {
-    type: String,
-  },
-  longtitude: {
-    type: String,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: [Date],
-    default: [],
-  },
+const companySchema = new mongoose.Schema({
+  name: { type: String },
+  description: { type: String },
+  address: { type: String },
+  category: { type: Schema.Types.ObjectId, ref: "Category" },
+  views: { type: Number, default: 0 },
+  status: { type: Boolean, default: false },
+  phone: { type: String, required: true },
+  open: { type: String },
+  close: { type: String },
+  companyOwner: { type: Schema.Types.ObjectId, ref: "User" },
+  logo: { type: String },
+  sliderImages: { type: [String] },
+  companyNumber: { type: Number, unique: true, default: 1000 },
+  latitude: { type: String },
+  longitude: { type: String },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
 });
 
-// Pre-save middleware (for create or update using `save`)
-CompanySchema.pre("save", function (next) {
-  this.updatedAt.push(Date.now()); // Add current timestamp to updatedAt array
+// Increment companyNumber automatically
+companySchema.pre("save", async function (next) {
+  if (this.isNew) {
+    try {
+      // Find and increment the counter in the CompanyCounter collection
+      const counter = await CompanyCounter.findOneAndUpdate(
+        { name: "companyNumber" }, // The name of the counter we are incrementing
+        { $inc: { seq: 1 } }, // Increment the sequence by 1
+        { new: true, upsert: true } // Return the updated document, create it if not found
+      );
+
+      // Set the company's companyNumber to the updated sequence value
+      this.companyNumber = counter.seq;
+      next();
+    } catch (error) {
+      next(error);
+    }
+  } else {
+    next();
+  }
+});
+
+// Automatically update the updatedAt field on updates
+companySchema.pre("findByIdAndUpdate", function (next) {
+  this._update.$set = this._update.$set || {};
+  this._update.$set.updatedAt = new Date();
   next();
 });
 
-// Pre-update middleware (for update operations using `findOneAndUpdate`)
-CompanySchema.pre("findOneAndUpdate", function (next) {
-  this._update.$push = this._update.$push || {}; // Ensure $push operator exists
-  this._update.$push.updatedAt = Date.now(); // Add current timestamp to updatedAt array
-  next();
-});
-
-module.exports = mongoose.model("Company", CompanySchema);
+module.exports = mongoose.model("Company", companySchema);
