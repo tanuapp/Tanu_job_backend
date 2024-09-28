@@ -82,6 +82,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
 
 exports.callback = asyncHandler(async (req, res, next) => {
   try {
+    console.log("callback duudagdsan");
     const io = req.app.get("io");
     const qpay_token = await qpay.makeRequest();
     const { access_token } = qpay_token;
