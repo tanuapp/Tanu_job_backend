@@ -3,9 +3,11 @@ const asyncHandler = require("../middleware/asyncHandler.js");
 const invoiceModel = require("../models/invoice.js");
 const qpay = require("../middleware/qpay");
 const customerModel = require("../models/customer.js");
-const serviceModel = require("../models/service.js");
-const khan = require("../middleware/khaan");
-const uniqid = require("uniqid");
+const Appointment = require("../models/appointment.js");
+const Service = require("../models/service.js");
+// const khan = require("../middleware/khaan");
+// const uniqid = require("uniqid");
+const schedule = require("../models/schedule.js");
 
 exports.createqpay = asyncHandler(async (req, res) => {
   try {
@@ -82,8 +84,6 @@ exports.createqpay = asyncHandler(async (req, res) => {
 
 exports.callback = asyncHandler(async (req, res, next) => {
   try {
-    console.log(req.params.id);
-    console.log("callback duudagdsan");
     const io = req.app.get("io");
     const qpay_token = await qpay.makeRequest();
     const { access_token } = qpay_token;
@@ -99,6 +99,11 @@ exports.callback = asyncHandler(async (req, res, next) => {
       });
     }
     const { qpay_invoice_id, _id, appointment, amount } = record;
+    const app = await Appointment.findById(appointment);
+    const sche = await schedule.findById(app.schedule);
+    const services = await Service.findById(sche.serviceId);
+    services.done++;
+    await services.save();
 
     const rentId = _id;
 
@@ -127,8 +132,6 @@ exports.callback = asyncHandler(async (req, res, next) => {
       result.data.rows[0].payment_status == "PAID"
     ) {
       io.emit("paymentDone");
-      console.log("payment done successfully");
-      console.log(result);
       const updateStatusInvoice = await invoiceModel.findByIdAndUpdate(
         rentId,
         { status: "paid" },
