@@ -9,7 +9,7 @@ const dayOffSchema = new Schema({
     ref: "Company",
   },
   day_off: {
-    type: Date,
+    type: String,
     required: true,
   },
   reason: {

@@ -28,6 +28,7 @@ const artistRoutes = require("./routes/artist.js");
 const customerRoutes = require("./routes/customer.js");
 const qpayRoutes = require("./routes/qpay.js");
 const invoiceRoutes = require("./routes/invoice.js");
+const dayoffRoutes = require("./routes/dayoff.js");
 
 //Server configuration for socket
 const app = express();
@@ -101,6 +102,7 @@ app.use("/api/v1/customer", customerRoutes);
 app.use("/api/v1/qpay", qpayRoutes);
 app.use("/api/v1/artist", artistRoutes);
 app.use("/api/v1/invoice", invoiceRoutes);
+app.use("/api/v1/dayoff", dayoffRoutes);
 
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));
