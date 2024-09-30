@@ -17,8 +17,10 @@ const dayOffSchema = new Schema({
     required: true,
   },
   status: {
-    type: Boolean,
-    default: false,
+    // 0 --> Pending, 1 --> Accepted, 2 --> Denied
+    type: Number,
+    enum: [0, 1, 2],
+    default: 0,
   },
   createdAt: {
     type: Date,
