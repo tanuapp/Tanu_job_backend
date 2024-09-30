@@ -12,6 +12,10 @@ const categorySchema = new mongoose.Schema({
     ref: "Category",
     default: null,
   },
+  status: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
