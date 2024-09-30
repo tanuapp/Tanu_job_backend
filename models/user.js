@@ -24,10 +24,15 @@ const userSchema = new Schema({
   },
   first_name: String,
   role: {
-    type: Number,
+    type: String,
     // 0 = Tanu super admin, 1 = Tanu ded admin, 2 = Baiguullagiin Admin, 3 = Baiguullagiin ded admin
-    enum: [0, 1, 2, 3],
-    default: 2,
+    enum: ["admin", "user"],
+    default: "user",
+  },
+  permission: {
+    type: [String],
+    enum: ["settings", "finance", "employee", "statistic", "banner", "dayoff"],
+    default: [],
   },
   last_name: String,
   email: {

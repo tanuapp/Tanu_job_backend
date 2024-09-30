@@ -1,6 +1,4 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const { Schema } = mongoose;
 
 const dayOffSchema = new Schema({
@@ -12,6 +10,10 @@ const dayOffSchema = new Schema({
     type: String,
     required: true,
   },
+  schedule: {
+    type: [Schema.Types.ObjectId],
+    ref: "Schedule",
+  },
   reason: {
     type: String,
     required: true,
@@ -21,6 +23,10 @@ const dayOffSchema = new Schema({
     type: Number,
     enum: [0, 1, 2],
     default: 0,
+  },
+  updatedUser: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
   },
   createdAt: {
     type: Date,
