@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 const dayOffSchema = new Schema({
   artistId: {
     type: Schema.Types.ObjectId,
-    ref: "Company",
+    ref: "Artist",
   },
   date: {
     type: String,
