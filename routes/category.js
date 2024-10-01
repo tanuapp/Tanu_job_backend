@@ -13,7 +13,7 @@ const router = express.Router();
 
 router
   .route("/")
-  .post(protect, authorize("0 1 2 3"), upload.single("file"), create)
+  .post(protect, authorize("admin"), upload.single("file"), create)
   .get(getAll);
 
 router
