@@ -31,7 +31,7 @@ const userSchema = new Schema({
   },
   permission: {
     type: [String],
-    enum: ["settings", "finance", "employee", "statistic", "banner", "dayoff"],
+    enum: ["settings", "employee", "statistic", "banner", "dayoff"],
     default: [],
   },
   last_name: String,
