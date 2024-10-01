@@ -1,5 +1,7 @@
 const User = require("../models/artist");
 const asyncHandler = require("../middleware/asyncHandler");
+const artist = require("../models/artist");
+const company = require("../models/company");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -19,6 +21,9 @@ exports.create = asyncHandler(async (req, res, next) => {
   try {
     const existingUser = await User.findOne({ phone: req.body.phone });
     const exinstingEmail = await User.findOne({ email: req.body.email });
+    const artister = await company.findById(req.body.companyId);
+    artister.numberOfArtist++;
+    await artister.save();
 
     if (existingUser) {
       return res.status(400).json({

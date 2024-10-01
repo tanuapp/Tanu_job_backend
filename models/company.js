@@ -11,6 +11,14 @@ const companySchema = new mongoose.Schema({
   status: { type: Boolean, default: false },
   phone: { type: String, required: true },
   open: { type: String },
+  numberOfArtist: {
+    type: Number,
+    default: 0,
+  },
+  rating: {
+    type: Number,
+    default: 5,
+  },
   close: { type: String },
   companyOwner: { type: Schema.Types.ObjectId, ref: "User" },
   logo: { type: String },

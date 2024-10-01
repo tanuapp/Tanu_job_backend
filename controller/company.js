@@ -16,20 +16,6 @@ exports.getAll = asyncHandler(async (req, res, next) => {
   }
 });
 
-exports.getStatistic = asyncHandler(async (req, res, next) => {
-  try {
-    const categories = await Model.find({ parent: null }).populate("children");
-    const total = await Model.countDocuments();
-    res.status(200).json({
-      success: true,
-      count: total,
-      data: categories,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
 exports.createModel = asyncHandler(async (req, res, next) => {
   try {
     console.log("plz");
