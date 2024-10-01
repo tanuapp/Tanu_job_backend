@@ -3,7 +3,7 @@ const asyncHandler = require("../middleware/asyncHandler");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    const allUser = await Model.find();
+    const allUser = await Model.find().populate("artistId");
     const total = await Model.countDocuments();
     res.status(200).json({
       success: true,
