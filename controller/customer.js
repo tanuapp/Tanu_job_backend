@@ -68,8 +68,10 @@ exports.getMe = async function getMe(req, res, next) {
 };
 exports.create = asyncHandler(async (req, res, next) => {
   try {
+    const { isEmail } = req.body;
+    console.log(isEmail);
     const existingUser = await User.findOne({ phone: req.body.phone });
-    const exinstingEmail = await User.findOne({ email: req.body.email });
+    const existingEmail = await User.findOne({ email: req.body.email });
 
     const { phone, email } = req.body;
 
@@ -79,7 +81,7 @@ exports.create = asyncHandler(async (req, res, next) => {
         error: "Утасны дугаар бүртгэлтэй байна",
       });
     }
-    if (exinstingEmail) {
+    if (existingEmail && isEmail == true) {
       return res.status(400).json({
         success: false,
         error: "И-мэйл бүртгэлтэй байна",
@@ -207,7 +209,7 @@ exports.get = asyncHandler(async (req, res, next) => {
 
 exports.deleteModel = async function deleteUser(req, res, next) {
   try {
-    const deletePost = await User.findOneAndDelete(req.params.id, {
+    const deletePost = await User.findByIdAndDelete(req.params.id, {
       new: true,
     });
     return res.status(200).json({

@@ -83,7 +83,7 @@ exports.get = asyncHandler(async (req, res, next) => {
 
 exports.deleteModel = async function deleteUser(req, res, next) {
   try {
-    const deletePost = await Model.findOneAndDelete(req.params.id, {
+    const deletePost = await Model.findByIdAndDelete(req.params.id, {
       new: true,
     });
     return res.status(200).json({

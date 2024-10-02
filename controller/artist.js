@@ -136,7 +136,7 @@ exports.get = asyncHandler(async (req, res, next) => {
 
 exports.deleteModel = async function deleteUser(req, res, next) {
   try {
-    const deletePost = await User.findOneAndDelete(req.params.id, {
+    const deletePost = await User.findByIdAndDelete(req.params.id, {
       new: true,
     });
     return res.status(200).json({
