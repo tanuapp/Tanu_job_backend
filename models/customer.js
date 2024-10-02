@@ -17,6 +17,7 @@ const customerSchema = new Schema({
     type: Boolean,
     default: true,
   },
+  firebase_token: String,
   first_name: String,
   last_name: String,
   email: String,

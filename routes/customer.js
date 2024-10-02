@@ -8,10 +8,16 @@ const {
   deleteModel,
   get,
   getAll,
+  sendMassNotification,
   update,
+  getMe,
+  updateUserFCM,
 } = require("../controller/customer");
 const router = express.Router();
 
+router.route("/getMe").get(getMe);
+router.route("/fcm").post(updateUserFCM);
+router.route("/notification/mass").post(sendMassNotification);
 router.route("/login").post(Login);
 router.route("/").post(upload.single("file"), create).get(getAll);
 

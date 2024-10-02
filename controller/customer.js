@@ -15,6 +15,57 @@ exports.getAll = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.sendMassNotification = asyncHandler(async (req, res, next) => {
+  try {
+    const users = await User.find();
+
+    const { title, body } = req.body;
+
+    users.map(async (list) => {
+      const message = {
+        notification: {
+          title: title,
+          body: body,
+        },
+        token: list.firebase_token, // The device token
+      };
+      const response = await admin.messaging().send(message);
+    });
+
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+exports.getMe = async function getMe(req, res, next) {
+  try {
+    if (!req.headers.authorization) {
+      return res.status(401).json({
+        success: false,
+        msg: "Та эхлээд нэвтрэнэ үү ",
+      });
+    }
+    const token = req.headers.authorization.split(" ")[1];
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        msg: "Токен хоосон байна",
+      });
+    }
+    const tokenObj = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = tokenObj.Id;
+    const user = await User.findById(tokenObj.Id);
+    return res.status(200).json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     const existingUser = await User.findOne({ phone: req.body.phone });
@@ -53,6 +104,22 @@ exports.create = asyncHandler(async (req, res, next) => {
         msg: "Имейл эсвэл утасны дугаар оруулж өгнө үү",
       });
     }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+exports.updateUserFCM = asyncHandler(async (req, res, next) => {
+  try {
+    const { user, token } = req.body;
+    const userFind = await User.findById(user);
+
+    userFind.firebase_token = token;
+    await userFind.save();
+
+    res.status(200).json({
+      success: true,
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
