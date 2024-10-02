@@ -6,7 +6,6 @@ const { Schema } = mongoose;
 const customerSchema = new Schema({
   phone: {
     type: String,
-    required: [true, "Утасны дугаар заавал бичнэ үү!"],
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
   password: {
@@ -16,7 +15,7 @@ const customerSchema = new Schema({
   pin: String,
   status: {
     type: Boolean,
-    default: false,
+    default: true,
   },
   first_name: String,
   last_name: String,

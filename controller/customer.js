@@ -20,6 +20,8 @@ exports.create = asyncHandler(async (req, res, next) => {
     const existingUser = await User.findOne({ phone: req.body.phone });
     const exinstingEmail = await User.findOne({ email: req.body.email });
 
+    const { phone, email } = req.body;
+
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -33,17 +35,24 @@ exports.create = asyncHandler(async (req, res, next) => {
       });
     }
 
-    const inputData = {
-      ...req.body,
-      photo: req.file ? req.file.filename : "no-img.png",
-    };
-    const user = await User.create(inputData);
-    const token = user.getJsonWebToken();
-    res.status(200).json({
-      success: true,
-      token,
-      data: user,
-    });
+    if (email || phone) {
+      const inputData = {
+        ...req.body,
+        photo: req.file ? req.file.filename : "no-img.png",
+      };
+      const user = await User.create(inputData);
+      const token = user.getJsonWebToken();
+      res.status(200).json({
+        success: true,
+        token,
+        data: user,
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        msg: "Имейл эсвэл утасны дугаар оруулж өгнө үү",
+      });
+    }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
