@@ -16,13 +16,13 @@ router.route("/login", Login);
 
 router
   .route("/")
-  .post(protect, authorize("admin"), upload.single("file"), create)
+  .post(protect, authorize("user"), upload.single("file"), create)
   .get(getAll);
 
 router
   .route("/:id")
-  .put(protect, authorize("admin"), upload.single("file"), update)
-  .delete(protect, authorize("admin"), deleteModel)
+  .put(protect, authorize("user"), upload.single("file"), update)
+  .delete(protect, authorize("user"), deleteModel)
   .get(get);
 
 module.exports = router;

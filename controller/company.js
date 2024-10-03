@@ -1,6 +1,7 @@
 const Model = require("../models/company");
 const asyncHandler = require("../middleware/asyncHandler");
 const mongoose = require("mongoose");
+const category = require("../models/category");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -16,9 +17,22 @@ exports.getAll = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.getAllPopulated = asyncHandler(async (req, res, next) => {
+  try {
+    const categories = await Model.find().populate("category");
+    const total = await Model.countDocuments();
+    res.status(200).json({
+      success: true,
+      count: total,
+      data: categories,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 exports.createModel = asyncHandler(async (req, res, next) => {
   try {
-    console.log("plz");
     const logo =
       req.files && req.files.logo ? req.files.logo[0].filename : "no-logo.png";
     const sliderImages =
@@ -28,8 +42,9 @@ exports.createModel = asyncHandler(async (req, res, next) => {
 
     const company = await Model.create({
       ...req.body,
-      logo, // Store the logo filename
-      sliderImages, // Store the array of slider image filenames
+      logo,
+      sliderImages,
+      category: JSON.parse(req.body.category) || [],
     });
 
     res.status(200).json({
