@@ -6,7 +6,7 @@ const companySchema = new mongoose.Schema({
   name: { type: String },
   description: { type: String },
   address: { type: String },
-  category: { type: Schema.Types.ObjectId, ref: "Category" },
+  category: { type: [Schema.Types.ObjectId], ref: "Category", required: true },
   views: { type: Number, default: 0 },
   status: { type: Boolean, default: false },
   phone: { type: String, required: true },
