@@ -52,10 +52,10 @@ exports.update = asyncHandler(async (req, res, next) => {
         ? req.files.sliderIMG.map((file) => file.filename)
         : old.sliderImages;
 
-    const company = await Model.create({
+    const company = await Model.findByIdAndUpdate(req.params.id, {
       ...req.body,
-      logo, // Store the logo filename
-      sliderImages, // Store the array of slider image filenames
+      logo,
+      sliderImages,
     });
 
     res.status(200).json({
