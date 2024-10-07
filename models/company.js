@@ -8,7 +8,12 @@ const companySchema = new mongoose.Schema({
   address: { type: String },
   category: { type: [Schema.Types.ObjectId], ref: "Category", required: true },
   views: { type: Number, default: 0 },
-  status: { type: Boolean, default: false },
+  status: {
+    // 0 --> Pending, 1 --> Accepted, 2 --> Denied
+    type: Number,
+    enum: [0, 1, 2],
+    default: 0,
+  },
   phone: { type: String, required: true },
   open: { type: String },
   numberOfArtist: {
