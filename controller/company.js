@@ -44,7 +44,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
       ...req.body,
       logo,
       sliderImages,
-      category: JSON.parse(req.body.category) || [],
+      category: JSON.parse(req.body.category || "[]") || [],
     });
 
     res.status(200).json({

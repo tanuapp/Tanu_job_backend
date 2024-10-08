@@ -36,7 +36,7 @@ exports.create = asyncHandler(async (req, res, next) => {
 
     const inputData = {
       ...req.body,
-      permission: JSON.parse(req.body.permission) || [],
+      permission: JSON.parse(req.body.permission || "[]") || [],
     };
     const user = await User.create(inputData);
     const token = user.getJsonWebToken();
