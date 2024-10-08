@@ -32,6 +32,9 @@ const qpayRoutes = require("./routes/qpay.js");
 const invoiceRoutes = require("./routes/invoice.js");
 const dayoffRoutes = require("./routes/dayoff.js");
 const calendarRoutes = require("./routes/calendar.js");
+const districtRoute = require("./routes/district.js");
+const subDistrictRoute = require("./routes/subdistrict.js");
+const areaRoute = require("./routes/area.js");
 
 //Server configuration for socket
 const app = express();
@@ -94,7 +97,9 @@ async function initializeFirebase() {
 }
 
 initializeFirebase();
-
+app.use("/api/v1/district", districtRoute);
+app.use("/api/v1/subdistrict", subDistrictRoute);
+app.use("/api/v1/area", areaRoute);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/company", companyRoutes);
 app.use("/api/v1/user", userRoutes);
