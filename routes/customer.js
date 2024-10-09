@@ -12,9 +12,11 @@ const {
   update,
   getMe,
   updateUserFCM,
+  getCustomerAppointments,
 } = require("../controller/customer");
 const router = express.Router();
 
+router.route("/order").get(protect, getCustomerAppointments);
 router.route("/getMe").get(getMe);
 router.route("/fcm").post(updateUserFCM);
 router.route("/notification/mass").post(sendMassNotification);

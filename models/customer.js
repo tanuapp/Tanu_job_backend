@@ -20,6 +20,7 @@ const customerSchema = new Schema({
   firebase_token: String,
   first_name: String,
   last_name: String,
+  verified_devices: [],
   email: String,
   resetPasswordToken: String,
   resetPasswordExpire: Date,

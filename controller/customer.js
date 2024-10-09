@@ -1,5 +1,9 @@
 const User = require("../models/customer");
+const Appointment = require("../models/appointment");
 const asyncHandler = require("../middleware/asyncHandler");
+const jwt = require("jsonwebtoken");
+const admin = require("../server");
+const { getMessaging } = require("firebase-admin/messaging");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -15,10 +19,23 @@ exports.getAll = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
+  try {
+    const allUser = await Appointment.find({
+      user: req.userId,
+    }).populate("schedule");
+    res.status(200).json({
+      success: true,
+      data: allUser,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 exports.sendMassNotification = asyncHandler(async (req, res, next) => {
   try {
     const users = await User.find();
-
     const { title, body } = req.body;
 
     users.map(async (list) => {
@@ -29,7 +46,9 @@ exports.sendMassNotification = asyncHandler(async (req, res, next) => {
         },
         token: list.firebase_token, // The device token
       };
-      const response = await admin.messaging().send(message);
+      await getMessaging()
+        .send(message)
+        .then((res) => console.log("done"));
     });
 
     res.status(200).json({
@@ -40,12 +59,12 @@ exports.sendMassNotification = asyncHandler(async (req, res, next) => {
   }
 });
 
-exports.getMe = async function getMe(req, res, next) {
+exports.getMe = asyncHandler(async (req, res, next) => {
   try {
     if (!req.headers.authorization) {
       return res.status(401).json({
         success: false,
-        msg: "Та эхлээд нэвтрэнэ үү ",
+        msg: "Та эхлээд нэвтрэнэ үү",
       });
     }
     const token = req.headers.authorization.split(" ")[1];
@@ -56,8 +75,13 @@ exports.getMe = async function getMe(req, res, next) {
       });
     }
     const tokenObj = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = tokenObj.Id;
     const user = await User.findById(tokenObj.Id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        msg: "Хэрэглэгч олдсонгүй",
+      });
+    }
     return res.status(200).json({
       success: true,
       data: user,
@@ -65,23 +89,30 @@ exports.getMe = async function getMe(req, res, next) {
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
-};
+});
+
 exports.create = asyncHandler(async (req, res, next) => {
   try {
-    const { isEmail } = req.body;
-    console.log(isEmail);
-    const existingUser = await User.findOne({ phone: req.body.phone });
-    const existingEmail = await User.findOne({ email: req.body.email });
+    const { isEmail, pin, phone, email } = req.body;
 
-    const { phone, email } = req.body;
+    if (!pin) {
+      return res.status(400).json({
+        success: false,
+        msg: "PIN кодоо оруулна уу",
+      });
+    }
 
-    if (existingUser) {
+    const existingUser = await User.findOne({ phone });
+    const existingEmail = await User.findOne({ email });
+
+    if (existingUser && !isEmail) {
       return res.status(400).json({
         success: false,
         error: "Утасны дугаар бүртгэлтэй байна",
       });
     }
-    if (existingEmail && isEmail == true) {
+
+    if (existingEmail && isEmail) {
       return res.status(400).json({
         success: false,
         error: "И-мэйл бүртгэлтэй байна",
@@ -129,37 +160,42 @@ exports.updateUserFCM = asyncHandler(async (req, res, next) => {
 
 exports.Login = asyncHandler(async (req, res, next) => {
   try {
-    const { phone, password, email, isEmail } = req.body;
+    const { phone, email, isEmail, pin, password } = req.body;
 
-    const userphone = isEmail
-      ? await User.find({ phone: phone })
-      : await User.find({ email: email });
-
-    if (!userphone) {
-      return res.status(404).json({
-        success: falce,
-        message: isEmail
-          ? "Имейл бүртгэлгүй байна"
-          : "Утасны дугаар бүртгэлгүй байна ",
+    if (!pin) {
+      return res.status(400).json({
+        success: false,
+        message: "PIN кодоо оруулна уу",
       });
     }
 
-    const user = isEmail
-      ? await User.findOne({ email }).select("+password")
-      : await User.findOne({ phone }).select("+password");
-    if (!user) {
+    let user;
+
+    if (isEmail) {
+      user = await User.findOne({ email }).select("+password");
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "Имейл бүртгэлгүй байна",
+        });
+      }
+    } else {
+      user = await User.findOne({ phone }).select("+password");
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "Утасны дугаар бүртгэлгүй байна",
+        });
+      }
+    }
+
+    if (!user.pin == pin) {
       return res.status(400).json({
         success: false,
         msg: "Нэвтрэх нэр эсвэл нууц үг буруу байна!",
       });
     }
-    const isPasswordValid = await user.checkPassword(password);
-    if (!isPasswordValid) {
-      return res.status(400).json({
-        success: false,
-        msg: "Утасны дугаар эсвэл нууц үг буруу байна!",
-      });
-    }
+
     const token = user.getJsonWebToken();
     res.status(200).json({
       success: true,
@@ -207,7 +243,7 @@ exports.get = asyncHandler(async (req, res, next) => {
   }
 });
 
-exports.deleteModel = async function deleteUser(req, res, next) {
+exports.deleteModel = asyncHandler(async (req, res, next) => {
   try {
     const deletePost = await User.findByIdAndDelete(req.params.id, {
       new: true,
@@ -220,6 +256,4 @@ exports.deleteModel = async function deleteUser(req, res, next) {
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
-};
-
-// Энд дуусаж байгаа шүүү
+});

@@ -81,7 +81,6 @@ async function initializeFirebase() {
     if (data.SecretString) {
       const serviceAccount = JSON.parse(data.SecretString);
 
-      // Initialize Firebase Admin SDK
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
@@ -144,3 +143,5 @@ process.on("unhandledRejection", (err, promise) => {
     process.exit(1);
   });
 });
+
+module.exports = admin;
