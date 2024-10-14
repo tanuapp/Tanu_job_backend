@@ -32,6 +32,7 @@ exports.getAllPopulated = asyncHandler(async (req, res, next) => {
 
 exports.createModel = asyncHandler(async (req, res, next) => {
   try {
+    console.log(req.body);
     const logo =
       req.files && req.files.logo ? req.files.logo[0].filename : "no-logo.png";
     const sliderImages =
