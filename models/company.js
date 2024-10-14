@@ -24,6 +24,18 @@ const companySchema = new mongoose.Schema({
     type: Number,
     default: 5,
   },
+  area: {
+    type: Schema.Types.ObjectId,
+    ref: "Area",
+  },
+  district: {
+    type: Schema.Types.ObjectId,
+    ref: "District",
+  },
+  subdistrict: {
+    type: Schema.Types.ObjectId,
+    ref: "Subdistrict",
+  },
   close: { type: String },
   companyOwner: { type: Schema.Types.ObjectId, ref: "User" },
   logo: { type: String },
