@@ -15,6 +15,20 @@ exports.getAll = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.getUserHistory = asyncHandler(async (req, res, next) => {
+  try {
+    const allUser = await Model.find();
+    const total = await Model.countDocuments();
+    res.status(200).json({
+      success: true,
+      count: total,
+      data: allUser,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     const inputData = {

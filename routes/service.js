@@ -13,13 +13,13 @@ const router = express.Router();
 
 router
   .route("/")
-  .post(protect, authorize("0 1 2 3"), upload.single("file"), create)
+  .post(protect, authorize("user admin"), upload.single("file"), create)
   .get(getAll);
 
 router
   .route("/:id")
   .put(protect, upload.single("file"), update)
-  .delete(protect, authorize("0 1 2 3"), deleteModel)
+  .delete(protect, authorize("user admin"), deleteModel)
   .get(get);
 
 module.exports = router;

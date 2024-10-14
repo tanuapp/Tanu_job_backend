@@ -23,7 +23,14 @@ exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await Appointment.find({
       user: req.userId,
-    }).populate("schedule");
+    }).populate({
+      path: "schedule", // First, populate the 'schedule' field
+      populate: {
+        path: "serviceId", // Then, populate the 'service' field within 'schedule'
+        model: "Service", // Make sure to specify the correct model name
+      },
+    });
+
     res.status(200).json({
       success: true,
       data: allUser,
@@ -35,24 +42,38 @@ exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
 
 exports.sendMassNotification = asyncHandler(async (req, res, next) => {
   try {
-    const users = await User.find();
-    const { title, body } = req.body;
+    const users = await User.find(); // Fetch all users
+    const { title, body } = req.body; // Destructure title and body from request
 
-    users.map(async (list) => {
+    if (!title || !body) {
+      return res.status(400).json({
+        success: false,
+        msg: "Title and body are required",
+      });
+    }
+
+    // Filter users who have a valid Firebase token
+    const validUsers = users.filter((user) => user.firebase_token);
+
+    // Map and send notifications asynchronously
+    const sendNotifications = validUsers.map(async (user) => {
       const message = {
         notification: {
           title: title,
           body: body,
         },
-        token: list.firebase_token, // The device token
+        token: user.firebase_token, // The device token
       };
-      await getMessaging()
-        .send(message)
-        .then((res) => console.log("done"));
+
+      return getMessaging().send(message);
     });
+
+    // Wait for all notifications to be sent
+    await Promise.all(sendNotifications);
 
     res.status(200).json({
       success: true,
+      msg: "Notifications sent successfully",
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

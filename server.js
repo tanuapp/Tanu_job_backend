@@ -6,6 +6,7 @@ dotenv.config({ path: ".env" });
 const connectDB = require("./db");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
+var serviceAccount = require("./order-app-52b91-firebase-adminsdk-auvl0-5dcc4e420b.json");
 
 // AWS SECRET for firebase json
 const AWS = require("aws-sdk");
@@ -82,7 +83,7 @@ async function initializeFirebase() {
       .promise();
 
     if (data.SecretString) {
-      const serviceAccount = JSON.parse(data.SecretString);
+      // const serviceAccount = JSON.parse(data.SecretString);
 
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
