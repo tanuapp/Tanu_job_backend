@@ -6,7 +6,7 @@ const { Schema } = mongoose;
 const userSchema = new Schema({
   phone: {
     type: String,
-    required: [true, "Утасны дугаар заавал бичнэ үү!"],
+    // required: [true, "Утасны дугаар заавал бичнэ үү!"],
     unique: [true, "Утасны дугаар бүртгэлтэй байна"],
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
