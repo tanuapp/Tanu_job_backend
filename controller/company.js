@@ -39,17 +39,11 @@ exports.createModel = asyncHandler(async (req, res, next) => {
         ? req.files.sliderIMG.map((file) => file.filename)
         : [];
 
-    const user = await User.create({
-      ...req.body,
-      role: "user",
-    });
-
     const company = await Model.create({
       ...req.body,
       logo,
       sliderImages,
       category: JSON.parse(req.body.category || "[]") || [],
-      companyOwner: user._id,
     });
 
     res.status(200).json({

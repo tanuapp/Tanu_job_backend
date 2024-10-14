@@ -18,6 +18,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
+    console.log(req.body);
     const existingUser = await User.findOne({ phone: req.body.phone });
     const exinstingEmail = await User.findOne({ email: req.body.email });
 
