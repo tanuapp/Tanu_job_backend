@@ -1,4 +1,6 @@
 const Model = require("../models/appointment");
+const Appointment = require("../models/appointment");
+const Schedule = require("../models/schedule");
 const asyncHandler = require("../middleware/asyncHandler");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
@@ -15,17 +17,122 @@ exports.getAll = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.getAllPopulated = asyncHandler(async (req, res, next) => {
+  try {
+    const allUser = await Model.find()
+      .populate({
+        path: "schedule",
+        populate: [
+          { path: "serviceId", model: "Service" },
+          { path: "artistId", model: "Artist" },
+        ],
+      })
+      .populate("user"); // Populate user
+
+    const total = await Model.countDocuments();
+
+    res.status(200).json({
+      success: true,
+      count: total,
+      data: allUser,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 exports.create = asyncHandler(async (req, res, next) => {
   try {
-    const inputData = {
+    const user = await Model.create({
       ...req.body,
-    };
-    const user = await Model.create(inputData);
+      user: req.userId,
+    });
 
     res.status(200).json({
       success: true,
 
       data: user,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
+  try {
+    const { date } = req.body;
+
+    const selectedDayOfWeek = new Date(date).toLocaleDateString("mn-MN", {
+      weekday: "long",
+    });
+    console.log(selectedDayOfWeek);
+
+    const schedules = await Schedule.find({
+      day_of_the_week: selectedDayOfWeek,
+    });
+
+    const appointments = await Appointment.find({
+      date: date,
+      status: true,
+    });
+
+    if (!schedules || schedules.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No schedules found for this day",
+      });
+    }
+
+    const availableSchedules = schedules.filter((schedule) => {
+      const isBooked = appointments.some(
+        (appointment) => String(appointment.schedule) === String(schedule._id)
+      );
+      return !isBooked;
+    });
+
+    res.status(200).json({
+      success: true,
+      data: availableSchedules,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+exports.getAvailableTimesByArtist = asyncHandler(async (req, res, next) => {
+  try {
+    const { date, artistId } = req.body;
+
+    const selectedDayOfWeek = new Date(date).toLocaleDateString("mn-MN", {
+      weekday: "long",
+    });
+
+    const schedules = await Schedule.find({
+      artistId,
+      day_of_the_week: selectedDayOfWeek,
+    });
+
+    const appointments = await Appointment.find({
+      date: date,
+      status: true,
+    });
+
+    if (!schedules || schedules.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No schedules found for this day",
+      });
+    }
+
+    const availableSchedules = schedules.filter((schedule) => {
+      const isBooked = appointments.some(
+        (appointment) => String(appointment.schedule) === String(schedule._id)
+      );
+      return !isBooked;
+    });
+
+    res.status(200).json({
+      success: true,
+      data: availableSchedules,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

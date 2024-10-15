@@ -1,6 +1,6 @@
 const Model = require("../models/company");
 const asyncHandler = require("../middleware/asyncHandler");
-const User = require("../models/user");
+const Artist = require("../models/artist");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -26,6 +26,25 @@ exports.getAllPopulated = asyncHandler(async (req, res, next) => {
       data: categories,
     });
   } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+exports.getCompanyArtist = asyncHandler(async (req, res, next) => {
+  try {
+    const artistList = await Artist.find({
+      companyId: req.params.id,
+    });
+
+    const company = await Model.findById(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      artist: artistList,
+      company,
+    });
+  } catch (error) {
+    console.log(error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

@@ -131,12 +131,17 @@ exports.callback = asyncHandler(async (req, res, next) => {
       result.data.count == 1 &&
       result.data.rows[0].payment_status == "PAID"
     ) {
-      io.emit("paymentDone");
-      const updateStatusInvoice = await invoiceModel.findByIdAndUpdate(
+      await Appointment.findByIdAndUpdate(
+        appointment,
+        { status: true },
+        { new: true }
+      );
+      await invoiceModel.findByIdAndUpdate(
         rentId,
         { status: "paid" },
         { new: true }
       );
+      io.emit("paymentDone");
       // const Company = await serviceModel.findById(Service);
       // let input = {
       //   Artist,
