@@ -1,6 +1,9 @@
 const User = require("../models/user");
+const Company = require("../models/company");
 const asyncHandler = require("../middleware/asyncHandler");
 const mongoose = require("mongoose");
+const customResponse = require("../utils/customResponse");
+const { read } = require("fs");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -12,7 +15,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
       data: allUser,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    customResponse.server(res, error.message);
   }
 });
 
@@ -47,7 +50,7 @@ exports.create = asyncHandler(async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    customResponse.server(res, error.message);
   }
 });
 
@@ -91,7 +94,7 @@ exports.Login = asyncHandler(async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    customResponse.server(res, error.message);
   }
 });
 
@@ -113,20 +116,24 @@ exports.update = asyncHandler(async (req, res, next) => {
       data: upDateUserData,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ success: false, error: error.message });
+    customResponse.server(res, error.message);
+    // res.status(500).json({ success: false, error: error.message });
   }
 });
 
 exports.get = asyncHandler(async (req, res, next) => {
   try {
     const allText = await User.findById(req.params.id);
+    const company = await Company.findOne({
+      companyOwner: req.params.id,
+    });
     return res.status(200).json({
       success: true,
       data: allText,
+      company,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    customResponse.server(res, error.message);
   }
 });
 
@@ -141,7 +148,7 @@ exports.deleteModel = async function deleteUser(req, res, next) {
       data: deletePost,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    customResponse.server(res, error.message);
   }
 };
 
