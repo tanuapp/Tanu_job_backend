@@ -42,7 +42,7 @@ exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
 
 exports.sendMassNotification = asyncHandler(async (req, res, next) => {
   try {
-    const users = await User.find(); // Fetch all users
+    const users = await User.findOne(); // Fetch all users
     const { title, body } = req.body; // Destructure title and body from request
 
     if (!title || !body) {
@@ -56,27 +56,38 @@ exports.sendMassNotification = asyncHandler(async (req, res, next) => {
     const validUsers = users.filter((user) => user.firebase_token);
 
     // Map and send notifications asynchronously
-    const sendNotifications = validUsers.map(async (user) => {
+    // const sendNotifications = validUsers.map(async (user) => {
+    //   const message = {
+    //     notification: {
+    //       title: title,
+    //       body: body,
+    //     },
+    //     token: user.firebase_token, // The device token
+    //   };
+    //   console.log(message);
+    //   return getMessaging().send(message);
+    // });
+
+    const sendMsg = () => {
       const message = {
         notification: {
           title: title,
           body: body,
         },
-        token: user.firebase_token, // The device token
+        token: users.firebase_token,
       };
-
       return getMessaging().send(message);
-    });
+    };
 
     // Wait for all notifications to be sent
-    await Promise.all(sendNotifications);
+    await Promise.all(sendMsg);
 
     res.status(200).json({
       success: true,
       msg: "Notifications sent successfully",
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: error });
   }
 });
 

@@ -39,6 +39,10 @@ const userSchema = new Schema({
     type: String,
     unique: true,
   },
+  booked: {
+    type: [Schema.Types.ObjectId],
+    ref: "Company",
+  },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
   createdAt: {
