@@ -14,7 +14,7 @@ const companySchema = new mongoose.Schema({
     enum: [0, 1, 2],
     default: 0,
   },
-  phone: { type: String, required: true },
+  phone: { type: String },
   open: { type: String },
   numberOfArtist: {
     type: Number,
