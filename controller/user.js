@@ -41,7 +41,9 @@ exports.create = asyncHandler(async (req, res, next) => {
     const inputData = {
       ...req.body,
       permission: JSON.parse(req.body.permission || "[]") || [],
+      photo: req.file?.filename ? req.file.filename : "no user photo",
     };
+    
     const user = await User.create(inputData);
     const token = user.getJsonWebToken();
     res.status(200).json({

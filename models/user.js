@@ -18,6 +18,7 @@ const userSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  photo: String,
   companyId: {
     type: Schema.Types.ObjectId,
     ref: "Company",
