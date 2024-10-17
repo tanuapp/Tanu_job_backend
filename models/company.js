@@ -29,6 +29,18 @@ const companySchema = new mongoose.Schema({
   logo: { type: String },
   sliderImages: { type: [String] },
   companyNumber: { type: Number, unique: true, default: 1000 },
+  district: {
+    type: mongoose.Types.ObjectId,
+    ref: "District",
+  },
+  area: {
+    type: mongoose.Types.ObjectId,
+    ref: "Area",
+  },
+  subDistrict: {
+    type: mongoose.Types.ObjectId,
+    ref: "SubDistrict",
+  },
   latitude: { type: String },
   longitude: { type: String },
   createdAt: { type: Date, default: Date.now },

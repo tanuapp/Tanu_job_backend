@@ -43,6 +43,15 @@ exports.getCompanyArtist = asyncHandler(async (req, res, next) => {
       artist: artistList,
       company,
     });
+    const data = await Model.find()
+    .populate("district")
+    .populate("subDistrict")
+    .populate("area");
+
+  res.status(200).json({
+    success: true,
+    data,
+  });
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, error: error.message });
