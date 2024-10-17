@@ -14,7 +14,7 @@ const companySchema = new mongoose.Schema({
     enum: [0, 1, 2],
     default: 0,
   },
-  phone: { type: String },
+  phone: { type: String, required: true },
   open: { type: String },
   numberOfArtist: {
     type: Number,
@@ -23,18 +23,6 @@ const companySchema = new mongoose.Schema({
   rating: {
     type: Number,
     default: 5,
-  },
-  area: {
-    type: Schema.Types.ObjectId,
-    ref: "Area",
-  },
-  district: {
-    type: Schema.Types.ObjectId,
-    ref: "District",
-  },
-  subdistrict: {
-    type: Schema.Types.ObjectId,
-    ref: "Subdistrict",
   },
   close: { type: String },
   companyOwner: { type: Schema.Types.ObjectId, ref: "User" },
