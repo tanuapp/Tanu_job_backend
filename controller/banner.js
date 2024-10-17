@@ -1,6 +1,6 @@
 const Model = require("../models/banner");
 const asyncHandler = require("../middleware/asyncHandler");
-
+const Company = require("../models/company");
 exports.getAllModel = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await Model.find().sort({
@@ -11,6 +11,14 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
       success: true,
       count: total,
       data: allUser,
+    });
+    const company = await Company.findOne({
+      companyOwner: req.params.id,
+    });
+    return res.status(200).json({
+      success: true,
+      data: allText,
+      company,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

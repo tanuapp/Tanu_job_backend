@@ -12,9 +12,14 @@ const BannerSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  companyId: {
+    type: Schema.Types.ObjectId,
+    ref: "Company",
+  },
   createdAt: {
     type: Date,
     default: Date.now,
   },
+ 
 });
 module.exports = mongoose.model("Banner", BannerSchema);
