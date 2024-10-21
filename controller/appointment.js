@@ -59,16 +59,20 @@ exports.create = asyncHandler(async (req, res, next) => {
 });
 exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
   try {
-    const { date } = req.body;
+    const { date, service } = req.body;
 
     const selectedDayOfWeek = new Date(date).toLocaleDateString("mn-MN", {
       weekday: "long",
     });
-    console.log(selectedDayOfWeek);
 
     const schedules = await Schedule.find({
       day_of_the_week: selectedDayOfWeek,
-    });
+      serviceId: service,
+    })
+      .populate("artistId")
+      .populate("serviceId");
+
+    console.log(schedules);
 
     const appointments = await Appointment.find({
       date: date,
@@ -76,9 +80,9 @@ exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
     });
 
     if (!schedules || schedules.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No schedules found for this day",
+      return res.status(200).json({
+        success: true,
+        data: [],
       });
     }
 
