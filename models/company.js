@@ -8,6 +8,7 @@ const companySchema = new mongoose.Schema({
   address: { type: String },
   category: { type: [Schema.Types.ObjectId], ref: "Category", required: true },
   views: { type: Number, default: 0 },
+  done: { type: Number, default: 0 },
   status: {
     // 0 --> Pending, 1 --> Accepted, 2 --> Denied
     type: Number,
