@@ -1,10 +1,11 @@
 const Model = require("../models/favourite");
 const asyncHandler = require("../middleware/asyncHandler");
 
+// Get all saved companies for the user
 exports.getUserSavedCompany = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await Model.find({ user: req.userId }).populate("company");
-    const total = await Model.countDocuments();
+    const total = await Model.countDocuments({ user: req.userId }); // Total count of user's saved companies
     res.status(200).json({
       success: true,
       count: total,
@@ -15,6 +16,7 @@ exports.getUserSavedCompany = asyncHandler(async (req, res, next) => {
   }
 });
 
+// Save a company to user's list
 exports.saveCompany = asyncHandler(async (req, res, next) => {
   try {
     const result = await Model.findOne({
@@ -22,17 +24,19 @@ exports.saveCompany = asyncHandler(async (req, res, next) => {
     });
 
     if (!result) {
-      const res = await Model.create({
+      const newEntry = await Model.create({
         user: req.body.user,
         company: [req.body.company],
       });
       res.status(200).json({
         success: true,
-        data: res,
+        data: newEntry,
       });
     } else {
-      result.company.push(req.body.company);
-      await result.save();
+      if (!result.company.includes(req.body.company)) {
+        result.company.push(req.body.company); // Add the company if it's not already in the list
+        await result.save();
+      }
 
       res.status(200).json({
         success: true,
@@ -44,6 +48,7 @@ exports.saveCompany = asyncHandler(async (req, res, next) => {
   }
 });
 
+// Remove a company from user's list
 exports.removeCompany = asyncHandler(async (req, res, next) => {
   try {
     const result = await Model.findOne({
@@ -51,18 +56,16 @@ exports.removeCompany = asyncHandler(async (req, res, next) => {
     });
 
     if (!result) {
-      const res = await Model.create({
-        user: req.body.user,
-        company: [],
-      });
-      res.status(200).json({
-        success: true,
-        data: res,
+      res.status(404).json({
+        success: false,
+        message: "No entry found for this user",
       });
     } else {
-      const p = result.company;
-      result.company = p.filter((list) => list != req.body.company);
-      await result.save;
+      result.company = result.company.filter(
+        (list) => list != req.body.company
+      ); // Remove the company from the array
+
+      await result.save(); // Ensure `.save()` is called correctly
 
       res.status(200).json({
         success: true,
@@ -74,9 +77,16 @@ exports.removeCompany = asyncHandler(async (req, res, next) => {
   }
 });
 
+// Delete an entire entry by ID
 exports.deleteModel = asyncHandler(async (req, res, next) => {
   try {
     const result = await Model.findByIdAndDelete(req.params.id);
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: "Entry not found",
+      });
+    }
     res.status(200).json({
       success: true,
       data: result,
