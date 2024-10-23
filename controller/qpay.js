@@ -8,7 +8,6 @@ const Service = require("../models/service.js");
 // const khan = require("../middleware/khaan");
 // const uniqid = require("uniqid");
 const schedule = require("../models/schedule.js");
-const schedule = require("../models/schedule.js");
 const service = require("../models/service.js");
 const company = require("../models/company.js");
 
@@ -134,14 +133,14 @@ exports.callback = asyncHandler(async (req, res, next) => {
       result.data.count == 1 &&
       result.data.rows[0].payment_status == "PAID"
     ) {
-      const ap =await Appointment.findByIdAndUpdate(
+      const ap = await Appointment.findByIdAndUpdate(
         appointment,
         { status: true },
         { new: true }
       );
-      const schedule = await schedule.findById(ap.schedule);
-      const service = await service.findById(schedule.serviceId)
-      const pcm = await company.findById(service.companyId)
+      const scheduleOne = await schedule.findById(ap.schedule);
+      const service = await service.findById(scheduleOne.serviceId);
+      const pcm = await company.findById(service.companyId);
       pcm.done++;
       await pcm.save();
       await invoiceModel.findByIdAndUpdate(
