@@ -4,7 +4,7 @@ const Artist = require("../models/artist");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    const categories = await Model.find().populate.area
+    const categories = await Model.find().populate("area");
     const total = await Model.countDocuments();
     res.status(200).json({
       success: true,
@@ -37,21 +37,21 @@ exports.getCompanyArtist = asyncHandler(async (req, res, next) => {
     });
 
     const company = await Model.findById(req.params.id)
-    .populate("district")
-    .populate("subDistrict")
-    .populate("area");
+      .populate("district")
+      .populate("subDistrict")
+      .populate("area");
 
     res.status(200).json({
       success: true,
       artist: artistList,
       company,
     });
-    const data = await Model.find()
+    const data = await Model.find();
 
-  res.status(200).json({
-    success: true,
-    data,
-  });
+    res.status(200).json({
+      success: true,
+      data,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, error: error.message });
