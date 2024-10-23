@@ -125,6 +125,8 @@ exports.getMe = asyncHandler(async (req, res, next) => {
 
 exports.customerUpdateTheirOwnInformation = asyncHandler(
   async (req, res, next) => {
+    console.log(req.body);
+    console.log("Ghfg");
     try {
       if (req.userId != req.params.id) {
         return res.status(401).json({

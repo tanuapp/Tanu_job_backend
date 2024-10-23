@@ -1,6 +1,7 @@
 const User = require("../models/artist");
 const asyncHandler = require("../middleware/asyncHandler");
-const artist = require("../models/artist");
+// const artist = require("../models/artist");
+const Service = require("../models/service");
 const company = require("../models/company");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
@@ -128,6 +129,23 @@ exports.get = asyncHandler(async (req, res, next) => {
     return res.status(200).json({
       success: true,
       data: allText,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+exports.getArtistServices = asyncHandler(async (req, res, next) => {
+  try {
+    const allText = await Service.find();
+
+    const data = allText.filter((list) =>
+      list.artistId.includes(req.params.id)
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: data,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
