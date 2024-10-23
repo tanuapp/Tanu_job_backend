@@ -4,7 +4,10 @@ const Artist = require("../models/artist");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    const categories = await Model.find().populate("area");
+    const categories = await Model.find()
+      .populate("area")
+      .populate("district")
+      .populate("subDistrict");
     const total = await Model.countDocuments();
     res.status(200).json({
       success: true,
