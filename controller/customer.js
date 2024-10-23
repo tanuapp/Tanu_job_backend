@@ -123,6 +123,30 @@ exports.getMe = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.customerUpdateTheirOwnInformation = asyncHandler(
+  async (req, res, next) => {
+    try {
+      if (req.userId != req.params.id) {
+        return res.status(401).json({
+          success: false,
+          msg: "Та зөвхөн өөрийн мэдээллийг өөрчлөж болно",
+        });
+      }
+      const old = await User.findById(req.params.id);
+      const data = await User.findByIdAndUpdate(req.params.id, {
+        ...req.body,
+        photo: req.file ? req.file.filename : old.photo,
+      });
+      return res.status(200).json({
+        success: true,
+        data,
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     const { isEmail, pin, phone, email } = req.body;
@@ -176,8 +200,8 @@ exports.create = asyncHandler(async (req, res, next) => {
 
 exports.updateUserFCM = asyncHandler(async (req, res, next) => {
   try {
-    const { user, token } = req.body;
-    const userFind = await User.findById(user);
+    const { token } = req.body;
+    const userFind = await User.findById(req.userId);
 
     userFind.firebase_token = token;
     await userFind.save();

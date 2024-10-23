@@ -9,6 +9,7 @@ const {
   get,
   getAll,
   sendMassNotification,
+  customerUpdateTheirOwnInformation,
   update,
   getMe,
   updateUserFCM,
@@ -17,6 +18,7 @@ const {
 const router = express.Router();
 
 router.route("/order").get(protect, getCustomerAppointments);
+router.route("/updateOwn/:id").get(protect, customerUpdateTheirOwnInformation);
 router.route("/getMe").get(getMe);
 router.route("/fcm").post(updateUserFCM);
 router.route("/notification/mass").post(sendMassNotification);

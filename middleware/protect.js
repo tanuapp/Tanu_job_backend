@@ -9,7 +9,6 @@ exports.protect = asyncHandler(async (req, res, next) => {
         msg: "Та эхлээд нэвтрэнэ үү ",
       });
     }
-    console.log(Date.now());
     const token = req.headers.authorization.split(" ")[1];
 
     if (!token) {
