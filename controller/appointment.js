@@ -17,8 +17,9 @@ exports.getAll = asyncHandler(async (req, res, next) => {
   }
 });
 
-exports.getAllPopulated = asyncHandler(async (req, res, next) => {
+exports.getAllPopulated = asyncHandler(async (req, res) => {
   try {
+    // Fetch all users and populate related fields
     const allUser = await Model.find()
       .populate({
         path: "schedule",
@@ -29,17 +30,27 @@ exports.getAllPopulated = asyncHandler(async (req, res, next) => {
       })
       .populate("user");
 
-    const data = allUser.filter((list) => list.schedule.serviceId);
+    // Filter users who have a populated schedule with a serviceId
+    const filteredUsers = allUser.filter(
+      (user) => user.schedule && user.schedule.serviceId
+    );
 
-    const total = await Model.countDocuments();
+    // Count the total number of documents in the collection
+    const totalDocuments = await Model.countDocuments();
 
+    // Return response
     res.status(200).json({
       success: true,
-      count: total,
-      data,
+      count: totalDocuments,
+      data: filteredUsers,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    // Log and handle error
+    console.error("Error in getAllPopulated:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 });
 
