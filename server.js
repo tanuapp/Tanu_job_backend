@@ -128,6 +128,9 @@ app.use(errorHandler);
 
 io.on("connection", (socket) => {
   console.log("A user connected");
+  socket.on("connect", () => {
+    console.log("User connected");
+  });
 
   socket.on("disconnect", () => {
     console.log("User disconnected");

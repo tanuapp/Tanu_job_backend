@@ -5,7 +5,7 @@ const asyncHandler = require("../middleware/asyncHandler");
 exports.getUserSavedCompany = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await Model.find({ user: req.userId }).populate("company");
-    const total = await Model.countDocuments({ user: req.userId }); // Total count of user's saved companies
+    const total = await Model.countDocuments({ user: req.userId });
     res.status(200).json({
       success: true,
       count: total,
