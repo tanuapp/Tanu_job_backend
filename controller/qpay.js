@@ -101,9 +101,14 @@ exports.callback = asyncHandler(async (req, res, next) => {
       });
     }
     const { qpay_invoice_id, _id, appointment, amount } = record;
+    // print
     const app = await Appointment.findById(appointment);
-    const sche = await schedule.findById(app.schedule);
-    const services = await Service.findById(sche.serviceId);
+    console.log("appointment done");
+    const sche = await schedule.findById(app.schedule.toString());
+
+    console.log("schedule done");
+    const services = await Service.findById(sche.serviceId.toString());
+    console.log("services done");
     services.done++;
     await services.save();
 
@@ -138,11 +143,15 @@ exports.callback = asyncHandler(async (req, res, next) => {
         { status: true },
         { new: true }
       );
-      const scheduleOne = await schedule.findById(ap.schedule);
-      const service = await service.findById(scheduleOne.serviceId);
-      const pcm = await company.findById(service.companyId);
-      pcm.done++;
-      await pcm.save();
+      const scheduleOne = await schedule.findById(ap.schedule.toString());
+      console.log(scheduleOne);
+      const service = await Service.findById(scheduleOne.serviceId.toString());
+      console.log(service);
+      const pcm = await company.findById(service.companyId.toString());
+      if (pcm) {
+        pcm.done++;
+        await pcm.save();
+      }
       await invoiceModel.findByIdAndUpdate(
         rentId,
         { status: "paid" },
