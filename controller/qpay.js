@@ -157,7 +157,7 @@ exports.callback = asyncHandler(async (req, res, next) => {
         { status: "paid" },
         { new: true }
       );
-      print("paymendDone");
+      console.log("paymendDone");
       io.emit("paymentDone");
       // const Company = await serviceModel.findById(Service);
       // let input = {
