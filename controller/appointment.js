@@ -36,7 +36,7 @@ exports.getAllPopulated = asyncHandler(async (req, res, next) => {
     res.status(200).json({
       success: true,
       count: total,
-      data: allUser,
+      data,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
