@@ -27,7 +27,9 @@ exports.getAllPopulated = asyncHandler(async (req, res, next) => {
           { path: "artistId", model: "Artist" },
         ],
       })
-      .populate("user"); // Populate user
+      .populate("user");
+
+    const data = allUser.filter((list) => list.schedule.serviceId);
 
     const total = await Model.countDocuments();
 
