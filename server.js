@@ -6,6 +6,7 @@ dotenv.config({ path: ".env" });
 const connectDB = require("./db");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
+const cron = require("node-cron");
 var serviceAccount = require("./order-app-52b91-firebase-adminsdk-auvl0-5dcc4e420b.json");
 
 // AWS SECRET for firebase json
@@ -145,6 +146,20 @@ io.on("connection", (socket) => {
     socket.emit("message", "Hello from server");
   });
 });
+
+cron.schedule("0 */3 * * *", async () => {
+  // console.log("Running the background job every 3 hours...");
+
+  try {
+    // const items = await YourModel.find();
+    // console.log(`Checked ${items.length} items in YourModel.`);
+    // Perform other operations on the model if necessary
+  } catch (error) {
+    console.error("Error checking the model:", error);
+  }
+});
+
+require("./controller/cron.js");
 
 // exporess server ajiluulah
 const server = httpServer.listen(
