@@ -53,11 +53,7 @@ function cyrillicToEnglishSlugify(text) {
 
 exports.getAllModel = asyncHandler(async (req, res, next) => {
   try {
-    const data = await Model.find()
-      .populate("district")
-      .populate("nam")
-      .populate("subDistrict")
-      .populate("area");
+    const data = await Model.find();
 
     res.status(200).json({
       success: true,
@@ -74,7 +70,7 @@ exports.getModel = asyncHandler(async (req, res, next) => {
   try {
     const data = await Model.findOne({
       slug: req.params.id,
-    }).populate("nam");
+    });
 
     res.status(200).json({
       success: true,

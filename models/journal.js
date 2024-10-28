@@ -29,22 +29,7 @@ const newJournalSchema = new Schema({
     type: String,
     unique: true,
   },
-  district: {
-    type: mongoose.Types.ObjectId,
-    ref: "District",
-  },
-  area: {
-    type: mongoose.Types.ObjectId,
-    ref: "Area",
-  },
-  subDistrict: {
-    type: mongoose.Types.ObjectId,
-    ref: "SubDistrict",
-  },
-  nam: {
-    type: mongoose.Types.ObjectId,
-    ref: "Nam",
-  },
+
   textcolor: String,
   slug: {
     type: String,
