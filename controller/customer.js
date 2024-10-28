@@ -218,7 +218,7 @@ exports.updateUserFCM = asyncHandler(async (req, res, next) => {
 
 exports.Login = asyncHandler(async (req, res, next) => {
   try {
-    const { phone, email, isEmail, pin, password } = req.body;
+    const { phone, email, isEmail, pin } = req.body;
 
     if (!pin) {
       return res.status(400).json({

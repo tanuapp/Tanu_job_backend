@@ -38,6 +38,7 @@ const subDistrictRoute = require("./routes/subdistrict.js");
 const areaRoute = require("./routes/area.js");
 const direct_paymentRoute = require("./routes/direct_payment.js");
 const favRoute = require("./routes/favourite.js");
+const journalRoute = require("./routes/journal.js");
 
 //Server configuration for socket
 const app = express();
@@ -118,6 +119,7 @@ app.use("/api/v1/invoice", invoiceRoutes);
 app.use("/api/v1/dayoff", dayoffRoutes);
 app.use("/api/v1/calendar", calendarRoutes);
 app.use("/api/v1/favourite", favRoute);
+app.use("/api/v1/journal", journalRoute);
 
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));
