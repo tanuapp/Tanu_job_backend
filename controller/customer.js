@@ -157,7 +157,7 @@ exports.customerUpdateTheirOwnInformation = asyncHandler(
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
-    const { isEmail, pin, phone, email } = req.body;
+    var { pin, phone } = req.body;
 
     if (!pin) {
       return res.status(400).json({
@@ -167,23 +167,23 @@ exports.create = asyncHandler(async (req, res, next) => {
     }
 
     const existingUser = await User.findOne({ phone });
-    const existingEmail = await User.findOne({ email });
+    // const existingEmail = await User.findOne({ email });
 
-    if (existingUser && !isEmail) {
+    if (existingUser) {
       return res.status(400).json({
         success: false,
         error: "Утасны дугаар бүртгэлтэй байна",
       });
     }
 
-    if (existingEmail && isEmail) {
-      return res.status(400).json({
-        success: false,
-        error: "И-мэйл бүртгэлтэй байна",
-      });
-    }
+    // if (existingEmail && isEmail) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     error: "И-мэйл бүртгэлтэй байна",
+    //   });
+    // }
 
-    if (email || phone) {
+    if (phone) {
       const inputData = {
         ...req.body,
         photo: req.file ? req.file.filename : "no-img.png",
