@@ -25,10 +25,16 @@ exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
       user: req.userId,
     }).populate({
       path: "schedule", // First, populate the 'schedule' field
-      populate: {
-        path: "serviceId", // Then, populate the 'service' field within 'schedule'
-        model: "Service", // Make sure to specify the correct model name
-      },
+      populate: [
+        {
+          path: "serviceId",
+          model: "Service",
+        },
+        {
+          path: "artistId",
+          model: "Artist", // Specify the model name for 'artistId'
+        },
+      ],
     });
 
     res.status(200).json({
