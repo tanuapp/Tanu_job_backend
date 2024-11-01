@@ -8,7 +8,8 @@ const {
   getAll,
   update,
   getAllPopulated,
-  getCompanyArtist,
+  getCompanyPopulate,
+  getCompanyBanner,
   deleteModel,
 } = require("../controller/company");
 const router = express.Router();
@@ -41,6 +42,6 @@ router
     // isActive && protect, isActive && authorize("admin"),
     deleteModel
   )
-  .get(getCompanyArtist);
+  .get(getCompanyPopulate)
 
 module.exports = router;
