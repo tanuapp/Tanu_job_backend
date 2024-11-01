@@ -6,6 +6,7 @@ dotenv.config({ path: ".env" });
 const connectDB = require("./db");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
+const cron = require("node-cron");
 var serviceAccount = require("./order-app-52b91-firebase-adminsdk-auvl0-5dcc4e420b.json");
 
 // AWS SECRET for firebase json
@@ -37,6 +38,8 @@ const districtRoute = require("./routes/district.js");
 const subDistrictRoute = require("./routes/subdistrict.js");
 const areaRoute = require("./routes/area.js");
 const direct_paymentRoute = require("./routes/direct_payment.js");
+const favRoute = require("./routes/favourite.js");
+const journalRoute = require("./routes/journal.js");
 
 //Server configuration for socket
 const app = express();
@@ -116,6 +119,8 @@ app.use("/api/v1/artist", artistRoutes);
 app.use("/api/v1/invoice", invoiceRoutes);
 app.use("/api/v1/dayoff", dayoffRoutes);
 app.use("/api/v1/calendar", calendarRoutes);
+app.use("/api/v1/favourite", favRoute);
+app.use("/api/v1/journal", journalRoute);
 
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));
@@ -126,6 +131,9 @@ app.use(errorHandler);
 
 io.on("connection", (socket) => {
   console.log("A user connected");
+  socket.on("connect", () => {
+    console.log("User connected");
+  });
 
   socket.on("disconnect", () => {
     console.log("User disconnected");
@@ -138,6 +146,20 @@ io.on("connection", (socket) => {
     socket.emit("message", "Hello from server");
   });
 });
+
+cron.schedule("0 */3 * * *", async () => {
+  // console.log("Running the background job every 3 hours...");
+
+  try {
+    // const items = await YourModel.find();
+    // console.log(`Checked ${items.length} items in YourModel.`);
+    // Perform other operations on the model if necessary
+  } catch (error) {
+    console.error("Error checking the model:", error);
+  }
+});
+
+require("./controller/cron.js");
 
 // exporess server ajiluulah
 const server = httpServer.listen(

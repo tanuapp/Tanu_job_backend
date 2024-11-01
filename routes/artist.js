@@ -6,13 +6,16 @@ const {
   Login,
   create,
   deleteModel,
+  getArtistServices,
   get,
   getAll,
   update,
 } = require("../controller/artist");
 const router = express.Router();
 
-router.route("/login", Login);
+router.route("/getArtistServices/:id").get(getArtistServices);
+
+router.route("/login").post(Login);
 
 router
   .route("/")

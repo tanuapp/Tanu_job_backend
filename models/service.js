@@ -14,7 +14,7 @@ const serviceSchema = new Schema({
   },
   artistId: {
     type: [Schema.Types.ObjectId],
-    ref: "Company",
+    ref: "Artist",
     default: [],
   },
   categoryId: {

@@ -8,9 +8,9 @@ const customerSchema = new Schema({
     type: String,
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
-  password: {
-    type: String,
-  },
+  // password: {
+  //   type: String,
+  // },
   photo: String,
   pin: String,
   status: {
@@ -30,13 +30,13 @@ const customerSchema = new Schema({
   },
 });
 
-customerSchema.pre("save", async function () {
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-});
-customerSchema.methods.checkPassword = async function (pass) {
-  return await bcrypt.compare(pass, this.password);
-};
+// customerSchema.pre("save", async function () {
+//   const salt = await bcrypt.genSalt(10);
+//   this.password = await bcrypt.hash(this.password, salt);
+// });
+// customerSchema.methods.checkPassword = async function (pass) {
+//   return await bcrypt.compare(pass, this.password);
+// };
 
 customerSchema.methods.getJsonWebToken = function () {
   let token = jwt.sign(

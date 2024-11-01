@@ -17,7 +17,7 @@ const invoiceSchema = new Schema({
   qpay_invoice_id: String,
   status: {
     type: String,
-    enum: ["pending", "paid"],
+    enum: ["pending", "paid", "expired"],
     default: "pending",
   },
   createdAt: {

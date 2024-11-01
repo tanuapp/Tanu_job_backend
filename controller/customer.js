@@ -25,10 +25,16 @@ exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
       user: req.userId,
     }).populate({
       path: "schedule", // First, populate the 'schedule' field
-      populate: {
-        path: "serviceId", // Then, populate the 'service' field within 'schedule'
-        model: "Service", // Make sure to specify the correct model name
-      },
+      populate: [
+        {
+          path: "serviceId",
+          model: "Service",
+        },
+        {
+          path: "artistId",
+          model: "Artist", // Specify the model name for 'artistId'
+        },
+      ],
     });
 
     res.status(200).json({
@@ -123,9 +129,35 @@ exports.getMe = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.customerUpdateTheirOwnInformation = asyncHandler(
+  async (req, res, next) => {
+    console.log(req.body);
+    console.log("Ghfg");
+    try {
+      if (req.userId != req.params.id) {
+        return res.status(401).json({
+          success: false,
+          msg: "Та зөвхөн өөрийн мэдээллийг өөрчлөж болно",
+        });
+      }
+      const old = await User.findById(req.params.id);
+      const data = await User.findByIdAndUpdate(req.params.id, {
+        ...req.body,
+        photo: req.file ? req.file.filename : old.photo,
+      });
+      return res.status(200).json({
+        success: true,
+        data,
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+
 exports.create = asyncHandler(async (req, res, next) => {
   try {
-    const { isEmail, pin, phone, email } = req.body;
+    var { pin, phone } = req.body;
 
     if (!pin) {
       return res.status(400).json({
@@ -135,23 +167,23 @@ exports.create = asyncHandler(async (req, res, next) => {
     }
 
     const existingUser = await User.findOne({ phone });
-    const existingEmail = await User.findOne({ email });
+    // const existingEmail = await User.findOne({ email });
 
-    if (existingUser && !isEmail) {
+    if (existingUser) {
       return res.status(400).json({
         success: false,
         error: "Утасны дугаар бүртгэлтэй байна",
       });
     }
 
-    if (existingEmail && isEmail) {
-      return res.status(400).json({
-        success: false,
-        error: "И-мэйл бүртгэлтэй байна",
-      });
-    }
+    // if (existingEmail && isEmail) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     error: "И-мэйл бүртгэлтэй байна",
+    //   });
+    // }
 
-    if (email || phone) {
+    if (phone) {
       const inputData = {
         ...req.body,
         photo: req.file ? req.file.filename : "no-img.png",
@@ -176,8 +208,8 @@ exports.create = asyncHandler(async (req, res, next) => {
 
 exports.updateUserFCM = asyncHandler(async (req, res, next) => {
   try {
-    const { user, token } = req.body;
-    const userFind = await User.findById(user);
+    const { token } = req.body;
+    const userFind = await User.findById(req.userId);
 
     userFind.firebase_token = token;
     await userFind.save();
@@ -192,7 +224,7 @@ exports.updateUserFCM = asyncHandler(async (req, res, next) => {
 
 exports.Login = asyncHandler(async (req, res, next) => {
   try {
-    const { phone, email, isEmail, pin, password } = req.body;
+    const { phone, email, isEmail, pin } = req.body;
 
     if (!pin) {
       return res.status(400).json({

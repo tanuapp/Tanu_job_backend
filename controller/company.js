@@ -7,8 +7,12 @@ const Service = require("../models/service");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    const categories = await Model.find().populate("area").populate("subDistrict").populate("district")
-    const total = await Model.countDocuments();
+
+    const categories = await Model.find()
+      .populate("area")
+      .populate("district")
+      .populate("subDistrict");
+   const total = await Model.countDocuments();
     res.status(200).json({
       success: true,
       count: total,
