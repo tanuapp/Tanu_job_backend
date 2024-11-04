@@ -1,6 +1,10 @@
 const Model = require("../models/appointment");
 const Appointment = require("../models/appointment");
+// consrt
 const Schedule = require("../models/schedule");
+const User = require("../models/customer");
+const Dayoff = require("../models/dayoff");
+
 const asyncHandler = require("../middleware/asyncHandler");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
@@ -11,6 +15,32 @@ exports.getAll = asyncHandler(async (req, res, next) => {
       success: true,
       count: total,
       data: allUser,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+exports.declineAppointment = asyncHandler(async (req, res, next) => {
+  try {
+    const decline = await Model.findById(req.params.id);
+    if (decline.status == false) {
+      res.status(400).json({
+        success: false,
+        msg: "Таны захиалга баталгаажаагүй байна",
+      });
+    }
+    decline.status = false;
+    await decline.save();
+    const user = await User.findById(decline.user);
+    user.coupon++;
+    await user.save();
+
+    const total = await Model.countDocuments();
+    res.status(200).json({
+      success: true,
+      count: total,
+      data: "Амжилттай цуцлалаа",
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -74,10 +104,21 @@ exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
   try {
     const { date, service } = req.body;
 
+    // Get all DayOffs for the provided date
+    const dayOffs = await Dayoff.find({ date });
+
+    // Extract artist IDs and schedules from DayOffs
+    const dayOffArtistIds = dayOffs.map((dayOff) => String(dayOff.artistId));
+    const dayOffSchedules = dayOffs.flatMap((dayOff) =>
+      dayOff.schedule.map((scheduleId) => String(scheduleId))
+    );
+
+    // Find the selected day of the week
     const selectedDayOfWeek = new Date(date).toLocaleDateString("mn-MN", {
       weekday: "long",
     });
 
+    // Fetch schedules for the selected day of the week and the specified service
     const schedules = await Schedule.find({
       day_of_the_week: selectedDayOfWeek,
       serviceId: service,
@@ -85,13 +126,13 @@ exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
       .populate("artistId")
       .populate("serviceId");
 
-    console.log(schedules);
-
+    // Fetch appointments for the date
     const appointments = await Appointment.find({
       date: date,
       status: true,
     });
 
+    // If there are no schedules, return an empty array
     if (!schedules || schedules.length === 0) {
       return res.status(200).json({
         success: true,
@@ -99,11 +140,16 @@ exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
       });
     }
 
+    // Filter schedules to exclude those with DayOff or booked appointments
     const availableSchedules = schedules.filter((schedule) => {
+      const isArtistDayOff = dayOffArtistIds.includes(
+        String(schedule.artistId._id)
+      );
+      const isScheduleDayOff = dayOffSchedules.includes(String(schedule._id));
       const isBooked = appointments.some(
         (appointment) => String(appointment.schedule) === String(schedule._id)
       );
-      return !isBooked;
+      return !isArtistDayOff && !isScheduleDayOff && !isBooked;
     });
 
     res.status(200).json({

@@ -9,8 +9,8 @@ const router = express.Router();
 
 router
   .route("/")
-  .post(saveCompany)
+  .post(protect, saveCompany)
   .get(protect, getUserSavedCompany)
-  .put(removeCompany);
+  .put(protect, removeCompany);
 
 module.exports = router;

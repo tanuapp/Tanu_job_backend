@@ -1,6 +1,7 @@
 const Model = require("../models/company");
 const asyncHandler = require("../middleware/asyncHandler");
 const Artist = require("../models/artist");
+const Fav = require("../models/favourite");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -8,11 +9,23 @@ exports.getAll = asyncHandler(async (req, res, next) => {
       .populate("area")
       .populate("district")
       .populate("subDistrict");
+
+    const allUser = await Fav.find({ user: req.userId });
+
+    // Create a Set of company IDs for faster lookup
+    const savedCompanyIds = new Set(allUser.map((el) => el.company.toString()));
+
+    // Map over categories and add isSaved property based on savedCompanyIds
+    const savedState = categories.map((list) => ({
+      ...list.toObject(),
+      isSaved: savedCompanyIds.has(list._id.toString()),
+    }));
+
     const total = await Model.countDocuments();
     res.status(200).json({
       success: true,
       count: total,
-      data: categories,
+      data: savedState,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

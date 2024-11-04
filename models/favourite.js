@@ -7,7 +7,7 @@ const FavouriteSchema = new mongoose.Schema({
     ref: "Customer",
   },
   company: {
-    type: [mongoose.Types.ObjectId],
+    type: mongoose.Types.ObjectId,
     ref: "Company",
     default: [],
   },
