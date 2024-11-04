@@ -25,7 +25,7 @@ router.route("/getMe").get(getMe);
 router.route("/fcm").post(updateUserFCM);
 router.route("/notification/mass").post(sendMassNotification);
 router.route("/login").post(Login);
-router.route("/").post(upload.single("file"), create).get(getAll);
+router.route("/").post(upload.single("file"), create).get(protect, getAll);
 
 router
   .route("/:id")
