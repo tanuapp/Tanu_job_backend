@@ -7,12 +7,27 @@ const Service = require("../models/service");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    const categories = await Model.find().populate("area").populate("subDistrict").populate("district")
+    const categories = await Model.find()
+      .populate("area")
+      .populate("district")
+      .populate("subDistrict");
+
+    const allUser = await Fav.find({ user: req.userId });
+
+    // Create a Set of company IDs for faster lookup
+    const savedCompanyIds = new Set(allUser.map((el) => el.company.toString()));
+
+    // Map over categories and add isSaved property based on savedCompanyIds
+    const savedState = categories.map((list) => ({
+      ...list.toObject(),
+      isSaved: savedCompanyIds.has(list._id.toString()),
+    }));
+
     const total = await Model.countDocuments();
     res.status(200).json({
       success: true,
       count: total,
-      data: categories,
+      data: savedState,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -58,9 +73,9 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
       success: true,
       artist: artistList,
       company,
-      banner : BannerList,
-      dayoff : DayoffList,
-      service : ServiceList
+      banner: BannerList,
+      dayoff: DayoffList,
+      service: ServiceList,
     });
     const data = await Model.find();
 
@@ -73,7 +88,6 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-
 
 exports.createModel = asyncHandler(async (req, res, next) => {
   try {
@@ -141,7 +155,7 @@ exports.get = asyncHandler(async (req, res, next) => {
   }
 });
 
-exports.deleteModel = async function deleteUser(req, res, next) {
+exports.deleteModel = asyncHandler(async (req, res, next) => {
   try {
     const deletePost = await Model.findByIdAndDelete(req.params.id, {
       new: true,
@@ -154,4 +168,4 @@ exports.deleteModel = async function deleteUser(req, res, next) {
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
-};
+});

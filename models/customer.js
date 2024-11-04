@@ -8,9 +8,6 @@ const customerSchema = new Schema({
     type: String,
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
-  // password: {
-  //   type: String,
-  // },
   photo: String,
   pin: String,
   status: {
@@ -22,6 +19,10 @@ const customerSchema = new Schema({
   last_name: String,
   verified_devices: [],
   email: String,
+  coupon: {
+    type: Number,
+    default: 0,
+  },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
   createdAt: {

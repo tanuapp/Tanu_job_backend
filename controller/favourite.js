@@ -5,7 +5,7 @@ const asyncHandler = require("../middleware/asyncHandler");
 exports.getUserSavedCompany = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await Model.find({ user: req.userId }).populate("company");
-    const total = await Model.countDocuments({ user: req.userId });
+    const total = allUser.length;
     res.status(200).json({
       success: true,
       count: total,
@@ -19,30 +19,14 @@ exports.getUserSavedCompany = asyncHandler(async (req, res, next) => {
 // Save a company to user's list
 exports.saveCompany = asyncHandler(async (req, res, next) => {
   try {
-    const result = await Model.findOne({
-      user: req.body.user,
+    const { company } = req.body;
+    let result = await Model.findOne({ user: req.userId });
+    result = await Model.create({ user: req.userId, company: company });
+
+    res.status(200).json({
+      success: true,
+      data: result,
     });
-
-    if (!result) {
-      const newEntry = await Model.create({
-        user: req.body.user,
-        company: [req.body.company],
-      });
-      res.status(200).json({
-        success: true,
-        data: newEntry,
-      });
-    } else {
-      if (!result.company.includes(req.body.company)) {
-        result.company.push(req.body.company); // Add the company if it's not already in the list
-        await result.save();
-      }
-
-      res.status(200).json({
-        success: true,
-        data: result,
-      });
-    }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -51,25 +35,31 @@ exports.saveCompany = asyncHandler(async (req, res, next) => {
 // Remove a company from user's list
 exports.removeCompany = asyncHandler(async (req, res, next) => {
   try {
-    const result = await Model.findOne({
-      user: req.body.user,
-    });
+    const { user, company } = req.body;
+    const result = await Model.findOne({ user });
 
     if (!result) {
-      res.status(404).json({
+      return res.status(404).json({
         success: false,
         message: "No entry found for this user",
       });
-    } else {
+    }
+
+    // Check and remove the company from the list if it exists
+    if (result.company.includes(company)) {
       result.company = result.company.filter(
-        (list) => list != req.body.company
-      ); // Remove the company from the array
+        (comp) => comp.toString() !== company
+      );
+      await result.save();
 
-      await result.save(); // Ensure `.save()` is called correctly
-
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: result,
+      });
+    } else {
+      return res.status(404).json({
+        success: false,
+        message: "Company not found in user's list",
       });
     }
   } catch (error) {
