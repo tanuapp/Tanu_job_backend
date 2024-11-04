@@ -4,6 +4,7 @@ const Artist = require("../models/artist");
 const Banner = require("../models/banner");
 const Dayoff = require("../models/dayoff");
 const Service = require("../models/service");
+const Fav = require("../models/favourite");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
