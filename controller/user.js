@@ -129,49 +129,20 @@ exports.get = asyncHandler(async (req, res, next) => {
     const company = await Company.findOne({
       companyOwner: req.params.id,
     });
-  
-    const data = {
-      ...allText.toObject(), // Use toObject() to avoid Mongoose document in JSON response
+
+  const data = {
+    ...allText,
+    company
+  }
+    return res.status(200).json({
+      success: true,
+      data: allText,
       company,
-    };
-  
-    return res.status(200).json({
-      success: true,
-      data,
-      company, // No need to add `company` separately; it's already included in `data`
-    });
-  } catch (error) {
-    customResponse.server(res, error.message);
-  }
-  
-});
-
-exports.getdd = asyncHandler(async (req, res, next) => {
-  try {
-    const allText = await User.find();
-
-    // Use Promise.all to wait for all async operations in map
-    const ps = await Promise.all(
-      allText.map(async (list) => {
-        const p = await Company.findOne({
-          companyOwner: list._id
-        });
-        return {
-          ...list.toObject(),
-          company: p
-        };
-      })
-    );
-
-    return res.status(200).json({
-      success: true,
-      data: ps,
     });
   } catch (error) {
     customResponse.server(res, error.message);
   }
 });
-
 
 exports.deleteModel = async function deleteUser(req, res, next) {
   try {
