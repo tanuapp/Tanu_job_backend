@@ -32,6 +32,18 @@ exports.approve = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.get = asyncHandler(async (req, res, next) => {
+  try {
+    const p = await Model.findOne();
+    res.status(200).json({
+      success: true,
+      data: p,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 exports.reject = asyncHandler(async (req, res, next) => {
   try {
     const p = await Model.findOneAndUpdate(
