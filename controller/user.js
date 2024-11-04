@@ -146,6 +146,33 @@ exports.get = asyncHandler(async (req, res, next) => {
   
 });
 
+exports.getdd = asyncHandler(async (req, res, next) => {
+  try {
+    const allText = await User.find();
+
+    // Use Promise.all to wait for all async operations in map
+    const ps = await Promise.all(
+      allText.map(async (list) => {
+        const p = await Company.findOne({
+          companyOwner: list._id
+        });
+        return {
+          ...list.toObject(),
+          company: p
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: ps,
+    });
+  } catch (error) {
+    customResponse.server(res, error.message);
+  }
+});
+
+
 exports.deleteModel = async function deleteUser(req, res, next) {
   try {
     const deletePost = await User.findByIdAndDelete(req.params.id, {
