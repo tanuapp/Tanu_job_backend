@@ -129,14 +129,21 @@ exports.get = asyncHandler(async (req, res, next) => {
     const company = await Company.findOne({
       companyOwner: req.params.id,
     });
+  
+    const data = {
+      ...allText.toObject(), // Use toObject() to avoid Mongoose document in JSON response
+      company,
+    };
+  
     return res.status(200).json({
       success: true,
-      data: allText,
-      company,
+      data,
+      company, // No need to add `company` separately; it's already included in `data`
     });
   } catch (error) {
     customResponse.server(res, error.message);
   }
+  
 });
 
 exports.deleteModel = async function deleteUser(req, res, next) {
