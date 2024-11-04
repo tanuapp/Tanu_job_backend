@@ -9,13 +9,11 @@ const {
   get,
   getAll,
   update,
-  getdd,
 } = require("../controller/user");
 const router = express.Router();
 
 router.route("/login").post(Login);
-router.route("/").post(create).get(getdd);
-
+router.route("/").post(create).get(getAll);
 
 router
   .route("/:id")

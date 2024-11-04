@@ -7,12 +7,8 @@ const Service = require("../models/service");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-
-    const categories = await Model.find()
-      .populate("area")
-      .populate("district")
-      .populate("subDistrict");
-   const total = await Model.countDocuments();
+    const categories = await Model.find().populate("area").populate("subDistrict").populate("district")
+    const total = await Model.countDocuments();
     res.status(200).json({
       success: true,
       count: total,
@@ -43,6 +39,15 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
       companyId: req.params.id,
     });
 
+    const BannerList = await Banner.find({
+      companyId: req.params.id,
+    });
+    const DayoffList = await Dayoff.find({
+      companyId: req.params.id,
+    });
+    const ServiceList = await Service.find({
+      companyId: req.params.id,
+    });
 
     const company = await Model.findById(req.params.id)
       .populate("district")
@@ -53,7 +58,9 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
       success: true,
       artist: artistList,
       company,
-  
+      banner : BannerList,
+      dayoff : DayoffList,
+      service : ServiceList
     });
     const data = await Model.find();
 
