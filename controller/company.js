@@ -43,15 +43,6 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
       companyId: req.params.id,
     });
 
-    const BannerList = await Banner.find({
-      companyId: req.params.id,
-    });
-    const DayoffList = await Dayoff.find({
-      companyId: req.params.id,
-    });
-    const ServiceList = await Service.find({
-      companyId: req.params.id,
-    });
 
     const company = await Model.findById(req.params.id)
       .populate("district")
@@ -62,9 +53,7 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
       success: true,
       artist: artistList,
       company,
-      banner : BannerList,
-      dayoff : DayoffList,
-      service : ServiceList
+  
     });
     const data = await Model.find();
 
