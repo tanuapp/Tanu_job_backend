@@ -218,6 +218,7 @@ exports.updateUserFCM = asyncHandler(async (req, res, next) => {
       success: true,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
