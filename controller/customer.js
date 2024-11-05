@@ -209,6 +209,7 @@ exports.create = asyncHandler(async (req, res, next) => {
 exports.updateUserFCM = asyncHandler(async (req, res, next) => {
   try {
     const { token } = req.body;
+    console.log(token);
     const userFind = await User.findById(req.userId);
 
     userFind.firebase_token = token;
