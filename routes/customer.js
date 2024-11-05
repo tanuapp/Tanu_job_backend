@@ -22,7 +22,7 @@ router
   .route("/updateOwn/:id")
   .put(upload.single("file"), protect, customerUpdateTheirOwnInformation);
 router.route("/getMe").get(getMe);
-router.route("/fcm").post(updateUserFCM);
+router.route("/fcm").post(protect, updateUserFCM);
 router.route("/notification/mass").post(sendMassNotification);
 router.route("/login").post(Login);
 router.route("/").post(upload.single("file"), create).get(protect, getAll);
