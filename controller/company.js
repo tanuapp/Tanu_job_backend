@@ -64,36 +64,35 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
     const ServiceList = await Service.find({
       companyId: req.params.id,
     });
-    const allUser = await Fav.find({ user: req.userId });
+    const allUser = await Fav.findOne({ user: req.userId  , company:req.params.id });
     const company = await Model.findById(req.params.id)
       .populate("district")
       .populate("subDistrict")
       .populate("area");
-    const savedCompanyIds = new Set(allUser.map((el) => el.company.toString()));
-
-    if (company) {
-      company.isSaved = savedCompanyIds.has(company._id.toString());
+    const comp = {
+      ...company.toObject(),
+      isSaved: allUser ? true: false
     }
 
 
-    res.status(200).json({
-      success: true,
-      artist: artistList,
-      company,
-      banner: BannerList,
-      dayoff: DayoffList,
-      service: ServiceList,
-    });
-    const data = await Model.find();
+res.status(200).json({
+  success: true,
+  artist: artistList,
+  company:comp,
+  banner: BannerList,
+  dayoff: DayoffList,
+  service: ServiceList,
+});
+const data = await Model.find();
 
-    res.status(200).json({
-      success: true,
-      data,
-    });
+res.status(200).json({
+  success: true,
+  data,
+});
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ success: false, error: error.message });
-  }
+  console.log(error);
+  res.status(500).json({ success: false, error: error.message });
+}
 });
 
 exports.createModel = asyncHandler(async (req, res, next) => {
