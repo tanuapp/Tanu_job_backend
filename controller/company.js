@@ -64,11 +64,17 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
     const ServiceList = await Service.find({
       companyId: req.params.id,
     });
-
+    const allUser = await Fav.find({ user: req.userId });
     const company = await Model.findById(req.params.id)
       .populate("district")
       .populate("subDistrict")
       .populate("area");
+    const savedCompanyIds = new Set(allUser.map((el) => el.company.toString()));
+
+    if (company) {
+      company.isSaved = savedCompanyIds.has(company._id.toString());
+    }
+
 
     res.status(200).json({
       success: true,
