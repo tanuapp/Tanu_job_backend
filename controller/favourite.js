@@ -1,18 +1,34 @@
 const Model = require("../models/favourite");
 const asyncHandler = require("../middleware/asyncHandler");
 
-// Get all saved companies for the user
+
 exports.getUserSavedCompany = asyncHandler(async (req, res, next) => {
   try {
-    const allUser = await Model.find({ user: req.userId }).populate("company");
-    const total = allUser.length;
-    res.status(200).json({
+    const savedCompanies = await Model.find({ user: req.userId })
+      .populate({
+        path: 'company',
+        populate: {
+          path: 'category'
+        }
+      })
+      .lean();
+    const formattedCompanies = savedCompanies.map(saved => ({
+      ...saved.company,
+      isSaved: true
+    }));
+
+    return res.status(200).json({
       success: true,
-      count: total,
-      data: allUser,
+      data: formattedCompanies,
+      total: formattedCompanies.length
     });
+
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Error fetching saved companies:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching saved companies'
+    });
   }
 });
 
