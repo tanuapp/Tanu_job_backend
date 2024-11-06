@@ -7,7 +7,8 @@ const connectDB = require("./db");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
 const cron = require("node-cron");
-var serviceAccount = require("./order-app-52b91-firebase-adminsdk-auvl0-5dcc4e420b.json");
+const path = require("path");
+var serviceAccount = require("./tanu-app-928a8-firebase-adminsdk-mrr1i-28babc6869.json");
 
 // AWS SECRET for firebase json
 const AWS = require("aws-sdk");
@@ -41,6 +42,7 @@ const direct_paymentRoute = require("./routes/direct_payment.js");
 const favRoute = require("./routes/favourite.js");
 const journalRoute = require("./routes/journal.js");
 const rejectRoute = require("./routes/reject.js");
+const notRoute = require("./routes/notification.js");
 
 //Server configuration for socket
 const app = express();
@@ -77,25 +79,14 @@ AWS.config.update({
   },
 });
 
-const secretsManager = new AWS.SecretsManager();
-const secret_name = "tanu/order";
-
 //FIREBASE
 async function initializeFirebase() {
   try {
-    const data = await secretsManager
-      .getSecretValue({ SecretId: secret_name })
-      .promise();
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
 
-    if (data.SecretString) {
-      // const serviceAccount = JSON.parse(data.SecretString);
-
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-
-      console.log("Firebase initialized successfully");
-    }
+    console.log("Firebase initialized successfully");
   } catch (err) {
     console.error("Error retrieving secret or initializing Firebase:", err);
   }
@@ -123,6 +114,7 @@ app.use("/api/v1/calendar", calendarRoutes);
 app.use("/api/v1/favourite", favRoute);
 app.use("/api/v1/journal", journalRoute);
 app.use("/api/v1/reject", rejectRoute);
+app.use("/api/v1/notification", notRoute);
 
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));
