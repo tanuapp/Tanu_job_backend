@@ -7,13 +7,12 @@ exports.getUserSavedCompany = asyncHandler(async (req, res, next) => {
     const savedCompanies = await Model.find({ user: req.userId })
       .populate({
         path: 'company',
-        populate: {
-          path: 'category'
-        }
       })
       .lean();
+
     const formattedCompanies = savedCompanies.map(saved => ({
       ...saved.company,
+      category: saved.company.category.map(cat => cat.toString()), 
       isSaved: true
     }));
 
@@ -31,6 +30,7 @@ exports.getUserSavedCompany = asyncHandler(async (req, res, next) => {
     });
   }
 });
+
 
 // Save a company to user's list
 exports.saveCompany = asyncHandler(async (req, res, next) => {
