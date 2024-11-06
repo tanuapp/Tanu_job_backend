@@ -14,6 +14,10 @@ const customerSchema = new Schema({
     type: Boolean,
     default: true,
   },
+  isAndroid: {
+    type: Boolean,
+    default: false,
+  },
   firebase_token: String,
   first_name: String,
   last_name: String,

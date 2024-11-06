@@ -48,8 +48,8 @@ exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
 
 exports.sendMassNotification = asyncHandler(async (req, res, next) => {
   try {
-    const users = await User.findOne(); // Fetch all users
-    const { title, body } = req.body; // Destructure title and body from request
+    const users = await User.findOne();
+    const { title, body } = req.body;
 
     if (!title || !body) {
       return res.status(400).json({
@@ -58,35 +58,21 @@ exports.sendMassNotification = asyncHandler(async (req, res, next) => {
       });
     }
 
-    // Filter users who have a valid Firebase token
-    const validUsers = users.filter((user) => user.firebase_token);
-
     // Map and send notifications asynchronously
     // const sendNotifications = validUsers.map(async (user) => {
-    //   const message = {
-    //     notification: {
-    //       title: title,
-    //       body: body,
-    //     },
-    //     token: user.firebase_token, // The device token
-    //   };
+    const message = {
+      notification: {
+        title: title,
+        body: body,
+      },
+      token:
+        "eeIlu0eZQ42PsuQjv9kQka:APA91bHnZ9T-2nN7kaDGDqWJPX_29uUJ7KQD4-nWHnT8XGkObwUCVaTZ0jrjRI2Eb9wcbUnGEw146nTO-tEESEiNeQCgItWDOi1ledA5YFSwCtrZa3FtwM8", // The device token
+    };
     //   console.log(message);
     //   return getMessaging().send(message);
     // });
 
-    const sendMsg = () => {
-      const message = {
-        notification: {
-          title: title,
-          body: body,
-        },
-        token: users.firebase_token,
-      };
-      return getMessaging().send(message);
-    };
-
-    // Wait for all notifications to be sent
-    await Promise.all(sendMsg);
+    getMessaging().send(message);
 
     res.status(200).json({
       success: true,
@@ -208,11 +194,12 @@ exports.create = asyncHandler(async (req, res, next) => {
 
 exports.updateUserFCM = asyncHandler(async (req, res, next) => {
   try {
-    const { token } = req.body;
+    const { token, isAndroid } = req.body;
     console.log(token);
     const userFind = await User.findById(req.userId);
 
     userFind.firebase_token = token;
+    userFind.isAndroid = isAndroid;
     await userFind.save();
 
     res.status(200).json({
