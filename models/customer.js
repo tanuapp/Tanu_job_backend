@@ -6,6 +6,7 @@ const { Schema } = mongoose;
 const customerSchema = new Schema({
   phone: {
     type: String,
+    unique: true,
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
   photo: String,
@@ -22,7 +23,10 @@ const customerSchema = new Schema({
   first_name: String,
   last_name: String,
   verified_devices: [],
-  email: String,
+  email: {
+    type: String,
+    unique: true,
+  },
   coupon: {
     type: Number,
     default: 0,
@@ -35,13 +39,13 @@ const customerSchema = new Schema({
   },
 });
 
-// customerSchema.pre("save", async function () {
-//   const salt = await bcrypt.genSalt(10);
-//   this.password = await bcrypt.hash(this.password, salt);
-// });
-// customerSchema.methods.checkPassword = async function (pass) {
-//   return await bcrypt.compare(pass, this.password);
-// };
+customerSchema.pre("save", async function () {
+  const salt = await bcrypt.genSalt(10);
+  this.pin = await bcrypt.hash(this.pin, salt);
+});
+customerSchema.methods.checkPassword = async function (pin) {
+  return await bcrypt.compare(pin, this.pin);
+};
 
 customerSchema.methods.getJsonWebToken = function () {
   let token = jwt.sign(
