@@ -77,8 +77,13 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
       .populate("subDistrict")
       .populate("area")
       .populate("category");
+
+    const company1 = await Model.findById(req.params.id)
+      .populate("district")
+      .populate("subDistrict")
+      .populate("area");
     const comp = {
-      ...company.toObject(),
+      ...company1.toObject(),
       isSaved: allUser ? true : false,
     };
 
@@ -87,6 +92,7 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
       artist: artistList,
       appointment: appointmentList,
       company: comp,
+      categories: company.category,
       banner: BannerList,
       dayoff: DayoffList,
       service: ServiceList,
