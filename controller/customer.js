@@ -2,8 +2,23 @@ const User = require("../models/customer");
 const Appointment = require("../models/appointment");
 const asyncHandler = require("../middleware/asyncHandler");
 const jwt = require("jsonwebtoken");
-const admin = require("../server");
-const { getMessaging } = require("firebase-admin/messaging");
+// const admin = require("../server");
+const sendMessage = require("../utils/callpro");
+// const { generateOTP } = require("../utils/otpGenerator");
+// const { getMessaging } = require("firebase-admin/messaging");
+
+const OTP = require("../models/otp");
+
+function generateOTP(length = 4) {
+  let otp = "";
+  const characters = "0123456789";
+
+  for (let i = 0; i < length; i++) {
+    otp += characters[Math.floor(Math.random() * characters.length)];
+  }
+
+  return otp;
+}
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -43,43 +58,6 @@ exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-exports.sendMassNotification = asyncHandler(async (req, res, next) => {
-  try {
-    const users = await User.findOne();
-    const { title, body } = req.body;
-
-    if (!title || !body) {
-      return res.status(400).json({
-        success: false,
-        msg: "Title and body are required",
-      });
-    }
-
-    // Map and send notifications asynchronously
-    // const sendNotifications = validUsers.map(async (user) => {
-    const message = {
-      notification: {
-        title: title,
-        body: body,
-      },
-      token:
-        "eeIlu0eZQ42PsuQjv9kQka:APA91bHnZ9T-2nN7kaDGDqWJPX_29uUJ7KQD4-nWHnT8XGkObwUCVaTZ0jrjRI2Eb9wcbUnGEw146nTO-tEESEiNeQCgItWDOi1ledA5YFSwCtrZa3FtwM8", // The device token
-    };
-    //   console.log(message);
-    //   return getMessaging().send(message);
-    // });
-
-    getMessaging().send(message);
-
-    res.status(200).json({
-      success: true,
-      msg: "Notifications sent successfully",
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error });
   }
 });
 
@@ -141,9 +119,10 @@ exports.customerUpdateTheirOwnInformation = asyncHandler(
   }
 );
 
-exports.create = asyncHandler(async (req, res, next) => {
+// Registration endpoint
+exports.register = asyncHandler(async (req, res, next) => {
   try {
-    var { pin, phone } = req.body;
+    const { pin, phone } = req.body;
 
     if (!pin) {
       return res.status(400).json({
@@ -153,7 +132,6 @@ exports.create = asyncHandler(async (req, res, next) => {
     }
 
     const existingUser = await User.findOne({ phone });
-    // const existingEmail = await User.findOne({ email });
 
     if (existingUser) {
       return res.status(400).json({
@@ -161,32 +139,127 @@ exports.create = asyncHandler(async (req, res, next) => {
         error: "Утасны дугаар бүртгэлтэй байна",
       });
     }
+    console.log(req.body);
+    const inputData = {
+      ...req.body,
+      photo: req.file ? req.file.filename : "no-img.png",
+    };
+    const user = await User.create(inputData);
 
-    // if (existingEmail && isEmail) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     error: "И-мэйл бүртгэлтэй байна",
-    //   });
-    // }
+    // Generate OTP and save it in the database
+    const otp = generateOTP();
+    await OTP.create({
+      otp,
+      customer: user._id,
+    });
 
-    if (phone) {
-      const inputData = {
-        ...req.body,
-        photo: req.file ? req.file.filename : "no-img.png",
-      };
-      const user = await User.create(inputData);
-      const token = user.getJsonWebToken();
-      res.status(200).json({
-        success: true,
-        token,
-        data: user,
-      });
-    } else {
-      res.status(400).json({
+    // Send OTP to the user's phone
+    console.log(phone);
+    await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
+
+    return res.status(200).json({
+      success: true,
+      msg: "Бүртгэл амжилттай. Нэг удаагийн нууц үг илгээгдлээ",
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// OTP verification endpoint
+exports.registerVerify = asyncHandler(async (req, res, next) => {
+  try {
+    const { otp, phone } = req.body;
+
+    const existingUser = await User.findOne({ phone });
+
+    if (!existingUser) {
+      return res.status(400).json({
         success: false,
-        msg: "Имейл эсвэл утасны дугаар оруулж өгнө үү",
+        error: "Утасны дугаар бүртгэлгүй байна",
       });
     }
+
+    const userOtp = await OTP.findOne({
+      customer: existingUser._id,
+    });
+
+    if (!userOtp) {
+      return res.status(400).json({
+        success: false,
+        msg: "OTP not found. Please request a new one.",
+      });
+    }
+
+    // Correct OTP comparison
+    if (otp !== userOtp.otp) {
+      return res.status(400).json({
+        success: false,
+        msg: "Буруу нэг удаагийн нууц үг",
+      });
+    }
+
+    // If OTP is correct, generate JWT token
+    const token = existingUser.getJsonWebToken();
+
+    // Optionally, delete the OTP after successful verification
+    await OTP.deleteOne({ customer: existingUser._id });
+
+    return res.status(200).json({
+      success: true,
+      token,
+      data: existingUser,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+});
+exports.Login = asyncHandler(async (req, res, next) => {
+  try {
+    const { phone, email, isEmail, pin } = req.body;
+
+    if (!pin) {
+      return res.status(400).json({
+        success: false,
+        message: "PIN кодоо оруулна уу",
+      });
+    }
+
+    let user;
+
+    if (isEmail) {
+      user = await User.findOne({ email }).select("+pin");
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "Имейл бүртгэлгүй байна",
+        });
+      }
+    } else {
+      user = await User.findOne({ phone }).select("+pin");
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "Утасны дугаар бүртгэлгүй байна",
+        });
+      }
+    }
+
+    // Check if PIN matches
+    const isMatch = await user.checkPassword(pin);
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        msg: "Нэвтрэх нэр эсвэл нууц үг буруу байна!",
+      });
+    }
+
+    const token = user.getJsonWebToken();
+    res.status(200).json({
+      success: true,
+      token,
+      data: user,
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -207,55 +280,6 @@ exports.updateUserFCM = asyncHandler(async (req, res, next) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-exports.Login = asyncHandler(async (req, res, next) => {
-  try {
-    const { phone, email, isEmail, pin } = req.body;
-
-    if (!pin) {
-      return res.status(400).json({
-        success: false,
-        message: "PIN кодоо оруулна уу",
-      });
-    }
-
-    let user;
-
-    if (isEmail) {
-      user = await User.findOne({ email }).select("+password");
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "Имейл бүртгэлгүй байна",
-        });
-      }
-    } else {
-      user = await User.findOne({ phone }).select("+password");
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "Утасны дугаар бүртгэлгүй байна",
-        });
-      }
-    }
-
-    if (!user.pin == pin) {
-      return res.status(400).json({
-        success: false,
-        msg: "Нэвтрэх нэр эсвэл нууц үг буруу байна!",
-      });
-    }
-
-    const token = user.getJsonWebToken();
-    res.status(200).json({
-      success: true,
-      token,
-      data: user,
-    });
-  } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });

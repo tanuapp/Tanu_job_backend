@@ -4,11 +4,11 @@ const { protect } = require("../middleware/protect");
 const { authorize } = require("../middleware/protect");
 const {
   Login,
-  create,
+  register,
+  registerVerify,
   deleteModel,
   get,
   getAll,
-  sendMassNotification,
   customerUpdateTheirOwnInformation,
   update,
   getMe,
@@ -23,9 +23,10 @@ router
   .put(upload.single("file"), protect, customerUpdateTheirOwnInformation);
 router.route("/getMe").get(getMe);
 router.route("/fcm").post(protect, updateUserFCM);
-router.route("/notification/mass").post(sendMassNotification);
 router.route("/login").post(Login);
-router.route("/").post(upload.single("file"), create).get(protect, getAll);
+router.route("/register").post(register);
+router.route("/register-verify").post(registerVerify);
+router.route("/").get(protect, getAll);
 
 router
   .route("/:id")
