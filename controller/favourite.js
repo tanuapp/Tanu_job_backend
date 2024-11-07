@@ -1,36 +1,62 @@
 const Model = require("../models/favourite");
 const asyncHandler = require("../middleware/asyncHandler");
 
-// Get all saved companies for the user
+
 exports.getUserSavedCompany = asyncHandler(async (req, res, next) => {
   try {
-    const allUser = await Model.find({ user: req.userId }).populate("company");
-    const total = allUser.length;
-    res.status(200).json({
+    const savedCompanies = await Model.find({ user: req.userId })
+      .populate({
+        path: 'company',
+      })
+      .lean();
+
+    const formattedCompanies = savedCompanies.map(saved => ({
+      ...saved.company,
+      category: saved.company.category.map(cat => cat.toString()),
+      isSaved: true
+    }));
+
+    return res.status(200).json({
       success: true,
-      count: total,
-      data: allUser,
+      data: formattedCompanies,
+      total: formattedCompanies.length
     });
+
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Error fetching saved companies:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching saved companies'
+    });
   }
 });
+
 
 // Save a company to user's list
 exports.saveCompany = asyncHandler(async (req, res, next) => {
   try {
     const { company } = req.body;
-    let result = await Model.findOne({ user: req.userId });
-    result = await Model.create({ user: req.userId, company: company });
+    let existingFavorite = await Model.findOne({ user: req.userId, company });
 
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
+    if (existingFavorite) {
+      await Model.deleteOne({ user: req.userId, company });
+      return res.status(200).json({
+        success: true,
+        message: 'Company removed from favorites',
+      });
+    } else {
+      const newFavorite = await Model.create({ user: req.userId, company });
+      return res.status(200).json({
+        success: true,
+        message: 'Company added to favorites',
+        data: newFavorite,
+      });
+    }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
 
 // Remove a company from user's list
 exports.removeCompany = asyncHandler(async (req, res, next) => {
