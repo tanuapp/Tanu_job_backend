@@ -4,6 +4,7 @@ const Artist = require("../models/artist");
 const Banner = require("../models/banner");
 const Dayoff = require("../models/dayoff");
 const Service = require("../models/service");
+const Appointment = require("../models/appointment");
 const Fav = require("../models/favourite");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
@@ -54,6 +55,9 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
     const artistList = await Artist.find({
       companyId: req.params.id,
     });
+    const appointmentList = await Appointment.find({
+      companyId: req.params.id,
+    });
 
     const BannerList = await Banner.find({
       companyId: req.params.id,
@@ -78,6 +82,7 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
 res.status(200).json({
   success: true,
   artist: artistList,
+  appointment: appointmentList,
   company:comp,
   banner: BannerList,
   dayoff: DayoffList,
