@@ -12,8 +12,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
     const categories = await Model.find()
       .populate("area")
       .populate("district")
-      .populate("subDistrict")
-      .populate("category")
+      .populate("subDistrict");
 
     const allUser = await Fav.find({ user: req.userId });
 
@@ -69,36 +68,39 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
     const ServiceList = await Service.find({
       companyId: req.params.id,
     });
-    const allUser = await Fav.findOne({ user: req.userId  , company:req.params.id });
+    const allUser = await Fav.findOne({
+      user: req.userId,
+      company: req.params.id,
+    });
     const company = await Model.findById(req.params.id)
       .populate("district")
       .populate("subDistrict")
-      .populate("area").populate("category")
+      .populate("area")
+      .populate("category");
     const comp = {
       ...company.toObject(),
-      isSaved: allUser ? true: false
-    }
+      isSaved: allUser ? true : false,
+    };
 
+    res.status(200).json({
+      success: true,
+      artist: artistList,
+      appointment: appointmentList,
+      company: comp,
+      banner: BannerList,
+      dayoff: DayoffList,
+      service: ServiceList,
+    });
+    const data = await Model.find();
 
-res.status(200).json({
-  success: true,
-  artist: artistList,
-  appointment: appointmentList,
-  company:comp,
-  banner: BannerList,
-  dayoff: DayoffList,
-  service: ServiceList,
-});
-const data = await Model.find();
-
-res.status(200).json({
-  success: true,
-  data,
-});
+    res.status(200).json({
+      success: true,
+      data,
+    });
   } catch (error) {
-  console.log(error);
-  res.status(500).json({ success: false, error: error.message });
-}
+    console.log(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 exports.createModel = asyncHandler(async (req, res, next) => {
