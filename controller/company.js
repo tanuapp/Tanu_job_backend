@@ -16,13 +16,14 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 
     const allUser = await Fav.find({ user: req.userId });
 
-    // Create a Set of company IDs for faster lookup
-    const savedCompanyIds = new Set(allUser.map((el) => el.company.toString()));
+    console.log(allUser);
 
-    // Map over categories and add isSaved property based on savedCompanyIds
+    // Create a Set of company IDs for faster lookup
+    const savedCompanyIds = allUser.map((el) => el.company.toString());
+
     const savedState = categories.map((list) => ({
       ...list.toObject(),
-      isSaved: savedCompanyIds.has(list._id.toString()),
+      isSaved: savedCompanyIds.includes(list._id.toString()),
     }));
 
     const total = await Model.countDocuments();

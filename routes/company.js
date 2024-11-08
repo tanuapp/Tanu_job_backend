@@ -25,7 +25,7 @@ router
     ]),
     createModel
   )
-  .get(getAll);
+  .get(protect, getAll);
 
 router
   .route("/:id")
@@ -42,6 +42,6 @@ router
     // isActive && protect, isActive && authorize("admin"),
     deleteModel
   )
-  .get(getCompanyPopulate)
+  .get(getCompanyPopulate);
 
 module.exports = router;

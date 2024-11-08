@@ -43,6 +43,7 @@ customerSchema.pre("save", async function () {
   const salt = await bcrypt.genSalt(10);
   this.pin = await bcrypt.hash(this.pin, salt);
 });
+
 customerSchema.methods.checkPassword = async function (pin) {
   return await bcrypt.compare(pin, this.pin);
 };

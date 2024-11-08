@@ -7,12 +7,10 @@ const notificationSchema = new Schema({
     required: true,
   },
   title: String,
-  desc: String,
 
-  status: {
-    type: String,
-    enum: ["read", "unread"],
-    default: "unread",
+  user: {
+    type: mongoose.Types.ObjectId,
+    ref: "Customer",
   },
   createdAt: {
     type: Date,

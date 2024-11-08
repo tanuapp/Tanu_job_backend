@@ -227,7 +227,7 @@ exports.Login = asyncHandler(async (req, res, next) => {
 
     let user;
 
-    if (isEmail) {
+    if (isEmail && email) {
       user = await User.findOne({ email }).select("+pin");
       if (!user) {
         return res.status(404).json({
