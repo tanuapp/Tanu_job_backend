@@ -95,8 +95,6 @@ exports.getMe = asyncHandler(async (req, res, next) => {
 
 exports.customerUpdateTheirOwnInformation = asyncHandler(
   async (req, res, next) => {
-    console.log(req.body);
-    console.log("Ghfg");
     try {
       if (req.userId != req.params.id) {
         return res.status(401).json({
@@ -109,9 +107,11 @@ exports.customerUpdateTheirOwnInformation = asyncHandler(
         ...req.body,
         photo: req.file ? req.file.filename : old.photo,
       });
+      const token = old.getJsonWebToken();
       return res.status(200).json({
         success: true,
         data,
+        token,
       });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
