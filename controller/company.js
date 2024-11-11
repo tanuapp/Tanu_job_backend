@@ -18,7 +18,6 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 
     console.log(allUser);
 
-    // Create a Set of company IDs for faster lookup
     const savedCompanyIds = allUser.map((el) => el.company.toString());
 
     const savedState = categories.map((list) => ({
@@ -87,18 +86,18 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
       user: req.userId,
       company: req.params.id,
     });
+
     const company = await Model.findById(req.params.id)
       .populate("district")
       .populate("subDistrict")
       .populate("area")
-      .populate("category");
+      .populate({
+        path: "category",
+        model: "Category", // Ensure this model name is correct for categories
+      });
 
-    const company1 = await Model.findById(req.params.id)
-      .populate("district")
-      .populate("subDistrict")
-      .populate("area");
     const comp = {
-      ...company1.toObject(),
+      ...company.toObject(),
       isSaved: allUser ? true : false,
     };
 
@@ -107,16 +106,10 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
       artist: artistList,
       appointment: appointmentList,
       company: comp,
-      categories: company.category,
+      categories: company.category, // Populated category data
       banner: BannerList,
       dayoff: DayoffList,
       service: ServiceList,
-    });
-    const data = await Model.find();
-
-    res.status(200).json({
-      success: true,
-      data,
     });
   } catch (error) {
     console.log(error);
