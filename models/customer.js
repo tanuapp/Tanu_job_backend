@@ -10,7 +10,10 @@ const customerSchema = new Schema({
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
   photo: String,
-  pin: String,
+  pin: {
+    type: String,
+    select: false,
+  },
   status: {
     type: Boolean,
     default: true,
@@ -25,7 +28,9 @@ const customerSchema = new Schema({
   verified_devices: [],
   email: {
     type: String,
+    index: true,
     unique: true,
+    sparse: true,
   },
   coupon: {
     type: Number,
@@ -39,31 +44,31 @@ const customerSchema = new Schema({
   },
 });
 
-customerSchema.pre("save", async function () {
+// Hash pin only if it's modified
+customerSchema.pre("save", async function (next) {
+  if (!this.isModified("pin")) return next();
   const salt = await bcrypt.genSalt(10);
   this.pin = await bcrypt.hash(this.pin, salt);
+  next();
 });
 
+// Method to check the pin
 customerSchema.methods.checkPassword = async function (pin) {
   return await bcrypt.compare(pin, this.pin);
 };
 
+// Generate JSON Web Token
 customerSchema.methods.getJsonWebToken = function () {
-  let token = jwt.sign(
-    { Id: this._id, phone: this.phone },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: process.env.JWT_EXPIREDIN,
-    }
-  );
-  return token;
+  return jwt.sign({ Id: this._id, phone: this.phone }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIREDIN,
+  });
 };
+
+// Hash pin if it's being updated
 customerSchema.pre("findOneAndUpdate", async function (next) {
-  if (!this._update.password) {
-    return next();
-  }
+  if (!this._update.pin) return next();
   const salt = await bcrypt.genSalt(10);
-  this._update.password = await bcrypt.hash(this._update.password, salt);
+  this._update.pin = await bcrypt.hash(this._update.pin, salt);
   next();
 });
 

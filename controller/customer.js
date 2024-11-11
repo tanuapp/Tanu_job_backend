@@ -247,6 +247,8 @@ exports.Login = asyncHandler(async (req, res, next) => {
 
     // Check if PIN matches
     const isMatch = await user.checkPassword(pin);
+
+    console.log(isMatch);
     if (!isMatch) {
       return res.status(400).json({
         success: false,

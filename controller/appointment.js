@@ -4,7 +4,9 @@ const Appointment = require("../models/appointment");
 const Schedule = require("../models/schedule");
 const User = require("../models/customer");
 const Dayoff = require("../models/dayoff");
-
+const path = require("path");
+const fs = require("fs");
+const QRCode = require("qrcode");
 const asyncHandler = require("../middleware/asyncHandler");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
@@ -86,15 +88,33 @@ exports.getAllPopulated = asyncHandler(async (req, res) => {
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
-    const user = await Model.create({
+    const appointmentData = {
       ...req.body,
       user: req.userId,
-    });
+    };
+
+    const appointment = await Model.create(appointmentData);
+
+    // Generate QR code data
+    const qrData = `Appointment ID: ${appointment._id}\nDate: ${appointment.date}\nUser ID: ${appointment.user}`;
+
+    // Define the file path for saving the QR code
+    const qrFilePath = path.join(
+      __dirname,
+      "../uploads/public",
+      `${appointment._id}-qr.png`
+    );
+
+    // Generate and save the QR code image
+    await QRCode.toFile(qrFilePath, qrData);
+
+    // Update appointment with the QR code file path
+    appointment.qr = `${appointment._id}-qr.png`;
+    await appointment.save();
 
     res.status(200).json({
       success: true,
-
-      data: user,
+      data: appointment,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
