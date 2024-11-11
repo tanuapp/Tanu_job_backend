@@ -73,7 +73,7 @@ exports.Login = asyncHandler(async (req, res, next) => {
 
     const isPasswordValid = await user.checkPassword(password);
     if (!isPasswordValid) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "Нэвтрэх нэр эсвэл нууц үг буруу байна!",
       });
