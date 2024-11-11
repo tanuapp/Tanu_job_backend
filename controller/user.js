@@ -43,7 +43,7 @@ exports.create = asyncHandler(async (req, res, next) => {
       permission: JSON.parse(req.body.permission || "[]") || [],
       photo: req.file?.filename ? req.file.filename : "no user photo",
     };
-    
+
     const user = await User.create(inputData);
     const token = user.getJsonWebToken();
     res.status(200).json({
@@ -59,46 +59,37 @@ exports.create = asyncHandler(async (req, res, next) => {
 exports.Login = asyncHandler(async (req, res, next) => {
   try {
     const { phone, password, email, isEmail } = req.body;
+    const userIdentifier = isEmail ? { email } : { phone };
+    const user = await User.findOne(userIdentifier).select("+password");
 
-    const userphone = isEmail
-      ? await User.find({ phone: phone })
-      : await User.find({ email: email });
-
-    if (!userphone) {
-      return res.status(404).json({
-        success: falce,
-        message: isEmail
-          ? "Имейл бүртгэлгүй байна"
-          : "Утасны дугаар бүртгэлгүй байна ",
-      });
-    }
-
-    const user = isEmail
-      ? await User.findOne({ email }).select("+password")
-      : await User.findOne({ phone }).select("+password");
     if (!user) {
-      return res.status(400).json({
+      return res.status(404).json({
         success: false,
-        msg: "Нэвтрэх нэр эсвэл нууц үг буруу байна!",
+        message: isEmail
+          ? "Имейл бүртгэлгүй байна."
+          : "Утасны дугаар бүртгэлгүй байна.",
       });
     }
+
     const isPasswordValid = await user.checkPassword(password);
     if (!isPasswordValid) {
       return res.status(400).json({
         success: false,
-        msg: "Утасны дугаар эсвэл нууц үг буруу байна!",
+        message: "Нэвтрэх нэр эсвэл нууц үг буруу байна!",
       });
     }
     const token = user.getJsonWebToken();
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       token,
       data: user,
     });
+
   } catch (error) {
     customResponse.server(res, error.message);
   }
 });
+
 
 exports.update = asyncHandler(async (req, res, next) => {
   try {
@@ -130,10 +121,10 @@ exports.get = asyncHandler(async (req, res, next) => {
       companyOwner: req.params.id,
     });
 
-  const data = {
-    ...allText,
-    company
-  }
+    const data = {
+      ...allText,
+      company
+    }
     return res.status(200).json({
       success: true,
       data: allText,
