@@ -26,6 +26,7 @@ const companySchema = new mongoose.Schema({
     default: 5,
   },
   close: { type: String },
+  contract: { type: String },
   companyOwner: { type: Schema.Types.ObjectId, ref: "User" },
   logo: { type: String },
   sliderImages: { type: [String] },

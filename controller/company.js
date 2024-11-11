@@ -37,6 +37,20 @@ exports.getAll = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.addContract = asyncHandler(async (req, res, next) => {
+  try {
+    await Model.findOneAndUpdate({
+      companyOwner: req.userId,
+      contract: req.file ? req.file.filename : "",
+    });
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 exports.getAllPopulated = asyncHandler(async (req, res, next) => {
   try {
     const categories = await Model.find().populate("category");

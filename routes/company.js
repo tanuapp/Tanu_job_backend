@@ -11,10 +11,13 @@ const {
   getCompanyPopulate,
   getCompanyBanner,
   deleteModel,
+  addContract,
 } = require("../controller/company");
 const router = express.Router();
 
 // const isActive = false;s
+
+router.route("/contract").post(upload.single("file"), addContract);
 
 router
   .route("/")

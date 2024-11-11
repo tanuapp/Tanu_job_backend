@@ -14,6 +14,10 @@ const appointmentSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Customer",
   },
+  qr: {
+    type: String,
+    default: "no-qr.png",
+  },
 
   status: {
     type: Boolean,
