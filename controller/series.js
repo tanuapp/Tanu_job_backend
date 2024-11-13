@@ -38,17 +38,14 @@ function cyrillicToEnglishSlugify(text) {
     я: "y",
   };
 
-  // Transliterate each Cyrillic character to its Latin equivalent
   const transliterated = text
     .toLowerCase()
     .split("")
     .map((char) => cyrillicToLatinMap[char] || char)
     .join("");
 
-  // Replace spaces and special characters with hyphens
   const slug = transliterated.replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
 
-  // Return the final slug
   return slug;
 }
 
@@ -218,7 +215,7 @@ exports.update = asyncHandler(async (req, res, next) => {
 
 exports.get = asyncHandler(async (req, res, next) => {
   try {
-    const allText = await Model.findById(req.params.id);
+    const allText = await Model.findById(req.params.id).populate("pages");
     return res.status(200).json({
       success: true,
       data: allText,

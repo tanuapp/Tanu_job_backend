@@ -8,6 +8,10 @@ const seriesSchema = new Schema({
     type: Number,
     default: 0,
   },
+  description: {
+    type: String,
+    required: true,
+  },
   title: String,
   pages: {
     type: [mongoose.Types.ObjectId],
