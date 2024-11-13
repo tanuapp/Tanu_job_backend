@@ -52,6 +52,40 @@ function cyrillicToEnglishSlugify(text) {
   return slug;
 }
 
+exports.viewsIncrement = asyncHandler(async (req, res, next) => {
+  try {
+    const data = await Model.findById(req.params.id);
+    data.views++;
+    await data.save();
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      msg: "Серверийн алдаа: " + error.message,
+    });
+  }
+});
+
+exports.getTopSeries = asyncHandler(async (req, res, next) => {
+  try {
+    const allUser = await Model.find()
+      .populate("pages")
+      .sort({ views: -1 })
+      .limit(5);
+    const total = await Model.countDocuments();
+    res.status(200).json({
+      success: true,
+      count: total,
+      data: allUser,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await Model.find().populate("pages");

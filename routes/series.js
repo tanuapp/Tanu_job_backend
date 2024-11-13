@@ -4,7 +4,9 @@ const upload = require("../middleware/fileUpload");
 const {
   create,
   addPage,
+  getTopSeries,
   deleteModel,
+  viewsIncrement,
   get,
   getAll,
   update,
@@ -20,6 +22,9 @@ router.route("/:id/add-page").post(
   ]),
   addPage
 );
+
+router.route("/top").get(getTopSeries);
+router.route("/views/:id").post(viewsIncrement);
 router.route("/").post(upload.single("file"), create).get(getAll);
 router
   .route("/:id")
