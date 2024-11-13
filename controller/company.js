@@ -12,7 +12,8 @@ exports.getAll = asyncHandler(async (req, res, next) => {
     const categories = await Model.find()
       .populate("area")
       .populate("district")
-      .populate("subDistrict");
+      .populate("subDistrict")
+      .populate('category');
 
     const allUser = await Fav.find({ user: req.userId });
 
