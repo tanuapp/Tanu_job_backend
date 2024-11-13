@@ -1,14 +1,139 @@
 const Model = require("../models/series");
+const Page = require("../models/journal");
 const asyncHandler = require("../middleware/asyncHandler");
+
+function cyrillicToEnglishSlugify(text) {
+  const cyrillicToLatinMap = {
+    а: "a",
+    б: "b",
+    в: "v",
+    г: "g",
+    д: "d",
+    е: "y",
+    ё: "e",
+    ж: "j",
+    з: "z",
+    и: "i",
+    й: "i",
+    к: "k",
+    л: "l",
+    м: "m",
+    н: "n",
+    о: "o",
+    ө: "u",
+    п: "p",
+    р: "r",
+    с: "s",
+    т: "t",
+    у: "u",
+    ф: "f",
+    х: "kh",
+    ц: "ts",
+    ч: "ch",
+    ш: "sh",
+    щ: "sch",
+    ы: "ii",
+    э: "e",
+    ю: "yu",
+    я: "y",
+  };
+
+  // Transliterate each Cyrillic character to its Latin equivalent
+  const transliterated = text
+    .toLowerCase()
+    .split("")
+    .map((char) => cyrillicToLatinMap[char] || char)
+    .join("");
+
+  // Replace spaces and special characters with hyphens
+  const slug = transliterated.replace(/\s+/g, "-").replace(/[^a-z0-9\-]/g, "");
+
+  // Return the final slug
+  return slug;
+}
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    const allUser = await Model.find();
+    const allUser = await Model.find().populate("pages");
     const total = await Model.countDocuments();
     res.status(200).json({
       success: true,
       count: total,
       data: allUser,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// exports.createModel = asyncHandler(async (req, res, next) => {
+//   try {
+//     const sliderImg = req.files.sliderImg
+//       ? req.files.sliderImg.map((file) => file.filename)
+//       : [];
+//     const bodyImages = req.files.bodyImg
+//       ? req.files.bodyImg.map((file) => file.filename)
+//       : [];
+//     const profile = req.files.profile ? req.files.profile[0].filename : null;
+//     const audio = req.files.audio ? req.files.audio[0].filename : null;
+
+//     // Combine request body with file paths
+//     const newEntryData = {
+//       ...req.body,
+//       sliderImg,
+//       bodyImages,
+//       profile,
+//       audio,
+//       slug: cyrillicToEnglishSlugify(req.body.name),
+//     };
+
+//     const newEntry = await Page.create(newEntryData);
+
+//     res.status(200).json({
+//       success: true,
+//       data: newEntry,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       msg: "Server Error: " + error.message,
+//     });
+//   }
+// });
+
+exports.addPage = asyncHandler(async (req, res, next) => {
+  try {
+    if (req.body._id) {
+      const journal = await Model.findById(req.params.id);
+      journal.pages?.push(req.body._id);
+      await journal.save();
+    } else {
+      const sliderImg = req.files.sliderImg
+        ? req.files.sliderImg.map((file) => file.filename)
+        : [];
+      const bodyImages = req.files.bodyImg
+        ? req.files.bodyImg.map((file) => file.filename)
+        : [];
+      const profile = req.files.profile ? req.files.profile[0].filename : null;
+      const audio = req.files.audio ? req.files.audio[0].filename : null;
+
+      // Combine request body with file paths
+      const newEntryData = {
+        ...req.body,
+        sliderImg,
+        bodyImages,
+        profile,
+        audio,
+        slug: cyrillicToEnglishSlugify(req.body.name),
+      };
+      const p = await Page.create(newEntryData);
+      const journal = await Model.findById(req.params.id);
+      journal.pages.push(p._id);
+      await journal.save();
+    }
+
+    res.status(200).json({
+      success: true,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
