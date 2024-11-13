@@ -43,6 +43,7 @@ const favRoute = require("./routes/favourite.js");
 const journalRoute = require("./routes/journal.js");
 const rejectRoute = require("./routes/reject.js");
 const mongooseRoute = require("./routes/mongooseChange.js");
+const seriesRoute = require("./routes/series.js");
 const notRoute = require("./routes/notification.js");
 
 //Server configuration for socket
@@ -117,6 +118,7 @@ app.use("/api/v1/journal", journalRoute);
 app.use("/api/v1/reject", rejectRoute);
 app.use("/api/v1/notification", notRoute);
 app.use("/api/v1/mongoose", mongooseRoute);
+app.use("/api/v1/series", seriesRoute);
 
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));

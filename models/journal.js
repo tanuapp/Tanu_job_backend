@@ -1,7 +1,16 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
+const Counter = require("./counter");
 
 const newJournalSchema = new Schema({
+  views: {
+    type: Number,
+    default: 0,
+  },
+  order: {
+    type: Number,
+    unique: true,
+  },
   facebook: String,
   instagram: String,
   twitter: String,
@@ -40,6 +49,26 @@ const newJournalSchema = new Schema({
     type: Date,
     default: Date.now,
   },
+});
+
+newJournalSchema.pre("save", async function (next) {
+  const doc = this;
+
+  if (doc.isNew) {
+    try {
+      const counter = await Counter.findByIdAndUpdate(
+        { _id: "order" },
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+      );
+      doc.order = counter.seq;
+      next();
+    } catch (error) {
+      next(error);
+    }
+  } else {
+    next();
+  }
 });
 
 module.exports = mongoose.model("NewJournal", newJournalSchema);

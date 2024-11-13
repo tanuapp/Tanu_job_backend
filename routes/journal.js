@@ -6,9 +6,12 @@ const {
   getAllModel,
   deleteModel,
   getModel,
+  viewsIncrement,
   updateModel,
 } = require("../controller/journal");
 const router = express.Router();
+
+router.route("/views").post(viewsIncrement);
 
 router
   .route("/")
