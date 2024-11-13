@@ -101,7 +101,7 @@ exports.create = asyncHandler(async (req, res, next) => {
     // Define the file path for saving the QR code
     const qrFilePath = path.join(
       __dirname,
-      "../uploads/public",
+      "../public/uploads/",
       `${appointment._id}-qr.png`
     );
 

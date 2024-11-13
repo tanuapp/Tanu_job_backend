@@ -214,6 +214,7 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
     return res.status(500).json({ success: false, error: error.message });
   }
 });
+
 exports.Login = asyncHandler(async (req, res, next) => {
   try {
     const { phone, email, isEmail, pin } = req.body;

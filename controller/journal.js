@@ -66,12 +66,31 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
     });
   }
 });
+
+exports.viewsIncrement = asyncHandler(async (req, res, next) => {
+  try {
+    const data = await Model.findOne({
+      slug: req.params.id,
+    });
+    data.views++;
+    await data.save();
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      msg: "Серверийн алдаа: " + error.message,
+    });
+  }
+});
+
 exports.getModel = asyncHandler(async (req, res, next) => {
   try {
     const data = await Model.findOne({
       slug: req.params.id,
     });
-
     res.status(200).json({
       success: true,
       data,
