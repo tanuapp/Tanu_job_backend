@@ -7,14 +7,15 @@ exports.getUserSavedCompany = asyncHandler(async (req, res, next) => {
       .populate({
         path: "company",
         populate: {
-          path: "category", // Field in the 'Category' schema that references another model
+          path: "category",
+          model: "Category",
         },
       })
       .lean();
 
     const formattedCompanies = savedCompanies.map((saved) => ({
       ...saved.company,
-      category: saved.company.category.map((cat) => cat.toString()),
+      // category: saved.company.category.map((cat) => cat.toString()),
       isSaved: true,
     }));
 
