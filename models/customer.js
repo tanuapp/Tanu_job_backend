@@ -22,7 +22,10 @@ const customerSchema = new Schema({
     type: Boolean,
     default: false,
   },
-  firebase_token: String,
+  firebase_token: {
+    type: String,
+    default: "",
+  },
   first_name: String,
   last_name: String,
   verified_devices: [],
