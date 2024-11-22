@@ -23,6 +23,7 @@
     "firebase-admin": "^12.3.1",
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
+    "mailersend": "^2.3.0",
     "mongoose": "^7.5.0",
     "mongoose-simple-slugify": "^1.2.11",
     "mongoose-slug-generator": "^1.0.4",

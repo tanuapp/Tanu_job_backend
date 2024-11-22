@@ -271,7 +271,8 @@ exports.Login = asyncHandler(async (req, res, next) => {
 exports.updateUserFCM = asyncHandler(async (req, res, next) => {
   try {
     const { token, isAndroid } = req.body;
-    console.log(token);
+    console.log(req.body);
+
     const userFind = await User.findById(req.userId);
 
     userFind.firebase_token = token;
@@ -283,7 +284,7 @@ exports.updateUserFCM = asyncHandler(async (req, res, next) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
