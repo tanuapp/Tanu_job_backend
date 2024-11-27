@@ -15,6 +15,6 @@ exports.saveMongooseChanges = asyncHandler(async (req, res, next) => {
       success: true,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });

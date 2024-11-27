@@ -26,13 +26,13 @@ exports.create = asyncHandler(async (req, res, next) => {
     const exinstingEmail = await User.findOne({ email: req.body.email });
 
     if (existingUser) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         error: "Утасны дугаар бүртгэлтэй байна",
       });
     }
     if (exinstingEmail) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         error: "И-мэйл бүртгэлтэй байна",
       });
@@ -84,12 +84,10 @@ exports.Login = asyncHandler(async (req, res, next) => {
       token,
       data: user,
     });
-
   } catch (error) {
     customResponse.server(res, error.message);
   }
 });
-
 
 exports.update = asyncHandler(async (req, res, next) => {
   try {
@@ -110,7 +108,7 @@ exports.update = asyncHandler(async (req, res, next) => {
     });
   } catch (error) {
     customResponse.server(res, error.message);
-    // res.status(500).json({ success: false, error: error.message });
+    // res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -123,8 +121,8 @@ exports.get = asyncHandler(async (req, res, next) => {
 
     const data = {
       ...allText,
-      company
-    }
+      company,
+    };
     return res.status(200).json({
       success: true,
       data: allText,

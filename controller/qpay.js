@@ -80,7 +80,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -208,12 +208,12 @@ exports.callback = asyncHandler(async (req, res, next) => {
         message: "Төлөлт амжилттай",
       });
     } else {
-      return res.status(401).json({
+      return res.status(200).json({
         success: false,
         message: "Төлөлт амжилтгүй",
       });
     }
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });

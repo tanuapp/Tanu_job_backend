@@ -13,7 +13,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
       .populate("area")
       .populate("district")
       .populate("subDistrict")
-      .populate('category');
+      .populate("category");
 
     const allUser = await Fav.find({ user: req.userId });
 
@@ -33,7 +33,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
       data: savedState,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -47,7 +47,7 @@ exports.addContract = asyncHandler(async (req, res, next) => {
       success: true,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -61,7 +61,7 @@ exports.getAllPopulated = asyncHandler(async (req, res, next) => {
       data: categories,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -114,7 +114,7 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -141,7 +141,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -166,7 +166,7 @@ exports.update = asyncHandler(async (req, res, next) => {
       data: company,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -180,7 +180,7 @@ exports.get = asyncHandler(async (req, res, next) => {
       data: allText,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -195,6 +195,6 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
       data: deletePost,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });

@@ -14,7 +14,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
       data: allUser,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -27,13 +27,13 @@ exports.create = asyncHandler(async (req, res, next) => {
     await artister.save();
 
     if (existingUser) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         error: "Утасны дугаар бүртгэлтэй байна",
       });
     }
     if (exinstingEmail) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         error: "И-мэйл бүртгэлтэй байна",
       });
@@ -52,7 +52,7 @@ exports.create = asyncHandler(async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -69,23 +69,23 @@ exports.Login = asyncHandler(async (req, res, next) => {
     }
 
     if (!phone || !password) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
-        msg: "Утасны дугаар  болон нууц үгээ оруулна уу!",
+        error: "Утасны дугаар  болон нууц үгээ оруулна уу!",
       });
     } else {
       const user = await User.findOne({ phone }).select("+password");
       if (!user) {
-        return res.status(400).json({
+        return res.status(200).json({
           success: false,
-          msg: "Утасны дугаар  эсвэл нууц үг буруу байна!",
+          error: "Утасны дугаар  эсвэл нууц үг буруу байна!",
         });
       }
       const isPasswordValid = await user.checkPassword(password);
       if (!isPasswordValid) {
-        return res.status(400).json({
+        return res.status(200).json({
           success: false,
-          msg: "Утасны дугаар  эсвэл нууц үг буруу байна!",
+          error: "Утасны дугаар  эсвэл нууц үг буруу байна!",
         });
       }
       const token = user.getJsonWebToken();
@@ -96,7 +96,7 @@ exports.Login = asyncHandler(async (req, res, next) => {
       });
     }
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -119,7 +119,7 @@ exports.update = asyncHandler(async (req, res, next) => {
       data: upDateUserData,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -131,7 +131,7 @@ exports.get = asyncHandler(async (req, res, next) => {
       data: allText,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -148,7 +148,7 @@ exports.getArtistServices = asyncHandler(async (req, res, next) => {
       data: data,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -163,7 +163,7 @@ exports.deleteModel = async function deleteUser(req, res, next) {
       data: deletePost,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 };
 

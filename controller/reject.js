@@ -11,7 +11,7 @@ exports.create = asyncHandler(async (req, res, next) => {
       data: p,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -28,7 +28,7 @@ exports.approve = asyncHandler(async (req, res, next) => {
       data: p,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -40,7 +40,7 @@ exports.get = asyncHandler(async (req, res, next) => {
       data: p,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -57,6 +57,6 @@ exports.reject = asyncHandler(async (req, res, next) => {
       data: p,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });

@@ -12,7 +12,7 @@ exports.getSuperStatistic = asyncHandler(async (req, res, next) => {
       data: categories,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -26,6 +26,6 @@ exports.getCompanyStatistic = asyncHandler(async (req, res, next) => {
       data: categories,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });

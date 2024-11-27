@@ -2,12 +2,11 @@ const User = require("../models/customer");
 const Appointment = require("../models/appointment");
 const asyncHandler = require("../middleware/asyncHandler");
 const jwt = require("jsonwebtoken");
-// const admin = require("../server");
 const sendMessage = require("../utils/callpro");
-// const { generateOTP } = require("../utils/otpGenerator");
-// const { getMessaging } = require("firebase-admin/messaging");
+const { sendEmail } = require("../utils/mailService");
 
 const OTP = require("../models/otp");
+const customer = require("../models/customer");
 
 function generateOTP(length = 4) {
   let otp = "";
@@ -30,7 +29,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
       data: allUser,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -57,21 +56,21 @@ exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
       data: allUser,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
 exports.getMe = asyncHandler(async (req, res, next) => {
   try {
     if (!req.headers.authorization) {
-      return res.status(401).json({
+      return res.status(200).json({
         success: false,
         msg: "Та эхлээд нэвтрэнэ үү",
       });
     }
     const token = req.headers.authorization.split(" ")[1];
     if (!token) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         msg: "Токен хоосон байна",
       });
@@ -89,7 +88,7 @@ exports.getMe = asyncHandler(async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -97,7 +96,7 @@ exports.customerUpdateTheirOwnInformation = asyncHandler(
   async (req, res, next) => {
     try {
       if (req.userId != req.params.id) {
-        return res.status(401).json({
+        return res.status(200).json({
           success: false,
           msg: "Та зөвхөн өөрийн мэдээллийг өөрчлөж болно",
         });
@@ -114,7 +113,7 @@ exports.customerUpdateTheirOwnInformation = asyncHandler(
         token,
       });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(200).json({ success: false, error: error.message });
     }
   }
 );
@@ -122,62 +121,115 @@ exports.customerUpdateTheirOwnInformation = asyncHandler(
 // Registration endpoint
 exports.register = asyncHandler(async (req, res, next) => {
   try {
-    const { pin, phone } = req.body;
+    const { pin, phone, isEmail, email } = req.body;
+    if (isEmail) {
+      if (!email) {
+        res.status(200).json({
+          success: false,
+          message: "Цахим хаягаа оруулна уу",
+        });
+      }
+    }
 
     if (!pin) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         msg: "PIN кодоо оруулна уу",
       });
     }
+    let existingUser = null;
+    let user = null;
 
-    const existingUser = await User.findOne({ phone });
+    if (isEmail) {
+      existingUser = await User.findOne({ email });
 
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        error: "Утасны дугаар бүртгэлтэй байна",
-      });
+      if (existingUser && existingUser.status == true) {
+        return res.status(200).json({
+          success: false,
+          error: "Цахим хаяг бүртгэлтэй байна",
+        });
+      }
+    } else {
+      existingUser = await User.findOne({ phone });
+
+      if (existingUser && existingUser.status == true) {
+        return res.status(200).json({
+          success: false,
+          error: "Утасны дугаар бүртгэлтэй байна",
+        });
+      }
     }
-    console.log(req.body);
+
     const inputData = {
       ...req.body,
       photo: req.file ? req.file.filename : "no-img.png",
     };
-    const user = await User.create(inputData);
+    if (!existingUser) {
+      user = await User.create(inputData);
+    }
 
     // Generate OTP and save it in the database
     const otp = generateOTP();
-    await OTP.create({
-      otp,
-      customer: user._id,
-    });
+    if (existingUser) {
+      await OTP.findByIdAndUpdate(
+        {
+          customer: user._id,
+        },
+        {
+          otp,
+          customer: user._id,
+        }
+      );
+    } else {
+      await OTP.create({
+        otp,
+        customer: user._id,
+      });
+    }
 
-    // Send OTP to the user's phone
-    console.log(phone);
-    await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
+    if (isEmail) {
+      await sendEmail(email, email, otp);
+    } else {
+      await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
+    }
 
     return res.status(200).json({
       success: true,
       msg: "Бүртгэл амжилттай. Нэг удаагийн нууц үг илгээгдлээ",
     });
   } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(200).json({ success: false, error: error.message });
   }
 });
 
 // OTP verification endpoint
 exports.registerVerify = asyncHandler(async (req, res, next) => {
   try {
-    const { otp, phone } = req.body;
+    const { otp, phone, email, isEmail, count } = req.body;
 
-    const existingUser = await User.findOne({ phone });
+    if (Number(count) < 3) {
+    }
 
-    if (!existingUser) {
-      return res.status(400).json({
-        success: false,
-        error: "Утасны дугаар бүртгэлгүй байна",
-      });
+    let existingUser;
+
+    if (isEmail && email) {
+      existingUser = await User.findOne({ email });
+
+      if (!existingUser) {
+        return res.status(200).json({
+          success: false,
+          error: "Цахим хаяг бүртгэлгүй байна",
+        });
+      }
+    } else {
+      existingUser = await User.findOne({ phone });
+
+      if (!existingUser) {
+        return res.status(200).json({
+          success: false,
+          error: "Утасны дугаар бүртгэлгүй байна",
+        });
+      }
     }
 
     const userOtp = await OTP.findOne({
@@ -185,19 +237,22 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
     });
 
     if (!userOtp) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
-        msg: "OTP not found. Please request a new one.",
+        error: "OTP not found. Please request a new one.",
       });
     }
 
     // Correct OTP comparison
     if (otp !== userOtp.otp) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
-        msg: "Буруу нэг удаагийн нууц үг",
+        error: "Буруу нэг удаагийн нууц үг",
       });
     }
+
+    existingUser.status = true;
+    await existingUser.save();
 
     // If OTP is correct, generate JWT token
     const token = existingUser.getJsonWebToken();
@@ -211,7 +266,7 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
       data: existingUser,
     });
   } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -249,11 +304,10 @@ exports.Login = asyncHandler(async (req, res, next) => {
     // Check if PIN matches
     const isMatch = await user.checkPassword(pin);
 
-    console.log(isMatch);
     if (!isMatch) {
       return res.status(200).json({
         success: false,
-        msg: "Нэвтрэх нэр эсвэл нууц үг буруу байна!",
+        error: "Нэвтрэх нэр эсвэл нууц үг буруу байна!",
       });
     }
 
@@ -264,20 +318,24 @@ exports.Login = asyncHandler(async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
 exports.updateUserFCM = asyncHandler(async (req, res, next) => {
   try {
-    // const { token, isAndroid } = req.body;
+    const { token, isAndroid } = req.body;
     console.log(req.body);
 
-    const userFind = await User.findByIdAndUpdate(req.userId, req.body);
+    const userFind = await User.findById(req.userId);
 
-    // userFind.firebase_token = token;
-    // userFind.isAndroid = isAndroid;
-    // await userFind.save();
+    if (!userFind) {
+      res.status(200).json({ success: false, error: "Хэрэглэгч олдсонгүй" });
+    }
+
+    userFind.firebase_token = token;
+    userFind.isAndroid = isAndroid;
+    await userFind.save();
 
     res.status(200).json({
       success: true,
@@ -308,7 +366,7 @@ exports.update = asyncHandler(async (req, res, next) => {
       data: upDateUserData,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -320,7 +378,7 @@ exports.get = asyncHandler(async (req, res, next) => {
       data: allText,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -335,6 +393,6 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
       data: deletePost,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });

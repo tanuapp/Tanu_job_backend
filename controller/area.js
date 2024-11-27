@@ -11,7 +11,7 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
       data: allUser,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -39,7 +39,7 @@ exports.clearModel = asyncHandler(async (req, res, next) => {
       success: true,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -56,7 +56,7 @@ exports.generateHoroo = asyncHandler(async (req, res, next) => {
       success: true,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -93,7 +93,7 @@ exports.generateSum = asyncHandler(async (req, res, next) => {
       success: true,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -107,7 +107,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
       data: result,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -121,7 +121,7 @@ exports.updateModel = asyncHandler(async (req, res, next) => {
       data: result,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 exports.getModel = asyncHandler(async (req, res, next) => {
@@ -132,7 +132,7 @@ exports.getModel = asyncHandler(async (req, res, next) => {
       data: result,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -144,6 +144,6 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
       data: result,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });

@@ -26,7 +26,7 @@ exports.getUserSavedCompany = asyncHandler(async (req, res, next) => {
     });
   } catch (error) {
     console.error("Error fetching saved companies:", error);
-    return res.status(500).json({
+    return res.status(200).json({
       success: false,
       message: "Error fetching saved companies",
     });
@@ -54,7 +54,7 @@ exports.saveCompany = asyncHandler(async (req, res, next) => {
       });
     }
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -89,7 +89,7 @@ exports.removeCompany = asyncHandler(async (req, res, next) => {
       });
     }
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -108,6 +108,6 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
       data: result,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });

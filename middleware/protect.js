@@ -4,7 +4,7 @@ const asyncHandler = require("../middleware/asyncHandler");
 exports.protect = asyncHandler(async (req, res, next) => {
   try {
     if (!req.headers.authorization) {
-      return res.status(401).json({
+      return res.status(200).json({
         success: false,
         msg: "Та эхлээд нэвтрэнэ үү ",
       });
@@ -12,7 +12,7 @@ exports.protect = asyncHandler(async (req, res, next) => {
     const token = req.headers.authorization.split(" ")[1];
 
     if (!token) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         msg: "Токен хоосон байна",
       });
@@ -23,7 +23,7 @@ exports.protect = asyncHandler(async (req, res, next) => {
     req.userRole = tokenObj.role;
     next();
   } catch (error) {
-    return res.status(401).json({
+    return res.status(200).json({
       success: false,
       msg: "Токен хоосон байна.  Та эхлээд нэвтрэнэ үү !",
     });
@@ -33,13 +33,13 @@ exports.protect = asyncHandler(async (req, res, next) => {
 exports.authorize = (roles) => {
   return (req, res, next) => {
     if (!req.userRole) {
-      return res.status(401).json({
+      return res.status(200).json({
         success: false,
         msg: "Токен хоосон байна.!",
       });
     }
     if (!roles.includes(req.userRole.toString())) {
-      return res.status(403).json({
+      return res.status(200).json({
         success: false,
         msg: `Энэ үйлдэлийг хийхэд таны эрх хүрэлцэхгүй байна : [${req.userRole}].`,
       });

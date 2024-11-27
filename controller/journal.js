@@ -60,7 +60,7 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
       data,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(200).json({
       success: false,
       msg: "Серверийн алдаа: " + error.message,
     });
@@ -79,9 +79,9 @@ exports.viewsIncrement = asyncHandler(async (req, res, next) => {
       data,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(200).json({
       success: false,
-      msg: "Серверийн алдаа: " + error.message,
+      error: "Серверийн алдаа: " + error.message,
     });
   }
 });
@@ -96,9 +96,9 @@ exports.getModel = asyncHandler(async (req, res, next) => {
       data,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(200).json({
       success: false,
-      msg: "Серверийн алдаа: " + error.message,
+      error: "Серверийн алдаа: " + error.message,
     });
   }
 });
@@ -138,9 +138,9 @@ exports.updateModel = asyncHandler(async (req, res, next) => {
       data: newEntry,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(200).json({
       success: false,
-      msg: "Серверийн алдаа: " + error.message,
+      error: "Серверийн алдаа: " + error.message,
     });
   }
 });
@@ -173,9 +173,9 @@ exports.createModel = asyncHandler(async (req, res, next) => {
       data: newEntry,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(200).json({
       success: false,
-      msg: "Server Error: " + error.message,
+      error: "Server Error: " + error.message,
     });
   }
 });
@@ -187,9 +187,9 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
       data: newEntry,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(200).json({
       success: false,
-      msg: "Server Error: " + error.message,
+      error: "Server Error: " + error.message,
     });
   }
 });

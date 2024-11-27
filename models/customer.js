@@ -7,6 +7,7 @@ const customerSchema = new Schema({
   phone: {
     type: String,
     unique: true,
+    sparse: true,
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
   photo: String,

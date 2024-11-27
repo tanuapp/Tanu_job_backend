@@ -19,7 +19,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
       data: allUser,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -27,9 +27,9 @@ exports.declineAppointment = asyncHandler(async (req, res, next) => {
   try {
     const decline = await Model.findById(req.params.id);
     if (decline.status == false) {
-      res.status(400).json({
+      res.status(200).json({
         success: false,
-        msg: "Таны захиалга баталгаажаагүй байна",
+        error: "Таны захиалга баталгаажаагүй байна",
       });
     }
     decline.status = false;
@@ -45,7 +45,7 @@ exports.declineAppointment = asyncHandler(async (req, res, next) => {
       data: "Амжилттай цуцлалаа",
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -79,7 +79,7 @@ exports.getAllPopulated = asyncHandler(async (req, res) => {
   } catch (error) {
     // Log and handle error
     console.error("Error in getAllPopulated:", error);
-    res.status(500).json({
+    res.status(200).json({
       success: false,
       error: error.message,
     });
@@ -117,7 +117,7 @@ exports.create = asyncHandler(async (req, res, next) => {
       data: appointment,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
@@ -177,7 +177,7 @@ exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
       data: availableSchedules,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -218,7 +218,7 @@ exports.getAvailableTimesByArtist = asyncHandler(async (req, res, next) => {
       data: availableSchedules,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -240,7 +240,7 @@ exports.update = asyncHandler(async (req, res, next) => {
       data: upDateUserData,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -252,7 +252,7 @@ exports.get = asyncHandler(async (req, res, next) => {
       data: allText,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -267,7 +267,7 @@ exports.deleteModel = async function deleteUser(req, res, next) {
       data: deletePost,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 };
 

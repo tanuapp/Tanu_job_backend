@@ -31,7 +31,7 @@ async function token() {
         console.log("Error", error.message);
       }
       return res
-        .status(500)
+        .status(200)
         .json({ status: 0, statusText: "Service iin aldaa garlaa orchuulah " });
     });
   console.log("555");

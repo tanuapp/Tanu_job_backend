@@ -12,7 +12,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
       data: categories,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -30,7 +30,7 @@ exports.create = asyncHandler(async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -54,7 +54,7 @@ exports.update = asyncHandler(async (req, res, next) => {
       data: upDateUserData,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -68,7 +68,7 @@ exports.get = asyncHandler(async (req, res, next) => {
       data: allText,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 });
 
@@ -83,6 +83,6 @@ exports.deleteModel = async function deleteUser(req, res, next) {
       data: deletePost,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(200).json({ success: false, error: error.message });
   }
 };
