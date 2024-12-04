@@ -270,9 +270,9 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
   }
 });
 
-exports.Login = asyncHandler(async (req, res, next) => {
+exports.loginWithPhone = asyncHandler(async (req, res, next) => {
   try {
-    const { phone, email, isEmail, pin } = req.body;
+    const { phone, pin } = req.body;
 
     if (!pin) {
       return res.status(200).json({
@@ -283,22 +283,12 @@ exports.Login = asyncHandler(async (req, res, next) => {
 
     let user;
 
-    if (isEmail && email) {
-      user = await User.findOne({ email }).select("+pin");
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "Имейл бүртгэлгүй байна",
-        });
-      }
-    } else {
-      user = await User.findOne({ phone }).select("+pin");
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "Утасны дугаар бүртгэлгүй байна",
-        });
-      }
+    user = await User.findOne({ phone }).select("+pin");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Имейл бүртгэлгүй байна",
+      });
     }
 
     // Check if PIN matches
@@ -317,6 +307,92 @@ exports.Login = asyncHandler(async (req, res, next) => {
       token,
       data: user,
     });
+  } catch (error) {
+    res.status(200).json({ success: false, error: error.message });
+  }
+});
+
+exports.loginWithEmail = asyncHandler(async (req, res, next) => {
+  try {
+    const { email, pin } = req.body;
+
+    if (!pin) {
+      return res.status(200).json({
+        success: false,
+        message: "PIN кодоо оруулна уу",
+      });
+    }
+
+    let user;
+
+    user = await User.findOne({ email }).select("+pin");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Имейл бүртгэлгүй байна",
+      });
+    }
+
+    // Check if PIN matches
+    const isMatch = await user.checkPassword(pin);
+
+    if (!isMatch) {
+      return res.status(200).json({
+        success: false,
+        error: "Нэвтрэх нэр эсвэл нууц үг буруу байна!",
+      });
+    }
+
+    const token = user.getJsonWebToken();
+    res.status(200).json({
+      success: true,
+      token,
+      data: user,
+    });
+  } catch (error) {
+    res.status(200).json({ success: false, error: error.message });
+  }
+});
+
+exports.validatePhone = asyncHandler(async (req, res, next) => {
+  try {
+    const { phone } = req.body;
+
+    let user;
+
+    user = await User.findOne({ phone }).select("+pin");
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Утас бүртгэлгүй байна",
+      });
+    } else {
+      return res.status(200).json({
+        success: true,
+      });
+    }
+  } catch (error) {
+    res.status(200).json({ success: false, error: error.message });
+  }
+});
+
+exports.validateEmail = asyncHandler(async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    let user;
+
+    user = await User.findOne({ email }).select("+pin");
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Утас бүртгэлгүй байна",
+      });
+    } else {
+      return res.status(200).json({
+        success: true,
+      });
+    }
   } catch (error) {
     res.status(200).json({ success: false, error: error.message });
   }
