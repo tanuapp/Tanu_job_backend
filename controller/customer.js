@@ -7,6 +7,7 @@ const { sendEmail } = require("../utils/mailService");
 
 const customResponse = require("../utils/customResponse");
 const OTP = require("../models/otp");
+const customer = require("../models/customer");
 
 function generateOTP(length = 4) {
   let otp = "";
