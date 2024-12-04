@@ -6,6 +6,7 @@ const Dayoff = require("../models/dayoff");
 const Service = require("../models/service");
 const Appointment = require("../models/appointment");
 const Fav = require("../models/favourite");
+const customResponse = require("../utils/customResponse");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -27,13 +28,10 @@ exports.getAll = asyncHandler(async (req, res, next) => {
     }));
 
     const total = await Model.countDocuments();
-    res.status(200).json({
-      success: true,
-      count: total,
-      data: savedState,
-    });
+
+    customResponse.success(res, savedState);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -43,25 +41,19 @@ exports.addContract = asyncHandler(async (req, res, next) => {
       companyOwner: req.userId,
       contract: req.file ? req.file.filename : "",
     });
-    res.status(200).json({
-      success: true,
-    });
+    customResponse.success(res, "");
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
 exports.getAllPopulated = asyncHandler(async (req, res, next) => {
   try {
     const categories = await Model.find().populate("category");
-    const total = await Model.countDocuments();
-    res.status(200).json({
-      success: true,
-      count: total,
-      data: categories,
-    });
+
+    customResponse.success(res, categories);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -113,8 +105,7 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
       service: ServiceList,
     });
   } catch (error) {
-    console.log(error);
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -140,8 +131,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
       data: company,
     });
   } catch (error) {
-    console.log(error);
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -166,7 +156,7 @@ exports.update = asyncHandler(async (req, res, next) => {
       data: company,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -180,7 +170,7 @@ exports.get = asyncHandler(async (req, res, next) => {
       data: allText,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -195,6 +185,6 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
       data: deletePost,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });

@@ -1,5 +1,6 @@
 const User = require("../models/artist");
 const asyncHandler = require("../middleware/asyncHandler");
+const customResponse = require("../utils/customResponse");
 // const artist = require("../models/artist");
 const Service = require("../models/service");
 const company = require("../models/company");
@@ -7,14 +8,10 @@ const company = require("../models/company");
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await User.find();
-    const total = await User.countDocuments();
-    res.status(200).json({
-      success: true,
-      count: total,
-      data: allUser,
-    });
+
+    customResponse.success(res, allUser);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -29,13 +26,13 @@ exports.create = asyncHandler(async (req, res, next) => {
     if (existingUser) {
       return res.status(200).json({
         success: false,
-        error: "Утасны дугаар бүртгэлтэй байна",
+        message: "Утасны дугаар бүртгэлтэй байна",
       });
     }
     if (exinstingEmail) {
       return res.status(200).json({
         success: false,
-        error: "И-мэйл бүртгэлтэй байна",
+        message: "И-мэйл бүртгэлтэй байна",
       });
     }
     console.log(req.files);
@@ -46,13 +43,10 @@ exports.create = asyncHandler(async (req, res, next) => {
     };
     const user = await User.create(inputData);
     const token = user.getJsonWebToken();
-    res.status(200).json({
-      success: true,
-      token,
-      data: user,
-    });
+
+    customResponse.success(res, user, token);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -63,40 +57,26 @@ exports.Login = asyncHandler(async (req, res, next) => {
     const userphone = await User.find({ phone: phone });
 
     if (!userphone) {
-      return res
-        .status(404)
-        .json({ success: falce, message: "Утасны дугаар бүртгэлгүй байна " });
+      customResponse.error(res, "Утасны дугаар бүртгэлгүй байна ");
     }
 
     if (!phone || !password) {
-      return res.status(200).json({
-        success: false,
-        error: "Утасны дугаар  болон нууц үгээ оруулна уу!",
-      });
+      customResponse.error(res, "Утасны дугаар  болон нууц үгээ оруулна уу!");
     } else {
       const user = await User.findOne({ phone }).select("+password");
       if (!user) {
-        return res.status(200).json({
-          success: false,
-          error: "Утасны дугаар  эсвэл нууц үг буруу байна!",
-        });
+        customResponse.error(res, "Утасны дугаар  эсвэл нууц үг буруу байна!");
       }
       const isPasswordValid = await user.checkPassword(password);
       if (!isPasswordValid) {
-        return res.status(200).json({
-          success: false,
-          error: "Утасны дугаар  эсвэл нууц үг буруу байна!",
-        });
+        customResponse.error(res, "Утасны дугаар  эсвэл нууц үг буруу байна!");
       }
       const token = user.getJsonWebToken();
-      res.status(200).json({
-        success: true,
-        token,
-        data: user,
-      });
+
+      customResponse.success(res, user, token);
     }
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -114,12 +94,10 @@ exports.update = asyncHandler(async (req, res, next) => {
         new: true,
       }
     );
-    return res.status(200).json({
-      success: true,
-      data: upDateUserData,
-    });
+
+    customResponse.success(res, upDateUserData);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -131,7 +109,7 @@ exports.get = asyncHandler(async (req, res, next) => {
       data: allText,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -143,12 +121,9 @@ exports.getArtistServices = asyncHandler(async (req, res, next) => {
       list.artistId.includes(req.params.id)
     );
 
-    return res.status(200).json({
-      success: true,
-      data: data,
-    });
+    customResponse.success(res, data);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -157,13 +132,10 @@ exports.deleteModel = async function deleteUser(req, res, next) {
     const deletePost = await User.findByIdAndDelete(req.params.id, {
       new: true,
     });
-    return res.status(200).json({
-      success: true,
-      msg: "Ажилттай усгагдлаа",
-      data: deletePost,
-    });
+
+    customResponse.success(res, deletePost);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 };
 

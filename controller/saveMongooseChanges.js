@@ -1,5 +1,6 @@
 const Model = require("../models/customer");
 const asyncHandler = require("../middleware/asyncHandler");
+const customResponse = require("../utils/customResponse");
 
 //model deer uurchlult oruulsan tohioldold ene functiong ajiluulna
 //!! model oo solihoo martvaa
@@ -15,6 +16,6 @@ exports.saveMongooseChanges = asyncHandler(async (req, res, next) => {
       success: true,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });

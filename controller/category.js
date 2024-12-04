@@ -1,18 +1,15 @@
 const Model = require("../models/category");
 const asyncHandler = require("../middleware/asyncHandler");
 const mongoose = require("mongoose");
+const customResponse = require("../utils/customResponse");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
     const categories = await Model.find({ parent: null }).populate("children");
-    const total = await Model.countDocuments();
-    res.status(200).json({
-      success: true,
-      count: total,
-      data: categories,
-    });
+
+    customResponse.success(res, categories);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -25,14 +22,9 @@ exports.create = asyncHandler(async (req, res, next) => {
       photo: req.file ? req.file.filename : "no-img.png",
       parent: parentId ? parentId : null,
     });
-
-    res.status(200).json({
-      success: true,
-
-      data: user,
-    });
+    customResponse.success(res, user);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -50,24 +42,18 @@ exports.update = asyncHandler(async (req, res, next) => {
         new: true,
       }
     );
-    return res.status(200).json({
-      success: true,
-      data: upDateUserData,
-    });
+    customResponse.success(res, upDateUserData);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
 exports.get = asyncHandler(async (req, res, next) => {
   try {
     const allText = await Model.findById(req.params.id).populate("children");
-    return res.status(200).json({
-      success: true,
-      data: allText,
-    });
+    customResponse.success(res, allText);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -76,12 +62,8 @@ exports.deleteModel = async function deleteUser(req, res, next) {
     const deletePost = await Model.findByIdAndDelete(req.params.id, {
       new: true,
     });
-    return res.status(200).json({
-      success: true,
-      msg: "Ажилттай усгагдлаа",
-      data: deletePost,
-    });
+    customResponse.success(res, deletePost);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 };

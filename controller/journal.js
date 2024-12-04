@@ -1,5 +1,6 @@
 const Model = require("../models/journal");
 const asyncHandler = require("../middleware/asyncHandler");
+const customResponse = require("../utils/customResponse");
 
 function cyrillicToEnglishSlugify(text) {
   const cyrillicToLatinMap = {
@@ -60,10 +61,7 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
       data,
     });
   } catch (error) {
-    res.status(200).json({
-      success: false,
-      msg: "Серверийн алдаа: " + error.message,
-    });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -79,10 +77,7 @@ exports.viewsIncrement = asyncHandler(async (req, res, next) => {
       data,
     });
   } catch (error) {
-    res.status(200).json({
-      success: false,
-      error: "Серверийн алдаа: " + error.message,
-    });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -96,10 +91,7 @@ exports.getModel = asyncHandler(async (req, res, next) => {
       data,
     });
   } catch (error) {
-    res.status(200).json({
-      success: false,
-      error: "Серверийн алдаа: " + error.message,
-    });
+    customResponse.error(res, error.message);
   }
 });
 exports.updateModel = asyncHandler(async (req, res, next) => {
@@ -138,10 +130,7 @@ exports.updateModel = asyncHandler(async (req, res, next) => {
       data: newEntry,
     });
   } catch (error) {
-    res.status(200).json({
-      success: false,
-      error: "Серверийн алдаа: " + error.message,
-    });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -173,10 +162,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
       data: newEntry,
     });
   } catch (error) {
-    res.status(200).json({
-      success: false,
-      error: "Server Error: " + error.message,
-    });
+    customResponse.error(res, error.message);
   }
 });
 exports.deleteModel = asyncHandler(async (req, res, next) => {
@@ -187,9 +173,6 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
       data: newEntry,
     });
   } catch (error) {
-    res.status(200).json({
-      success: false,
-      error: "Server Error: " + error.message,
-    });
+    customResponse.error(res, error.message);
   }
 });

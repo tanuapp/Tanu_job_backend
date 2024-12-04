@@ -1,5 +1,6 @@
 const { sendEmail } = require("../utils/mailService");
 const asyncHandler = require("../middleware/asyncHandler");
+const customResponse = require("../utils/customResponse");
 exports.sendMail = asyncHandler(async (req, res, next) => {
   try {
     await sendEmail();
@@ -8,6 +9,7 @@ exports.sendMail = asyncHandler(async (req, res, next) => {
     });
   } catch (error) {
     console.log(error);
-    res.status(200).json({ success: false, error: error.message });
+
+    customResponse.error(res, error.message);
   }
 });

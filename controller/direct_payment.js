@@ -4,6 +4,7 @@ const Schedule = require("../models/schedule");
 const Invoice = require("../models/invoice");
 const asyncHandler = require("../middleware/asyncHandler");
 const { default: axios } = require("axios");
+const customResponse = require("../utils/customResponse");
 
 exports.createPayment = asyncHandler(async (req, res, next) => {
   try {
@@ -36,6 +37,6 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       data: duk.data.data,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });

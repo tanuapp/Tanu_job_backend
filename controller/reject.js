@@ -1,5 +1,6 @@
 const Model = require("../models/reject");
 const asyncHandler = require("../middleware/asyncHandler");
+const customResponse = require("../utils/customResponse");
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
@@ -11,7 +12,7 @@ exports.create = asyncHandler(async (req, res, next) => {
       data: p,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -28,7 +29,7 @@ exports.approve = asyncHandler(async (req, res, next) => {
       data: p,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -40,7 +41,7 @@ exports.get = asyncHandler(async (req, res, next) => {
       data: p,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -57,6 +58,6 @@ exports.reject = asyncHandler(async (req, res, next) => {
       data: p,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });

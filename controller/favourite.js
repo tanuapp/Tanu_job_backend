@@ -1,5 +1,6 @@
 const Model = require("../models/favourite");
 const asyncHandler = require("../middleware/asyncHandler");
+const customResponse = require("../utils/customResponse");
 
 exports.getUserSavedCompany = asyncHandler(async (req, res, next) => {
   try {
@@ -25,11 +26,7 @@ exports.getUserSavedCompany = asyncHandler(async (req, res, next) => {
       total: formattedCompanies.length,
     });
   } catch (error) {
-    console.error("Error fetching saved companies:", error);
-    return res.status(200).json({
-      success: false,
-      message: "Error fetching saved companies",
-    });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -54,7 +51,7 @@ exports.saveCompany = asyncHandler(async (req, res, next) => {
       });
     }
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -89,7 +86,7 @@ exports.removeCompany = asyncHandler(async (req, res, next) => {
       });
     }
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -108,6 +105,6 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
       data: result,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });

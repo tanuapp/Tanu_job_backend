@@ -3,6 +3,7 @@ const path = require("path");
 const asyncHandler = require("../middleware/asyncHandler");
 const apnService = require("../utils/apnService");
 const User = require("../models/customer");
+const customResponse = require("../utils/customResponse");
 
 exports.send = asyncHandler(async (req, res, next) => {
   try {
@@ -19,7 +20,7 @@ exports.send = asyncHandler(async (req, res, next) => {
       });
     }
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -42,6 +43,6 @@ exports.sendMass = asyncHandler(async (req, res, next) => {
       });
     }
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
