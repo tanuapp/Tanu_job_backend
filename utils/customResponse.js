@@ -1,14 +1,14 @@
 function errorResponse(res, data) {
   return res.status(500).json({
     success: false,
-    msg: data,
+    message: data,
   });
 }
 
 function successResponse(res, data, token) {
   return res.status(200).json({
     success: true,
-    msg: data,
+    message: data,
     token: token ? token : null,
   });
 }
@@ -16,14 +16,14 @@ function successResponse(res, data, token) {
 function unAuthenticated(res) {
   return res.status(401).json({
     success: false,
-    msg: "Таны эрх хүрэхгүй байна",
+    message: "Таны эрх хүрэхгүй байна",
   });
 }
 
 function serverError(res, data) {
   return res.status(500).json({
     success: false,
-    msg: "Серверийн алдаа: " + data,
+    message: "Серверийн алдаа: " + data,
   });
 }
 
