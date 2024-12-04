@@ -1,17 +1,14 @@
 const Model = require("../models/area");
 const asyncHandler = require("../middleware/asyncHandler");
+const customResponse = require("../utils/customResponse");
 
 exports.getAllModel = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await Model.find();
-    const total = await Model.countDocuments();
-    res.status(200).json({
-      success: true,
-      count: total,
-      data: allUser,
-    });
+
+    customResponse.success(res, allUser);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -35,11 +32,10 @@ exports.clearModel = asyncHandler(async (req, res, next) => {
         await Model.findByIdAndDelete(list._id);
       }
     });
-    res.status(200).json({
-      success: true,
-    });
+
+    customResponse.success(res, allUser);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -52,11 +48,10 @@ exports.generateHoroo = asyncHandler(async (req, res, next) => {
         name: `${i} хороо`,
       });
     }
-    res.status(200).json({
-      success: true,
-    });
+
+    customResponse.success(res, "");
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -89,11 +84,10 @@ exports.generateSum = asyncHandler(async (req, res, next) => {
         subdistrict,
       });
     });
-    res.status(200).json({
-      success: true,
-    });
+
+    customResponse.success(res, "");
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -102,12 +96,10 @@ exports.createModel = asyncHandler(async (req, res, next) => {
     const result = await Model.create({
       ...req.body,
     });
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
+
+    customResponse.success(res, result);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -116,34 +108,28 @@ exports.updateModel = asyncHandler(async (req, res, next) => {
     const result = await Model.findByIdAndUpdate(req.params.id, {
       ...req.body,
     });
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
+
+    customResponse.success(res, result);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 exports.getModel = asyncHandler(async (req, res, next) => {
   try {
     const result = await Model.findById(req.params.id);
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
+
+    customResponse.success(res, result);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
 exports.deleteModel = asyncHandler(async (req, res, next) => {
   try {
     const result = await Model.findByIdAndDelete(req.params.id);
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
+
+    customResponse.success(res, result);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });

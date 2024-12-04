@@ -10,6 +10,7 @@ const Service = require("../models/service.js");
 const schedule = require("../models/schedule.js");
 const service = require("../models/service.js");
 const company = require("../models/company.js");
+const customResponse = require("../utils/customResponse");
 
 exports.createqpay = asyncHandler(async (req, res) => {
   try {
@@ -214,6 +215,6 @@ exports.callback = asyncHandler(async (req, res, next) => {
       });
     }
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });

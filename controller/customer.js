@@ -5,8 +5,8 @@ const jwt = require("jsonwebtoken");
 const sendMessage = require("../utils/callpro");
 const { sendEmail } = require("../utils/mailService");
 
+const customResponse = require("../utils/customResponse");
 const OTP = require("../models/otp");
-const customer = require("../models/customer");
 
 function generateOTP(length = 4) {
   let otp = "";
@@ -29,7 +29,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
       data: allUser,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -56,7 +56,7 @@ exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
       data: allUser,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -65,14 +65,14 @@ exports.getMe = asyncHandler(async (req, res, next) => {
     if (!req.headers.authorization) {
       return res.status(200).json({
         success: false,
-        msg: "Та эхлээд нэвтрэнэ үү",
+        message: "Та эхлээд нэвтрэнэ үү",
       });
     }
     const token = req.headers.authorization.split(" ")[1];
     if (!token) {
       return res.status(200).json({
         success: false,
-        msg: "Токен хоосон байна",
+        message: "Токен хоосон байна",
       });
     }
     const tokenObj = jwt.verify(token, process.env.JWT_SECRET);
@@ -80,7 +80,7 @@ exports.getMe = asyncHandler(async (req, res, next) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        msg: "Хэрэглэгч олдсонгүй",
+        message: "Хэрэглэгч олдсонгүй",
       });
     }
     return res.status(200).json({
@@ -88,7 +88,7 @@ exports.getMe = asyncHandler(async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -113,7 +113,7 @@ exports.customerUpdateTheirOwnInformation = asyncHandler(
         token,
       });
     } catch (error) {
-      res.status(200).json({ success: false, error: error.message });
+      customResponse.error(res, error.message);
     }
   }
 );
@@ -134,7 +134,7 @@ exports.register = asyncHandler(async (req, res, next) => {
     if (!pin) {
       return res.status(200).json({
         success: false,
-        msg: "PIN кодоо оруулна уу",
+        message: "PIN кодоо оруулна уу",
       });
     }
     let existingUser = null;
@@ -146,7 +146,7 @@ exports.register = asyncHandler(async (req, res, next) => {
       if (existingUser && existingUser.status == true) {
         return res.status(200).json({
           success: false,
-          error: "Цахим хаяг бүртгэлтэй байна",
+          message: "Цахим хаяг бүртгэлтэй байна",
         });
       }
     } else {
@@ -155,7 +155,7 @@ exports.register = asyncHandler(async (req, res, next) => {
       if (existingUser && existingUser.status == true) {
         return res.status(200).json({
           success: false,
-          error: "Утасны дугаар бүртгэлтэй байна",
+          message: "Утасны дугаар бүртгэлтэй байна",
         });
       }
     }
@@ -195,10 +195,10 @@ exports.register = asyncHandler(async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      msg: "Бүртгэл амжилттай. Нэг удаагийн нууц үг илгээгдлээ",
+      message: "Бүртгэл амжилттай. Нэг удаагийн нууц үг илгээгдлээ",
     });
   } catch (error) {
-    return res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -218,7 +218,7 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
       if (!existingUser) {
         return res.status(200).json({
           success: false,
-          error: "Цахим хаяг бүртгэлгүй байна",
+          message: "Цахим хаяг бүртгэлгүй байна",
         });
       }
     } else {
@@ -227,7 +227,7 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
       if (!existingUser) {
         return res.status(200).json({
           success: false,
-          error: "Утасны дугаар бүртгэлгүй байна",
+          message: "Утасны дугаар бүртгэлгүй байна",
         });
       }
     }
@@ -239,7 +239,7 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
     if (!userOtp) {
       return res.status(200).json({
         success: false,
-        error: "OTP not found. Please request a new one.",
+        message: "OTP not found. Please request a new one.",
       });
     }
 
@@ -247,7 +247,7 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
     if (otp !== userOtp.otp) {
       return res.status(200).json({
         success: false,
-        error: "Буруу нэг удаагийн нууц үг",
+        message: "Буруу нэг удаагийн нууц үг",
       });
     }
 
@@ -266,7 +266,7 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
       data: existingUser,
     });
   } catch (error) {
-    return res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -297,7 +297,7 @@ exports.loginWithPhone = asyncHandler(async (req, res, next) => {
     if (!isMatch) {
       return res.status(200).json({
         success: false,
-        error: "Нэвтрэх нэр эсвэл нууц үг буруу байна!",
+        message: "Нэвтрэх нэр эсвэл нууц үг буруу байна!",
       });
     }
 
@@ -308,7 +308,7 @@ exports.loginWithPhone = asyncHandler(async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -317,30 +317,21 @@ exports.loginWithEmail = asyncHandler(async (req, res, next) => {
     const { email, pin } = req.body;
 
     if (!pin) {
-      return res.status(200).json({
-        success: false,
-        message: "PIN кодоо оруулна уу",
-      });
+      customResponse.error(res, "PIN кодоо оруулна уу");
     }
 
     let user;
 
     user = await User.findOne({ email }).select("+pin");
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "Имейл бүртгэлгүй байна",
-      });
+      customResponse.error(res, "Имейл бүртгэлгүй байна");
     }
 
     // Check if PIN matches
     const isMatch = await user.checkPassword(pin);
 
     if (!isMatch) {
-      return res.status(200).json({
-        success: false,
-        error: "Нэвтрэх нэр эсвэл нууц үг буруу байна!",
-      });
+      customResponse.error(res, "Нэвтрэх нэр эсвэл нууц үг буруу байна!");
     }
 
     const token = user.getJsonWebToken();
@@ -350,7 +341,7 @@ exports.loginWithEmail = asyncHandler(async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -362,17 +353,14 @@ exports.validatePhone = asyncHandler(async (req, res, next) => {
 
     user = await User.findOne({ phone }).select("+pin");
     if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "Утас бүртгэлгүй байна",
-      });
+      customResponse.error(res, "Утас бүртгэлгүй байна");
     } else {
       return res.status(200).json({
         success: true,
       });
     }
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -384,29 +372,25 @@ exports.validateEmail = asyncHandler(async (req, res, next) => {
 
     user = await User.findOne({ email }).select("+pin");
     if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "Утас бүртгэлгүй байна",
-      });
+      customResponse.error(res, "Утас бүртгэлгүй байна");
     } else {
       return res.status(200).json({
         success: true,
       });
     }
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
 exports.updateUserFCM = asyncHandler(async (req, res, next) => {
   try {
     const { token, isAndroid } = req.body;
-    console.log(req.body);
 
     const userFind = await User.findById(req.userId);
 
     if (!userFind) {
-      res.status(200).json({ success: false, error: "Хэрэглэгч олдсонгүй" });
+      customResponse.error(res, "Хэрэглэгч олдсонгүй");
     }
 
     userFind.firebase_token = token;
@@ -417,8 +401,7 @@ exports.updateUserFCM = asyncHandler(async (req, res, next) => {
       success: true,
     });
   } catch (error) {
-    console.log(error);
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -442,7 +425,7 @@ exports.update = asyncHandler(async (req, res, next) => {
       data: upDateUserData,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -454,7 +437,7 @@ exports.get = asyncHandler(async (req, res, next) => {
       data: allText,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -469,6 +452,6 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
       data: deletePost,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });

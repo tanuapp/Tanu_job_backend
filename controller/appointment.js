@@ -1,5 +1,6 @@
 const Model = require("../models/appointment");
 const Appointment = require("../models/appointment");
+const customResponse = require("../utils/customResponse");
 // consrt
 const Schedule = require("../models/schedule");
 const User = require("../models/customer");
@@ -12,14 +13,16 @@ const asyncHandler = require("../middleware/asyncHandler");
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await Model.find();
-    const total = await Model.countDocuments();
-    res.status(200).json({
-      success: true,
-      count: total,
-      data: allUser,
-    });
+
+    customResponse.success(res, allUser);
+    // res.status(200).json({
+    //   success: true,
+    //   count: total,
+    //   data: allUser,
+    // });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
+    // res.status(500).json({ success: false, message: error.message });
   }
 });
 
@@ -27,10 +30,7 @@ exports.declineAppointment = asyncHandler(async (req, res, next) => {
   try {
     const decline = await Model.findById(req.params.id);
     if (decline.status == false) {
-      res.status(200).json({
-        success: false,
-        error: "Таны захиалга баталгаажаагүй байна",
-      });
+      customResponse.error(res, "Таны захиалга баталгаажаагүй байна");
     }
     decline.status = false;
     await decline.save();
@@ -38,14 +38,9 @@ exports.declineAppointment = asyncHandler(async (req, res, next) => {
     user.coupon++;
     await user.save();
 
-    const total = await Model.countDocuments();
-    res.status(200).json({
-      success: true,
-      count: total,
-      data: "Амжилттай цуцлалаа",
-    });
+    customResponse.success(res, "Амжилттай цуцлалаа");
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -67,22 +62,9 @@ exports.getAllPopulated = asyncHandler(async (req, res) => {
       (user) => user.schedule && user.schedule.serviceId
     );
 
-    // Count the total number of documents in the collection
-    const totalDocuments = await Model.countDocuments();
-
-    // Return response
-    res.status(200).json({
-      success: true,
-      count: totalDocuments,
-      data: filteredUsers,
-    });
+    customResponse.success(res, filteredUsers);
   } catch (error) {
-    // Log and handle error
-    console.error("Error in getAllPopulated:", error);
-    res.status(200).json({
-      success: false,
-      error: error.message,
-    });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -112,12 +94,9 @@ exports.create = asyncHandler(async (req, res, next) => {
     appointment.qr = `${appointment._id}-qr.png`;
     await appointment.save();
 
-    res.status(200).json({
-      success: true,
-      data: appointment,
-    });
+    customResponse.success(res, appointment);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
@@ -172,12 +151,9 @@ exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
       return !isArtistDayOff && !isScheduleDayOff && !isBooked;
     });
 
-    res.status(200).json({
-      success: true,
-      data: availableSchedules,
-    });
+    customResponse.success(res, availableSchedules);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -213,12 +189,9 @@ exports.getAvailableTimesByArtist = asyncHandler(async (req, res, next) => {
       return !isBooked;
     });
 
-    res.status(200).json({
-      success: true,
-      data: availableSchedules,
-    });
+    customResponse.success(res, availableSchedules);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -235,24 +208,20 @@ exports.update = asyncHandler(async (req, res, next) => {
         new: true,
       }
     );
-    return res.status(200).json({
-      success: true,
-      data: upDateUserData,
-    });
+
+    customResponse.success(res, upDateUserData);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
 exports.get = asyncHandler(async (req, res, next) => {
   try {
     const allText = await Model.findById(req.params.id);
-    return res.status(200).json({
-      success: true,
-      data: allText,
-    });
+
+    customResponse.success(res, allText);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -261,13 +230,10 @@ exports.deleteModel = async function deleteUser(req, res, next) {
     const deletePost = await Model.findByIdAndDelete(req.params.id, {
       new: true,
     });
-    return res.status(200).json({
-      success: true,
-      msg: "Ажилттай усгагдлаа",
-      data: deletePost,
-    });
+
+    customResponse.success(res, deletePost);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 };
 

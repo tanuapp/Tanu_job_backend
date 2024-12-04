@@ -1,18 +1,16 @@
 const Model = require("../models/banner");
 const asyncHandler = require("../middleware/asyncHandler");
+const customResponse = require("../utils/customResponse");
+
 exports.getAllModel = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await Model.find().sort({
       order: 1,
     });
-    const total = await Model.countDocuments();
-    res.status(200).json({
-      success: true,
-      count: total,
-      data: allUser,
-    });
+
+    customResponse.success(res, allUser);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -22,12 +20,10 @@ exports.createModel = asyncHandler(async (req, res, next) => {
       ...req.body,
       photo: req.file ? req.file.filename : "no-img.png",
     });
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
+
+    customResponse.success(res, result);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -38,34 +34,28 @@ exports.updateModel = asyncHandler(async (req, res, next) => {
       ...req.body,
       photo: req.file ? req.file.filename : old.photo,
     });
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
+
+    customResponse.success(res, result);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 exports.getModel = asyncHandler(async (req, res, next) => {
   try {
     const result = await Model.findById(req.params.id);
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
+
+    customResponse.success(res, result);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
 exports.deleteModel = asyncHandler(async (req, res, next) => {
   try {
     const result = await Model.findByIdAndDelete(req.params.id);
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
+
+    customResponse.success(res, result);
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });

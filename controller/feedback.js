@@ -1,6 +1,7 @@
 const Model = require("../models/feedback");
 const asyncHandler = require("../middleware/asyncHandler");
 
+const customResponse = require("../utils/customResponse");
 exports.getAllModel = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await Model.find().populate("userId");
@@ -11,7 +12,7 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
       data: allUser,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -25,7 +26,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
       data: result,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -39,7 +40,7 @@ exports.updateModel = asyncHandler(async (req, res, next) => {
       data: result,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 exports.getModel = asyncHandler(async (req, res, next) => {
@@ -50,7 +51,7 @@ exports.getModel = asyncHandler(async (req, res, next) => {
       data: result,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 

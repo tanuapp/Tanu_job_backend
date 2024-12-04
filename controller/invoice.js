@@ -1,5 +1,6 @@
 const Model = require("../models/invoice");
 const asyncHandler = require("../middleware/asyncHandler");
+const customResponse = require("../utils/customResponse");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -11,7 +12,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
       data: allUser,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -25,7 +26,7 @@ exports.getUserHistory = asyncHandler(async (req, res, next) => {
       data: allUser,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -42,7 +43,7 @@ exports.create = asyncHandler(async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -64,7 +65,7 @@ exports.update = asyncHandler(async (req, res, next) => {
       data: upDateUserData,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -76,7 +77,7 @@ exports.get = asyncHandler(async (req, res, next) => {
       data: allText,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 });
 
@@ -91,7 +92,7 @@ exports.deleteModel = async function deleteUser(req, res, next) {
       data: deletePost,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    customResponse.error(res, error.message);
   }
 };
 
