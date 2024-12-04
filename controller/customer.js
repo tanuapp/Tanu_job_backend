@@ -354,7 +354,10 @@ exports.validatePhone = asyncHandler(async (req, res, next) => {
 
     user = await User.findOne({ phone }).select("+pin");
     if (!user) {
-      customResponse.error(res, "Утас бүртгэлгүй байна");
+      return res.status(200).json({
+        success: false,
+        message: 'email бүртгэлгүй байна'
+      });
     } else {
       return res.status(200).json({
         success: true,
@@ -373,7 +376,10 @@ exports.validateEmail = asyncHandler(async (req, res, next) => {
 
     user = await User.findOne({ email }).select("+pin");
     if (!user) {
-      customResponse.error(res, "Утас бүртгэлгүй байна");
+      return res.status(200).json({
+        success: false,
+        message: 'email бүртгэлгүй байна'
+      });
     } else {
       return res.status(200).json({
         success: true,
