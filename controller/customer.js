@@ -266,7 +266,7 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
       data: existingUser,
     });
   } catch (error) {
-    return res.status(200).json({ success: false, error: error.message });
+    return res.status(400).json({ success: false, error: error.message });
   }
 });
 
@@ -295,7 +295,7 @@ exports.loginWithPhone = asyncHandler(async (req, res, next) => {
     const isMatch = await user.checkPassword(pin);
 
     if (!isMatch) {
-      return res.status(200).json({
+      return res.status(401).json({
         success: false,
         error: "Нэвтрэх нэр эсвэл нууц үг буруу байна!",
       });
@@ -308,7 +308,7 @@ exports.loginWithPhone = asyncHandler(async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+    res.status(400).json({ success: false, error: error.message });
   }
 });
 
