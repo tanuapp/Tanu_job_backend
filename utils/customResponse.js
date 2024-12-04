@@ -8,7 +8,7 @@ function errorResponse(res, data) {
 function successResponse(res, data, token) {
   return res.status(200).json({
     success: true,
-    message: data,
+    data: data,
     token: token ? token : null,
   });
 }
