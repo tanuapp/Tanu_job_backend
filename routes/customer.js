@@ -3,12 +3,14 @@ const upload = require("../middleware/fileUpload");
 const { protect } = require("../middleware/protect");
 const { authorize } = require("../middleware/protect");
 const {
-  register,
+  registerWithEmail,
+  registerWithPhone,
   registerVerify,
   deleteModel,
   loginWithEmail,
   loginWithPhone,
   validateEmail,
+
   validatePhone,
   get,
   getAll,
@@ -30,7 +32,8 @@ router.route("/validate/phone").post(validatePhone);
 router.route("/validate/email").post(validateEmail);
 router.route("/login/email").post(loginWithEmail);
 router.route("/login/phone").post(loginWithPhone);
-router.route("/register").post(register);
+router.route("/register/email").post(registerWithEmail);
+router.route("/register/phone").post(registerWithPhone);
 router.route("/register-verify").post(registerVerify);
 router.route("/").get(protect, getAll);
 
