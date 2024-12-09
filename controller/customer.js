@@ -119,18 +119,9 @@ exports.customerUpdateTheirOwnInformation = asyncHandler(
   }
 );
 
-// Registration endpoint
-exports.register = asyncHandler(async (req, res, next) => {
+exports.registerWithPhone = asyncHandler(async (req, res, next) => {
   try {
-    const { pin, phone, isEmail, email } = req.body;
-    if (isEmail) {
-      if (!email) {
-        res.status(200).json({
-          success: false,
-          message: "Цахим хаягаа оруулна уу",
-        });
-      }
-    }
+    const { pin, phone } = req.body;
 
     if (!pin) {
       return res.status(200).json({
@@ -138,38 +129,22 @@ exports.register = asyncHandler(async (req, res, next) => {
         message: "PIN кодоо оруулна уу",
       });
     }
-    let existingUser = null;
-    let user = null;
+    let existingUser = await User.findOne({ phone });
 
-    if (isEmail) {
-      existingUser = await User.findOne({ email });
-
-      if (existingUser && existingUser.status == true) {
-        return res.status(200).json({
-          success: false,
-          message: "Цахим хаяг бүртгэлтэй байна",
-        });
-      }
-    } else {
-      existingUser = await User.findOne({ phone });
-
-      if (existingUser && existingUser.status == true) {
-        return res.status(200).json({
-          success: false,
-          message: "Утасны дугаар бүртгэлтэй байна",
-        });
-      }
+    if (existingUser) {
+      res.status(400).json({
+        success: false,
+        message: "Утасны дугаар бүртгэлтэй байна",
+      });
     }
 
     const inputData = {
       ...req.body,
       photo: req.file ? req.file.filename : "no-img.png",
     };
-    if (!existingUser) {
-      user = await User.create(inputData);
-    }
 
-    // Generate OTP and save it in the database
+    const user = await User.create(inputData);
+
     const otp = generateOTP();
     if (existingUser) {
       await OTP.findByIdAndUpdate(
@@ -188,11 +163,64 @@ exports.register = asyncHandler(async (req, res, next) => {
       });
     }
 
-    if (isEmail) {
-      await sendEmail(email, email, otp);
-    } else {
-      await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
+    await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
+
+    return res.status(200).json({
+      success: true,
+      message: "Бүртгэл амжилттай. Нэг удаагийн нууц үг илгээгдлээ",
+    });
+  } catch (error) {
+    customResponse.error(res, error.message);
+  }
+});
+
+exports.registerWithEmail = asyncHandler(async (req, res, next) => {
+  try {
+    const { pin, email } = req.body;
+
+    if (!pin) {
+      return res.status(200).json({
+        success: false,
+        message: "PIN кодоо оруулна уу",
+      });
     }
+    let existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      res.status(400).json({
+        success: false,
+        message: "Утасны дугаар бүртгэлтэй байна",
+      });
+    }
+
+    const inputData = {
+      ...req.body,
+      photo: req.file ? req.file.filename : "no-img.png",
+    };
+
+    const user = await User.create(inputData);
+
+    const otp = generateOTP();
+    if (existingUser) {
+      await OTP.findByIdAndUpdate(
+        {
+          customer: user._id,
+        },
+        {
+          otp,
+          customer: user._id,
+        }
+      );
+    } else {
+      await OTP.create({
+        otp,
+        customer: user._id,
+      });
+    }
+
+    await sendEmail(email, email, otp);
+
+    // await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
 
     return res.status(200).json({
       success: true,
@@ -209,6 +237,10 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
     const { otp, phone, email, isEmail, count } = req.body;
 
     if (Number(count) < 3) {
+      res.status(400).json({
+        success: false,
+        message: "Та түр хүлээн дахин оролдоно уу",
+      });
     }
 
     let existingUser;

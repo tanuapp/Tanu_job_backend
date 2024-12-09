@@ -63,6 +63,7 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
       data: result,
     });
   } catch (error) {
-    res.status(200).json({ success: false, error: error.message });
+
+    customResponse.error(res, error.message);s
   }
 });
