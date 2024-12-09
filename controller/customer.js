@@ -7,7 +7,7 @@ const { sendEmail } = require("../utils/mailService");
 
 const customResponse = require("../utils/customResponse");
 const OTP = require("../models/otp");
-const customer = require("../models/customer");
+const Artist = require("../models/artist");
 
 function generateOTP(length = 4) {
   let otp = "";
@@ -317,29 +317,40 @@ exports.loginWithPhone = asyncHandler(async (req, res, next) => {
     let user;
 
     user = await User.findOne({ phone }).select("+pin");
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "Имейл бүртгэлгүй байна",
+    const artist = await Artist.findOne({ phone }).select("+pin");
+    if (!user && !artist) {
+      customResponse.error(res, "Имейл бүртгэлгүй байна");
+    }
+    if (artist) {
+      const isMatch = await artist.checkPassword(pin);
+
+      if (!isMatch) {
+        customResponse.error(res, "Нэвтрэх нэр эсвэл нууц үг буруу байна!");
+      }
+
+      const token = artist.getJsonWebToken();
+      res.status(200).json({
+        success: true,
+        isArtist: true,
+        token,
+        data: artist,
       });
     }
+    if (user) {
+      const isMatch = await user.checkPassword(pin);
 
-    // Check if PIN matches
-    const isMatch = await user.checkPassword(pin);
+      if (!isMatch) {
+        customResponse.error(res, "Нэвтрэх нэр эсвэл нууц үг буруу байна!");
+      }
 
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Нэвтрэх нэр эсвэл нууц үг буруу байна!",
+      const token = user.getJsonWebToken();
+      res.status(200).json({
+        success: true,
+        isArtist: false,
+        token,
+        data: user,
       });
     }
-
-    const token = user.getJsonWebToken();
-    res.status(200).json({
-      success: true,
-      token,
-      data: user,
-    });
   } catch (error) {
     customResponse.error(res, error.message);
   }
@@ -353,26 +364,41 @@ exports.loginWithEmail = asyncHandler(async (req, res, next) => {
       customResponse.error(res, "PIN кодоо оруулна уу");
     }
 
-    let user;
-
-    user = await User.findOne({ email }).select("+pin");
-    if (!user) {
+    const user = await User.findOne({ email }).select("+pin");
+    const artist = await Artist.findOne({ email }).select("+pin");
+    if (!user && !artist) {
       customResponse.error(res, "Имейл бүртгэлгүй байна");
     }
+    if (artist) {
+      const isMatch = await artist.checkPassword(pin);
 
-    // Check if PIN matches
-    const isMatch = await user.checkPassword(pin);
+      if (!isMatch) {
+        customResponse.error(res, "Нэвтрэх нэр эсвэл нууц үг буруу байна!");
+      }
 
-    if (!isMatch) {
-      customResponse.error(res, "Нэвтрэх нэр эсвэл нууц үг буруу байна!");
+      const token = artist.getJsonWebToken();
+      res.status(200).json({
+        success: true,
+        isArtist: true,
+        token,
+        data: artist,
+      });
     }
+    if (user) {
+      const isMatch = await user.checkPassword(pin);
 
-    const token = user.getJsonWebToken();
-    res.status(200).json({
-      success: true,
-      token,
-      data: user,
-    });
+      if (!isMatch) {
+        customResponse.error(res, "Нэвтрэх нэр эсвэл нууц үг буруу байна!");
+      }
+
+      const token = user.getJsonWebToken();
+      res.status(200).json({
+        success: true,
+        isArtist: false,
+        token,
+        data: user,
+      });
+    }
   } catch (error) {
     customResponse.error(res, error.message);
   }

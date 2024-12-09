@@ -6,15 +6,21 @@ const { Schema } = mongoose;
 const artistSchema = new Schema({
   phone: {
     type: String,
+    sparse: true,
+    unique: true,
     required: [true, "Утасны дугаар заавал бичнэ үү!"],
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
-  email: String,
+  email: {
+    type: String,
+    sparse: true,
+    unique: true,
+  },
   companyId: {
     type: Schema.Types.ObjectId,
     ref: "Company",
   },
-  password: {
+  pin: {
     type: String,
   },
   status: {
@@ -34,10 +40,10 @@ const artistSchema = new Schema({
 
 artistSchema.pre("save", async function () {
   const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  this.pin = await bcrypt.hash(this.pin, salt);
 });
 artistSchema.methods.checkPassword = async function (pass) {
-  return await bcrypt.compare(pass, this.password);
+  return await bcrypt.compare(pass, this.pin);
 };
 
 artistSchema.methods.getJsonWebToken = function () {
@@ -51,11 +57,11 @@ artistSchema.methods.getJsonWebToken = function () {
   return token;
 };
 artistSchema.pre("findOneAndUpdate", async function (next) {
-  if (!this._update.password) {
+  if (!this._update.pin) {
     return next();
   }
   const salt = await bcrypt.genSalt(10);
-  this._update.password = await bcrypt.hash(this._update.password, salt);
+  this._update.pin = await bcrypt.hash(this._update.pin, salt);
   next();
 });
 
