@@ -302,49 +302,58 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
-
 exports.loginWithPhone = asyncHandler(async (req, res, next) => {
   try {
     const { phone, pin } = req.body;
 
-    if (!pin) {
+    // Validate input
+    if (!phone || !pin) {
       return res.status(200).json({
         success: false,
-        message: "PIN кодоо оруулна уу",
+        message: "Утасны дугаар болон PIN кодоо оруулна уу",
       });
     }
 
-    let user;
-
-    user = await User.findOne({ phone }).select("+pin");
+    // Find user or artist by phone
+    const user = await User.findOne({ phone }).select("+pin");
     const artist = await Artist.findOne({ phone }).select("+pin");
+
     if (!user && !artist) {
-      customResponse.error(res, "Имейл бүртгэлгүй байна");
+      return customResponse.error(res, "Утасны дугаар бүртгэлгүй байна");
     }
+
+    // Authenticate artist
     if (artist) {
       const isMatch = await artist.checkPassword(pin);
-
+      console.log(isMatch);
       if (!isMatch) {
-        customResponse.error(res, "Нэвтрэх нэр эсвэл нууц үг буруу байна!");
+        return customResponse.error(
+          res,
+          "Нэвтрэх нэр эсвэл нууц үг буруу байна!"
+        );
       }
 
       const token = artist.getJsonWebToken();
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         isArtist: true,
         token,
         data: artist,
       });
     }
+
+    // Authenticate user
     if (user) {
       const isMatch = await user.checkPassword(pin);
-
       if (!isMatch) {
-        customResponse.error(res, "Нэвтрэх нэр эсвэл нууц үг буруу байна!");
+        return customResponse.error(
+          res,
+          "Нэвтрэх нэр эсвэл нууц үг буруу байна!"
+        );
       }
 
       const token = user.getJsonWebToken();
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         isArtist: false,
         token,
@@ -352,7 +361,8 @@ exports.loginWithPhone = asyncHandler(async (req, res, next) => {
       });
     }
   } catch (error) {
-    customResponse.error(res, error.message);
+    console.log(error);
+    return customResponse.error(res, error.message);
   }
 });
 
@@ -360,39 +370,50 @@ exports.loginWithEmail = asyncHandler(async (req, res, next) => {
   try {
     const { email, pin } = req.body;
 
-    if (!pin) {
-      customResponse.error(res, "PIN кодоо оруулна уу");
+    // Validate input
+    if (!email || !pin) {
+      return customResponse.error(res, "Имейл болон PIN кодоо оруулна уу");
     }
 
+    // Find user or artist by email
     const user = await User.findOne({ email }).select("+pin");
     const artist = await Artist.findOne({ email }).select("+pin");
+
     if (!user && !artist) {
-      customResponse.error(res, "Имейл бүртгэлгүй байна");
+      return customResponse.error(res, "Имейл бүртгэлгүй байна");
     }
+
+    // Authenticate artist
     if (artist) {
       const isMatch = await artist.checkPassword(pin);
-
       if (!isMatch) {
-        customResponse.error(res, "Нэвтрэх нэр эсвэл нууц үг буруу байна!");
+        return customResponse.error(
+          res,
+          "Нэвтрэх нэр эсвэл нууц үг буруу байна!"
+        );
       }
 
       const token = artist.getJsonWebToken();
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         isArtist: true,
         token,
         data: artist,
       });
     }
+
+    // Authenticate user
     if (user) {
       const isMatch = await user.checkPassword(pin);
-
       if (!isMatch) {
-        customResponse.error(res, "Нэвтрэх нэр эсвэл нууц үг буруу байна!");
+        return customResponse.error(
+          res,
+          "Нэвтрэх нэр эсвэл нууц үг буруу байна!"
+        );
       }
 
       const token = user.getJsonWebToken();
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         isArtist: false,
         token,
@@ -400,7 +421,7 @@ exports.loginWithEmail = asyncHandler(async (req, res, next) => {
       });
     }
   } catch (error) {
-    customResponse.error(res, error.message);
+    return customResponse.error(res, error.message);
   }
 });
 
