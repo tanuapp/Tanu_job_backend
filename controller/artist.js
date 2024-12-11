@@ -18,11 +18,17 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
+    if (!req.body.pin) {
+      customResponse.error(res, "Та пин оруулж өгнө үү ");
+    }
     const existingUser = await User.findOne({ phone: req.body.phone });
     const exinstingEmail = await User.findOne({ email: req.body.email });
-    const artister = await company.find({
+    const artister = await company.findOne({
       companyNumber: req.body.companyNumber,
     });
+    if (!artister) {
+      customResponse.error(res, "Байгууллага олдсонгүй");
+    }
     artister.numberOfArtist++;
     await artister.save();
 
@@ -41,12 +47,14 @@ exports.create = asyncHandler(async (req, res, next) => {
 
     const inputData = {
       ...req.body,
+      companyId: artister._id.toString(),
       photo: req.file?.filename ? req.file.filename : "no user photo",
     };
     const user = await User.create(inputData);
 
-    customResponse.success(res, "Амжилттай хүсэлт илгээлээ", token);
+    customResponse.success(res, "Амжилттай хүсэлт илгээлээ");
   } catch (error) {
+    console.log(error);
     customResponse.error(res, error.message);
   }
 });
