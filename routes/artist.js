@@ -16,8 +16,9 @@ const router = express.Router();
 router.route("/getArtistServices/:id").get(getArtistServices);
 
 router.route("/login").post(Login);
+router.route("/register").post(upload.single("file"), create);
 
-router.route("/").post(upload.single("file"), create).get(getAll);
+router.route("/").get(getAll);
 
 router
   .route("/:id")
