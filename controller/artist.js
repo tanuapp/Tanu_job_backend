@@ -4,6 +4,7 @@ const customResponse = require("../utils/customResponse");
 // const artist = require("../models/artist");
 const Service = require("../models/service");
 const company = require("../models/company");
+const user = require("../models/user");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -19,7 +20,9 @@ exports.create = asyncHandler(async (req, res, next) => {
   try {
     const existingUser = await User.findOne({ phone: req.body.phone });
     const exinstingEmail = await User.findOne({ email: req.body.email });
-    const artister = await company.findById(req.body.companyId);
+    const artister = await company.find({
+      companyNumber: req.body.companyNumber,
+    });
     artister.numberOfArtist++;
     await artister.save();
 
@@ -35,16 +38,14 @@ exports.create = asyncHandler(async (req, res, next) => {
         message: "И-мэйл бүртгэлтэй байна",
       });
     }
-    console.log(req.files);
 
     const inputData = {
       ...req.body,
       photo: req.file?.filename ? req.file.filename : "no user photo",
     };
     const user = await User.create(inputData);
-    const token = user.getJsonWebToken();
 
-    customResponse.success(res, user, token);
+    customResponse.success(res, "Амжилттай хүсэлт илгээлээ", token);
   } catch (error) {
     customResponse.error(res, error.message);
   }
@@ -52,22 +53,25 @@ exports.create = asyncHandler(async (req, res, next) => {
 
 exports.Login = asyncHandler(async (req, res, next) => {
   try {
-    const { phone, password } = req.body;
+    const { phone, pin } = req.body;
 
     const userphone = await User.find({ phone: phone });
 
     if (!userphone) {
       customResponse.error(res, "Утасны дугаар бүртгэлгүй байна ");
     }
+    if (!userphone.status) {
+      customResponse.error(res, "Байгууллагаас таныг зөвшөөрөөгүй байна ");
+    }
 
-    if (!phone || !password) {
+    if (!phone || !pin) {
       customResponse.error(res, "Утасны дугаар  болон нууц үгээ оруулна уу!");
     } else {
-      const user = await User.findOne({ phone }).select("+password");
+      const user = await User.findOne({ phone }).select("+pin");
       if (!user) {
         customResponse.error(res, "Утасны дугаар  эсвэл нууц үг буруу байна!");
       }
-      const isPasswordValid = await user.checkPassword(password);
+      const isPasswordValid = await user.checkPassword(pin);
       if (!isPasswordValid) {
         customResponse.error(res, "Утасны дугаар  эсвэл нууц үг буруу байна!");
       }
