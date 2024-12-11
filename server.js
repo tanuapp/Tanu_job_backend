@@ -46,6 +46,7 @@ const mongooseRoute = require("./routes/mongooseChange.js");
 const seriesRoute = require("./routes/series.js");
 const emailRoute = require("./routes/email.js");
 const notRoute = require("./routes/notification.js");
+const companyArtistRequestRoute = require("./routes/company_artist_request.js");
 
 //Server configuration for socket
 const app = express();
@@ -121,6 +122,7 @@ app.use("/api/v1/notification", notRoute);
 app.use("/api/v1/mongoose", mongooseRoute);
 app.use("/api/v1/email", emailRoute);
 app.use("/api/v1/series", seriesRoute);
+app.use("/api/v1/company-artist-request", companyArtistRequestRoute);
 
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));
