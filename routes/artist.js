@@ -17,10 +17,9 @@ router.route("/getArtistServices/:id").get(getArtistServices);
 
 router.route("/login").post(Login);
 
-router
-  .route("/")
-  .post(protect, authorize("user"), upload.single("file"), create)
-  .get(getAll);
+router.route("/login").post(Login);
+
+router.route("/").post(upload.single("file"), create).get(getAll);
 
 router
   .route("/:id")

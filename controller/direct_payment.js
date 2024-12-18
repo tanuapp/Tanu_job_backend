@@ -1,3 +1,4 @@
+
 const Model = require("../models/appointment");
 const Appointment = require("../models/appointment");
 const Schedule = require("../models/schedule");

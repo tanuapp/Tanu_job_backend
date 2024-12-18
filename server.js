@@ -98,7 +98,6 @@ async function initializeFirebase() {
 initializeFirebase();
 app.use("/api/v1/district", districtRoute);
 app.use("/api/v1/subdistrict", subDistrictRoute);
-app.use("/api/v1/direct-payment", direct_paymentRoute);
 app.use("/api/v1/area", areaRoute);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/company", companyRoutes);
