@@ -100,65 +100,55 @@ exports.create = asyncHandler(async (req, res, next) => {
   }
 });
 exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
-  try {
-    const { date } = req.body;
+  const { date, service } = req.body;
 
-    // Get all DayOffs for the provided date
-    const dayOffs = await Dayoff.find({ date });
-
-    // Extract artist IDs and schedules from DayOffs
-    const dayOffArtistIds = dayOffs.map((dayOff) => String(dayOff.artistId));
-    const dayOffSchedules = dayOffs.flatMap((dayOff) =>
-      dayOff.schedule.map((scheduleId) => String(scheduleId))
-    );
-
-    // Find the selected day of the week
-    const selectedDayOfWeek = new Date(date).toLocaleDateString("mn-MN", {
-      weekday: "long",
+  if (!date || !service) {
+    return res.status(400).json({
+      success: false,
+      message: "Date and service are required",
     });
-    console.log(selectedDayOfWeek);
-
-    // Fetch schedules for the selected day of the week and the specified service
-    const schedules = await Schedule.find({
-      day_of_the_week: selectedDayOfWeek,
-      serviceId: service,
-    })
-      .populate("artistId")
-      .populate("serviceId");
-
-    // Fetch appointments for the date
-    });
-
-    const appointments = await Appointment.find({
-      date: date,
-      status: true,
-    });
-
-    // If there are no schedules, return an empty array
-    if (!schedules || schedules.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No schedules found for this day",
-      });
-    }
-
-    // Filter schedules to exclude those with DayOff or booked appointments
-    const availableSchedules = schedules.filter((schedule) => {
-      const isArtistDayOff = dayOffArtistIds.includes(
-        String(schedule.artistId._id)
-      );
-      const isScheduleDayOff = dayOffSchedules.includes(String(schedule._id));
-      const isBooked = appointments.some(
-        (appointment) => String(appointment.schedule) === String(schedule._id)
-      );
-      return !isArtistDayOff && !isScheduleDayOff && !isBooked;
-    });
-
-    customResponse.success(res, availableSchedules);
-  } catch (error) {
-    customResponse.error(res, error.message);
   }
+
+  const selectedDayOfWeek = new Date(date).toLocaleDateString("mn-MN", {
+    weekday: "long",
+  });
+
+  const dayOffs = await Dayoff.find({ date });
+
+  const dayOffArtistIds = dayOffs.map((dayOff) => String(dayOff.artistId));
+  const dayOffSchedules = dayOffs.flatMap((dayOff) =>
+    dayOff.schedule.map((scheduleId) => String(scheduleId))
+  );
+  const schedules = await Schedule.find({
+    day_of_the_week: selectedDayOfWeek,
+    serviceId: service,
+  })
+    .populate("artistId")
+    .populate("serviceId");
+  const appointments = await Appointment.find({
+    date: date,
+    status: true,
+  });
+  if (!schedules || schedules.length === 0) {
+    return res.status(404).json({
+      success: false,
+      message: "No schedules found for this day",
+    });
+  }
+  const availableSchedules = schedules.filter((schedule) => {
+    const isArtistDayOff = dayOffArtistIds.includes(
+      String(schedule.artistId._id)
+    );
+    const isScheduleDayOff = dayOffSchedules.includes(String(schedule._id));
+    const isBooked = appointments.some(
+      (appointment) => String(appointment.schedule) === String(schedule._id)
+    );
+    return !isArtistDayOff && !isScheduleDayOff && !isBooked;
+  });
+
+  customResponse.success(res, availableSchedules);
 });
+
 
 exports.getAvailableTimesByArtist = asyncHandler(async (req, res, next) => {
   try {
