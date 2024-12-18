@@ -30,6 +30,7 @@ const serviceSchema = new Schema({
     default: 0,
   },
   description: String,
+  type: String,
   price: {
     type: Number,
     required: true,
