@@ -8,11 +8,7 @@ function errorResponse(res, data) {
 function successResponse(res, data, token) {
   return res.status(200).json({
     success: true,
-<<<<<<< HEAD
     data: data,
-=======
-    msg: data,
->>>>>>> ebc9545e48a215925418cb7785a6011516689074
     token: token ? token : null,
   });
 }
