@@ -27,7 +27,6 @@ function serverError(res, data) {
   });
 }
 
-// Corrected export syntax
 const customResponse = {
   error: errorResponse,
   success: successResponse,
@@ -36,5 +35,3 @@ const customResponse = {
 };
 
 module.exports = customResponse;
-
-// export default customResponse;

@@ -356,7 +356,7 @@ exports.validatePhone = asyncHandler(async (req, res, next) => {
     if (!user) {
       return res.status(200).json({
         success: false,
-        message: 'email бүртгэлгүй байна'
+        message: 'Дугаар бүртгэлгүй байна'
       });
     } else {
       return res.status(200).json({
