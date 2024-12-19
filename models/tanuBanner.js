@@ -4,6 +4,9 @@ const tanuBannerSchema = new mongoose.Schema({
   photo: {
     type: String,
   },
+  links: {
+    type: String,
+  },
 
   createdAt: {
     type: Date,
