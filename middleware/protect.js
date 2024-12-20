@@ -17,6 +17,7 @@ exports.protect = asyncHandler(async (req, res, next) => {
         msg: "Токен хоосон байна",
       });
     }
+    
     const tokenObj = jwt.verify(token, process.env.JWT_SECRET);
 
     req.userId = tokenObj.Id;
