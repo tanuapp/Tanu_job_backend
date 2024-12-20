@@ -217,6 +217,46 @@ exports.registerWithPhone = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.register = asyncHandler(async (req, res, next) => {
+  try {
+    if (!req.body.pin) {
+      customResponse.error(res, "Та пин оруулж өгнө үү ");
+    }
+    const existingUser = await User.findOne({ phone: req.body.phone });
+    const exinstingEmail = await User.findOne({ email: req.body.email });
+    const artister = await company.findById(req.body.companyId);
+    artister.numberOfArtist++;
+    await artister.save();
+
+    if (existingUser) {
+      return res.status(200).json({
+        success: false,
+        message: "Утасны дугаар бүртгэлтэй байна",
+      });
+    }
+    if (exinstingEmail) {
+      return res.status(200).json({
+        success: false,
+        message: "И-мэйл бүртгэлтэй байна",
+      });
+    }
+
+    const inputData = {
+      ...req.body,
+      companyId: artister._id.toString(),
+      photo: req.file?.filename ? req.file.filename : "no user photo",
+    };
+
+    const user = await User.create(inputData);
+    const token = user.getJsonWebToken();
+
+    customResponse.success(res, "Амжилттай хүсэлт илгээлээ");
+  } catch (error) {
+    console.log(error);
+    customResponse.error(res, error.message);
+  }
+});
+
 exports.registerWithEmail = asyncHandler(async (req, res, next) => {
   try {
     const { pin, email } = req.body;

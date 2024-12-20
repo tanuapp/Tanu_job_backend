@@ -10,7 +10,7 @@ const {
   loginWithEmail,
   loginWithPhone,
   validateEmail,
-
+  register,
   validatePhone,
   get,
   getAll,
@@ -33,7 +33,7 @@ router.route("/validate/phone").post(validatePhone);
 router.route("/validate/email").post(validateEmail);
 router.route("/login/email").post(loginWithEmail);
 router.route("/login/phone").post(loginWithPhone);
-<<<<<<< HEAD
+
 router.route("/register/email").post(registerWithEmail);
 router.route("/register/phone").post(registerWithPhone);
 
