@@ -20,6 +20,49 @@ function generateOTP(length = 4) {
   return otp;
 }
 
+const validatePhone = async (phone) => {
+  const user = await User.findOne({ phone }).select("+pin");
+  return user ? true : false;
+};
+
+const validateEmail = async (email) => {
+  const user = await User.findOne({ email }).select("+pin");
+  return user ? true : false;
+};
+
+// Exports
+exports.validatePhone = asyncHandler(async (req, res) => {
+  const { phone } = req.body;
+
+  if (!phone) {
+    return customResponse.error(res, "Утасны дугаараа оруулна уу");
+  }
+
+  const userExists = await validatePhone(phone);
+
+  if (!userExists) {
+    return customResponse.error(res, "Утас бүртгэлгүй байна");
+  }
+
+  return res.status(200).json({ success: true });
+});
+
+exports.validateEmail = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return customResponse.error(res, "Цахим хаягаа оруулна уу");
+  }
+
+  const userExists = await validateEmail(email);
+
+  if (!userExists) {
+    return customResponse.error(res, "Цахим хаяг бүртгэлгүй байна");
+  }
+
+  return res.status(200).json({ success: true });
+});
+
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await User.find();
@@ -302,6 +345,54 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+
+exports.forgotPassword = asyncHandler(async (req, res) => {
+  const { phone, isEmail, email } = req.body;
+  let user;
+  if (isEmail) {
+    user = await User.findOne({ email });
+  } else {
+    user = await User.findOne({ phone });
+  }
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "Хэрэглэгч олдсонгүй эсвэл мэдээлэл буруу байна.",
+    });
+  }
+  const otp = generateOTP();
+
+  try {
+    user.pin = otp;
+    await user.save();
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Хэрэглэгчийн мэдээллийг хадгалах явцад алдаа гарлаа.",
+    });
+  }
+
+  try {
+    if (isEmail) {
+      await sendEmail(email, "Forgot Password OTP", `Таны нууц үг ${otp} болж шинэчлэгдлээ.`);
+    } else {
+      await sendMessage(phone, `Таны нууц үг ${otp} болж шинэчлэгдлээ.`);
+    }
+  } catch (error) {
+    console.error("Error sending OTP:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "OTP илгээх явцад алдаа гарлаа.",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Амжилттай. Нэг удаагийн нууц үг илгээгдлээ.",
+  });
+});
+
 exports.loginWithPhone = asyncHandler(async (req, res, next) => {
   try {
     const { phone, pin } = req.body;
@@ -425,43 +516,7 @@ exports.loginWithEmail = asyncHandler(async (req, res, next) => {
   }
 });
 
-exports.validatePhone = asyncHandler(async (req, res, next) => {
-  try {
-    const { phone } = req.body;
 
-    let user;
-
-    user = await User.findOne({ phone }).select("+pin");
-    if (!user) {
-      customResponse.error(res, "Утас бүртгэлгүй байна");
-    } else {
-      return res.status(200).json({
-        success: true,
-      });
-    }
-  } catch (error) {
-    customResponse.error(res, error.message);
-  }
-});
-
-exports.validateEmail = asyncHandler(async (req, res, next) => {
-  try {
-    const { email } = req.body;
-
-    let user;
-
-    user = await User.findOne({ email }).select("+pin");
-    if (!user) {
-      customResponse.error(res, "Утас бүртгэлгүй байна");
-    } else {
-      return res.status(200).json({
-        success: true,
-      });
-    }
-  } catch (error) {
-    customResponse.error(res, error.message);
-  }
-});
 
 exports.updateUserFCM = asyncHandler(async (req, res, next) => {
   try {

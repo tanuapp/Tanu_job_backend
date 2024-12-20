@@ -1,7 +1,6 @@
-const User = require("../models/artist");
+const Artist = require("../models/artist");
 const asyncHandler = require("../middleware/asyncHandler");
 const customResponse = require("../utils/customResponse");
-// const artist = require("../models/artist");
 const Service = require("../models/service");
 const company = require("../models/company");
 const user = require("../models/user");
@@ -21,14 +20,9 @@ exports.create = asyncHandler(async (req, res, next) => {
     if (!req.body.pin) {
       customResponse.error(res, "Та пин оруулж өгнө үү ");
     }
-    const existingUser = await User.findOne({ phone: req.body.phone });
-    const exinstingEmail = await User.findOne({ email: req.body.email });
-    const artister = await company.findOne({
-      companyNumber: req.body.companyNumber,
-    });
-    if (!artister) {
-      customResponse.error(res, "Байгууллага олдсонгүй");
-    }
+    const existingUser = await Artist.findOne({ phone: req.body.phone });
+    const exinstingEmail = await Artist.findOne({ email: req.body.email });
+    const artister = await company.findById(req.body.companyId);
     artister.numberOfArtist++;
     await artister.save();
 
@@ -50,7 +44,9 @@ exports.create = asyncHandler(async (req, res, next) => {
       companyId: artister._id.toString(),
       photo: req.file?.filename ? req.file.filename : "no user photo",
     };
-    const user = await User.create(inputData);
+
+    const user = await Artist.create(inputData);
+    const token = user.getJsonWebToken();
 
     customResponse.success(res, "Амжилттай хүсэлт илгээлээ");
   } catch (error) {
@@ -58,6 +54,65 @@ exports.create = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+
+exports.checkArtistPhone = asyncHandler(async (req, res, next) => {
+  try {
+    const body = req.body;
+    const existingUser = await Artist.findOne({ phone: body.phone });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Утас бүртгэлтэй байна",
+      });
+    }
+    return res.status(200).json({
+      success: false,
+      message: "Амжилттай",
+    });
+  }
+  catch (error) {
+    customResponse.error(res, error.message);
+  }
+})
+exports.checkArtistEmail = asyncHandler(async (req, res, next) => {
+  try {
+    const body = req.body;
+    const existingUser = await Artist.findOne({ email: body.email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "И-мэйл бүртгэлтэй байна",
+      });
+    } return res.status(200).json({
+      success: false,
+      message: "Амжилттай",
+    });
+
+  }
+  catch (error) {
+    customResponse.error(res, error.message);
+  }
+})
+
+exports.registerArtist = asyncHandler(async (req, res, next) => {
+  try {
+    const body = req.body;
+    const artister = await company.findById(body.companyId);
+    artister.numberOfArtist++;
+    await artister.save();
+    const inputData = {
+      ...body,
+      photo: req.file?.filename ? req.file.filename : "no user photo",
+    };
+    const user = await Artist.create(inputData);
+    const token = user.getJsonWebToken();
+
+    customResponse.success(res, user, token);
+  }
+  catch (error) {
+    customResponse.error(res, error.message);
+  }
+})
 
 exports.Login = asyncHandler(async (req, res, next) => {
   try {
@@ -75,7 +130,7 @@ exports.Login = asyncHandler(async (req, res, next) => {
     if (!phone || !pin) {
       customResponse.error(res, "Утасны дугаар  болон нууц үгээ оруулна уу!");
     } else {
-      const user = await User.findOne({ phone }).select("+pin");
+      const user = await Artist.findOne({ phone }).select("+password");
       if (!user) {
         customResponse.error(res, "Утасны дугаар  эсвэл нууц үг буруу байна!");
       }

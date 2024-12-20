@@ -10,6 +10,9 @@ const {
   get,
   getAll,
   update,
+  registerArtist,
+  checkArtistEmail,
+  checkArtistPhone,
 } = require("../controller/artist");
 const router = express.Router();
 
@@ -17,8 +20,15 @@ router.route("/getArtistServices/:id").get(getArtistServices);
 
 router.route("/login").post(Login);
 router.route("/register").post(upload.single("file"), create);
-
 router.route("/").get(getAll);
+
+router.route("/checkArtistEmail").post(checkArtistEmail);
+
+router.route("/registerArtist").post(registerArtist);
+
+router.route("/checkArtistPhone").post(checkArtistPhone);
+
+router.route("/").post(upload.single("file"), create).get(getAll);
 
 router
   .route("/:id")
