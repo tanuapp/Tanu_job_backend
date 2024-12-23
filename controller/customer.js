@@ -429,8 +429,9 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
 
   return res.status(200).json({
     success: true,
-    message: "Амжилттай. Нэг удаагийн нууц үг илгээгдлээ.",
+    message: `Амжилттай. Таны шинэ нууц үг бүртгэлтэй ${isEmail ? 'email-руу' : 'утас руу'} илгээгдлээ.`,
   });
+
 });
 
 exports.loginWithPhone = asyncHandler(async (req, res, next) => {
