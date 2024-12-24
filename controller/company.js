@@ -3,6 +3,7 @@ const asyncHandler = require("../middleware/asyncHandler");
 const Artist = require("../models/artist");
 const Banner = require("../models/banner");
 const Dayoff = require("../models/dayoff");
+const Contract = require("../models/onlineContract");
 const Service = require("../models/service");
 const Appointment = require("../models/appointment");
 const Fav = require("../models/favourite");
@@ -72,6 +73,9 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
     const DayoffList = await Dayoff.find({
       companyId: req.params.id,
     });
+    const ContractList = await Contract.find({
+      companyId: req.params.id,
+    });
     const ServiceList = await Service.find({
       companyId: req.params.id,
     });
@@ -102,6 +106,7 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
       categories: company.category, // Populated category data
       banner: BannerList,
       dayoff: DayoffList,
+      Contract: ContractList,
       service: ServiceList,
     });
   } catch (error) {

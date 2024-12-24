@@ -17,10 +17,11 @@ const AWS = require("aws-sdk");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 
-//Global Error Handler
+// Global Error Handler
 const errorHandler = require("./middleware/error.js");
 
-//Routes
+// Routes
+const onlineContractRouter = require("./routes/onlineContractRouter.js");
 const categoryRoutes = require("./routes/category.js");
 const userRoutes = require("./routes/user.js");
 const companyRoutes = require("./routes/company.js");
@@ -49,7 +50,34 @@ const emailRoute = require("./routes/email.js");
 const notRoute = require("./routes/notification.js");
 const companyArtistRequestRoute = require("./routes/company_artist_request.js");
 
-//Server configuration for socket
+// Multer setup
+const multer = require("multer");
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = `${Date.now()}-${file.originalname}`;
+    cb(null, uniqueName);
+  },
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype === "application/pdf") {
+    cb(null, true);
+  } else {
+    cb(new Error("Only PDF files are allowed"), false);
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 300 * 1024 * 1024 }, // Set max file size limit (300MB)
+});
+
+// Server configuration for socket
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -59,11 +87,12 @@ const io = new Server(httpServer, {
   },
 });
 
-//DB connection
+// DB connection
 connectDB();
 
 app.set("io", io);
-//CORS
+
+// CORS
 app.use(
   cors({
     origin: "*",
@@ -75,7 +104,7 @@ app.options(cors());
 app.use(logger);
 app.use(express.json());
 
-//AWS SECRET
+// AWS SECRET
 AWS.config.update({
   region: "ap-south-1",
   credentials: {
@@ -84,7 +113,7 @@ AWS.config.update({
   },
 });
 
-//FIREBASE
+// FIREBASE
 async function initializeFirebase() {
   try {
     admin.initializeApp({
@@ -98,6 +127,7 @@ async function initializeFirebase() {
 }
 
 initializeFirebase();
+app.use("/api/v1/contract", onlineContractRouter);
 app.use("/api/v1/district", districtRoute);
 app.use("/api/v1/subdistrict", subDistrictRoute);
 app.use("/api/v1/area", areaRoute);
@@ -127,9 +157,21 @@ app.use("/api/v1/company-artist-request", companyArtistRequestRoute);
 
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));
-app.use("/uploads", express.static(__dirname + "/public/uploads"));
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
-// global алдаа шалгах  function
+// File upload route
+app.post("/api/v1/upload-pdf", upload.single("pdfFile"), (req, res) => {
+  try {
+    res.status(200).json({
+      message: "File uploaded successfully",
+      file: req.file,
+    });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Global error handler
 app.use(errorHandler);
 
 io.on("connection", (socket) => {
@@ -142,10 +184,8 @@ io.on("connection", (socket) => {
     console.log("User disconnected");
   });
 
-  // Example of listening for a custom event
   socket.on("message", (data) => {
     console.log("Message received:", data);
-    // Emit a message back to the client
     socket.emit("message", "Hello from server");
   });
 });
@@ -156,7 +196,6 @@ cron.schedule("0 */3 * * *", async () => {
   try {
     // const items = await YourModel.find();
     // console.log(`Checked ${items.length} items in YourModel.`);
-    // Perform other operations on the model if necessary
   } catch (error) {
     console.error("Error checking the model:", error);
   }
@@ -164,7 +203,7 @@ cron.schedule("0 */3 * * *", async () => {
 
 require("./controller/cron.js");
 
-// exporess server ajiluulah
+// Express server running
 const server = httpServer.listen(
   process.env.PORT,
   console.log(`Express server is running on port ${process.env.PORT}`)
