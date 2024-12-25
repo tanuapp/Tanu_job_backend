@@ -66,7 +66,7 @@ exports.checkArtistPhone = asyncHandler(async (req, res, next) => {
       });
     }
     return res.status(200).json({
-      success: false,
+      success: true,
       message: "Амжилттай",
     });
   }
@@ -84,7 +84,7 @@ exports.checkArtistEmail = asyncHandler(async (req, res, next) => {
         message: "И-мэйл бүртгэлтгүй байна",
       });
     } return res.status(200).json({
-      success: false,
+      success: true,
       message: "Амжилттай",
     });
 
