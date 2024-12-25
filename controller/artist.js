@@ -59,14 +59,14 @@ exports.checkArtistPhone = asyncHandler(async (req, res, next) => {
   try {
     const body = req.body;
     const existingUser = await Artist.findOne({ phone: body.phone });
-    if (existingUser) {
+    if (!existingUser) {
       return res.status(400).json({
         success: false,
-        message: "Утас бүртгэлтэй байна",
+        message: "Утас бүртгэлгүй байна",
       });
     }
     return res.status(200).json({
-      success: false,
+      success: true,
       message: "Амжилттай",
     });
   }
@@ -78,13 +78,13 @@ exports.checkArtistEmail = asyncHandler(async (req, res, next) => {
   try {
     const body = req.body;
     const existingUser = await Artist.findOne({ email: body.email });
-    if (existingUser) {
+    if (!existingUser) {
       return res.status(400).json({
         success: false,
-        message: "И-мэйл бүртгэлтэй байна",
+        message: "И-мэйл бүртгэлтгүй байна",
       });
     } return res.status(200).json({
-      success: false,
+      success: true,
       message: "Амжилттай",
     });
 
@@ -118,7 +118,7 @@ exports.Login = asyncHandler(async (req, res, next) => {
   try {
     const { phone, pin } = req.body;
 
-    const userphone = await User.find({ phone: phone });
+    const userphone = await Artist.find({ phone: phone });
 
     if (!userphone) {
       customResponse.error(res, "Утасны дугаар бүртгэлгүй байна ");
