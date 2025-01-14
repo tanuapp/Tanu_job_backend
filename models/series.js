@@ -12,6 +12,10 @@ const seriesSchema = new Schema({
     type: String,
     required: true,
   },
+  author: {
+    type: String,
+    default: "TuvshinBat",
+  },
   title: String,
   pages: {
     type: [mongoose.Types.ObjectId],

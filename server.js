@@ -10,9 +10,6 @@ const cron = require("node-cron");
 const path = require("path");
 var serviceAccount = require("./tanu-app-928a8-firebase-adminsdk-mrr1i-28babc6869.json");
 
-// AWS SECRET for firebase json
-const AWS = require("aws-sdk");
-
 // Socket
 const { createServer } = require("http");
 const { Server } = require("socket.io");
@@ -103,15 +100,6 @@ app.use(
 app.options(cors());
 app.use(logger);
 app.use(express.json());
-
-// AWS SECRET
-AWS.config.update({
-  region: "ap-south-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_KEY,
-  },
-});
 
 // FIREBASE
 async function initializeFirebase() {
