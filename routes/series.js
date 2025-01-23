@@ -9,6 +9,7 @@ const {
   viewsIncrement,
   get,
   getAll,
+
   update,
 } = require("../controller/series");
 const router = express.Router();
