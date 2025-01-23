@@ -110,9 +110,9 @@ exports.registerArtist = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+
 exports.Login = asyncHandler(async (req, res, next) => {
   try {
-    console.log(req.body);
     const { phone, pin } = req.body;
 
     // Validate if phone and pin are provided
@@ -124,7 +124,8 @@ exports.Login = asyncHandler(async (req, res, next) => {
     }
 
     // Check if user exists
-    const user = await Artist.findOne({ phone }).select("+password");
+    const user = await Artist.findOne({ phone }).select("+pin");
+
     if (!user) {
       return customResponse.error(
         res,
@@ -142,12 +143,15 @@ exports.Login = asyncHandler(async (req, res, next) => {
 
     // Verify password/pin
     const isPasswordValid = await user.checkPassword(pin);
+    console.log(isPasswordValid);
     if (!isPasswordValid) {
       return customResponse.error(
         res,
         "Утасны дугаар эсвэл нууц үг буруу байна!"
       );
     }
+
+    console.log("end irjin");
 
     // Generate token
     const token = user.getJsonWebToken();

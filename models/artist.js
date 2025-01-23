@@ -43,11 +43,14 @@ artistSchema.pre("save", async function () {
   const salt = await bcrypt.genSalt(10);
   this.pin = await bcrypt.hash(this.pin, salt);
 });
+
 artistSchema.methods.checkPassword = async function (pin) {
   return await bcrypt.compare(pin, this.pin);
 };
 
 artistSchema.methods.getJsonWebToken = function () {
+  console.log("HGjgh");
+  console.log(process.env.JWT_SECRET);
   let token = jwt.sign(
     { Id: this._id, phone: this.phone },
     process.env.JWT_SECRET,
