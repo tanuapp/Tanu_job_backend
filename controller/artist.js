@@ -110,37 +110,50 @@ exports.registerArtist = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
-
 exports.Login = asyncHandler(async (req, res, next) => {
   try {
+    console.log(req.body);
     const { phone, pin } = req.body;
 
-    const userphone = await Artist.findOne({ phone: phone });
-
-    if (!userphone) {
-      customResponse.error(res, "Утасны дугаар бүртгэлгүй байна ");
-    }
-    if (userphone.status == false) {
-      customResponse.error(res, "Байгууллагаас таныг зөвшөөрөөгүй байна ");
-    }
-
+    // Validate if phone and pin are provided
     if (!phone || !pin) {
-      customResponse.error(res, "Утасны дугаар  болон нууц үгээ оруулна уу!");
-    } else {
-      const user = await Artist.findOne({ phone }).select("+password");
-      if (!user) {
-        customResponse.error(res, "Утасны дугаар  эсвэл нууц үг буруу байна!");
-      }
-      const isPasswordValid = await user.checkPassword(pin);
-      if (!isPasswordValid) {
-        customResponse.error(res, "Утасны дугаар  эсвэл нууц үг буруу байна!");
-      }
-      const token = user.getJsonWebToken();
-
-      customResponse.success(res, user, token);
+      return customResponse.error(
+        res,
+        "Утасны дугаар болон нууц үгээ оруулна уу!"
+      );
     }
+
+    // Check if user exists
+    const user = await Artist.findOne({ phone }).select("+password");
+    if (!user) {
+      return customResponse.error(
+        res,
+        "Утасны дугаар эсвэл нууц үг буруу байна!"
+      );
+    }
+
+    // Check user status
+    if (user.status === false) {
+      return customResponse.error(
+        res,
+        "Байгууллагаас таныг зөвшөөрөөгүй байна!"
+      );
+    }
+
+    // Verify password/pin
+    const isPasswordValid = await user.checkPassword(pin);
+    if (!isPasswordValid) {
+      return customResponse.error(
+        res,
+        "Утасны дугаар эсвэл нууц үг буруу байна!"
+      );
+    }
+
+    // Generate token
+    const token = user.getJsonWebToken();
+    return customResponse.success(res, user, token);
   } catch (error) {
-    customResponse.error(res, error.message);
+    return customResponse.error(res, error.message);
   }
 });
 
