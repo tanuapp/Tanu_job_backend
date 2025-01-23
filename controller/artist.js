@@ -69,11 +69,10 @@ exports.checkArtistPhone = asyncHandler(async (req, res, next) => {
       success: true,
       message: "Амжилттай",
     });
-  }
-  catch (error) {
+  } catch (error) {
     customResponse.error(res, error.message);
   }
-})
+});
 exports.checkArtistEmail = asyncHandler(async (req, res, next) => {
   try {
     const body = req.body;
@@ -83,16 +82,15 @@ exports.checkArtistEmail = asyncHandler(async (req, res, next) => {
         success: false,
         message: "И-мэйл бүртгэлтгүй байна",
       });
-    } return res.status(200).json({
+    }
+    return res.status(200).json({
       success: true,
       message: "Амжилттай",
     });
-
-  }
-  catch (error) {
+  } catch (error) {
     customResponse.error(res, error.message);
   }
-})
+});
 
 exports.registerArtist = asyncHandler(async (req, res, next) => {
   try {
@@ -108,22 +106,21 @@ exports.registerArtist = asyncHandler(async (req, res, next) => {
     const token = user.getJsonWebToken();
 
     customResponse.success(res, user, token);
-  }
-  catch (error) {
+  } catch (error) {
     customResponse.error(res, error.message);
   }
-})
+});
 
 exports.Login = asyncHandler(async (req, res, next) => {
   try {
     const { phone, pin } = req.body;
 
-    const userphone = await Artist.find({ phone: phone });
+    const userphone = await Artist.findOne({ phone: phone });
 
     if (!userphone) {
       customResponse.error(res, "Утасны дугаар бүртгэлгүй байна ");
     }
-    if (!userphone.status) {
+    if (userphone.status == false) {
       customResponse.error(res, "Байгууллагаас таныг зөвшөөрөөгүй байна ");
     }
 
