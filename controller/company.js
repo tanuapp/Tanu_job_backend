@@ -136,6 +136,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
       data: company,
     });
   } catch (error) {
+	console.log(error);
     customResponse.error(res, error.message);
   }
 });
