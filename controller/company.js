@@ -82,7 +82,7 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
     });
     const ScheduleList = await Schedule.find({
       companyId: req.params.id,
-    });
+    }).populate("artistId serviceId");
     const allUser = await Fav.findOne({
       user: req.userId,
       company: req.params.id,
