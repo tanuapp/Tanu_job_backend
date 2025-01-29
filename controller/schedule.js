@@ -5,7 +5,7 @@ const customResponse = require("../utils/customResponse");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    const categories = await Model.find();
+    const categories = await Model.find().populate("artistId");
     const total = await Model.countDocuments();
     res.status(200).json({
       success: true,
