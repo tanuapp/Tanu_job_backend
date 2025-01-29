@@ -415,7 +415,11 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
 
   try {
     if (isEmail) {
-      await sendEmail(email, "Forgot Password OTP", `Таны нууц үг ${otp} болж шинэчлэгдлээ.`);
+      await sendEmail(
+        email,
+        "Forgot Password OTP",
+        `Таны нууц үг ${otp} болж шинэчлэгдлээ.`
+      );
     } else {
       await sendMessage(phone, `Таны нууц үг ${otp} болж шинэчлэгдлээ.`);
     }
@@ -429,9 +433,10 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
 
   return res.status(200).json({
     success: true,
-    message: `Амжилттай. Таны шинэ нууц үг бүртгэлтэй ${isEmail ? 'email-руу' : 'утас руу'} илгээгдлээ.`,
+    message: `Амжилттай. Таны шинэ нууц үг бүртгэлтэй ${
+      isEmail ? "email-руу" : "утас руу"
+    } илгээгдлээ.`,
   });
-
 });
 
 exports.loginWithPhone = asyncHandler(async (req, res, next) => {
@@ -448,50 +453,35 @@ exports.loginWithPhone = asyncHandler(async (req, res, next) => {
 
     // Find user or artist by phone
     const user = await User.findOne({ phone }).select("+pin");
-    const artist = await Artist.findOne({ phone }).select("+pin");
 
-    if (!user && !artist) {
+    // await User.findOneAndUpdate(
+    //   { phone },
+    //   {
+    //     pin: "2211",
+    //   }
+    // );
+
+    if (!user) {
       return customResponse.error(res, "Утасны дугаар бүртгэлгүй байна");
     }
 
-    // Authenticate artist
-    if (artist) {
-      const isMatch = await artist.checkPassword(pin);
-      console.log(isMatch);
-      if (!isMatch) {
-        return customResponse.error(
-          res,
-          "Нэвтрэх нэр эсвэл нууц үг буруу байна!"
-        );
-      }
-
-      const token = artist.getJsonWebToken();
-      return res.status(200).json({
-        success: true,
-        isArtist: true,
-        token,
-        data: artist,
-      });
-    }
-
     // Authenticate user
-    if (user) {
-      const isMatch = await user.checkPassword(pin);
-      if (!isMatch) {
-        return customResponse.error(
-          res,
-          "Нэвтрэх нэр эсвэл нууц үг буруу байна!"
-        );
-      }
 
-      const token = user.getJsonWebToken();
-      return res.status(200).json({
-        success: true,
-        isArtist: false,
-        token,
-        data: user,
-      });
+    const isMatch = await user.checkPassword(pin);
+    if (!isMatch) {
+      return customResponse.error(
+        res,
+        "Нэвтрэх нэр эсвэл нууц үг буруу байна!"
+      );
     }
+
+    const token = user.getJsonWebToken();
+    return res.status(200).json({
+      success: true,
+      isArtist: false,
+      token,
+      data: user,
+    });
   } catch (error) {
     console.log(error);
     return customResponse.error(res, error.message);
@@ -557,16 +547,20 @@ exports.loginWithEmail = asyncHandler(async (req, res, next) => {
   }
 });
 
-
-
 exports.updateUserFCM = asyncHandler(async (req, res, next) => {
   try {
     const { token, isAndroid } = req.body;
 
+    console.log(req.userId);
+
     const userFind = await User.findById(req.userId);
+    console.log(userFind);
 
     if (!userFind) {
-      customResponse.error(res, "Хэрэглэгч олдсонгүй");
+      return res.status(400).json({
+        success: false,
+        message: "Бүртгэлгүй",
+      });
     }
 
     userFind.firebase_token = token;
@@ -577,6 +571,7 @@ exports.updateUserFCM = asyncHandler(async (req, res, next) => {
       success: true,
     });
   } catch (error) {
+    console.log(error);
     customResponse.error(res, error.message);
   }
 });
