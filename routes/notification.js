@@ -1,8 +1,8 @@
 express = require("express");
 
-const { send } = require("../controller/notification");
+const { sendMass } = require("../controller/notification");
 const router = express.Router();
 
-router.route("/").post(send);
+router.route("/").post(sendMass);
 
 module.exports = router;

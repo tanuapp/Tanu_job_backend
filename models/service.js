@@ -13,8 +13,9 @@ const serviceSchema = new Schema({
     ref: "Company",
   },
   artistId: {
-    type: mongoose.Types.ObjectId,
+    type: [Schema.Types.ObjectId],
     ref: "Artist",
+    default: [],
   },
   categoryId: {
     type: Schema.Types.ObjectId,
