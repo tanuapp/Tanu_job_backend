@@ -6,6 +6,7 @@ const Dayoff = require("../models/dayoff");
 const Contract = require("../models/onlineContract");
 const Service = require("../models/service");
 const Appointment = require("../models/appointment");
+const Schedule = require("../models/schedule");
 const Fav = require("../models/favourite");
 const customResponse = require("../utils/customResponse");
 
@@ -79,6 +80,9 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
     const ServiceList = await Service.find({
       companyId: req.params.id,
     });
+    const ScheduleList = await Schedule.find({
+      companyId: req.params.id,
+    });
     const allUser = await Fav.findOne({
       user: req.userId,
       company: req.params.id,
@@ -105,6 +109,7 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
       company: comp,
       categories: company.category, // Populated category data
       banner: BannerList,
+      schedule: ScheduleList,
       dayoff: DayoffList,
       Contract: ContractList,
       service: ServiceList,
@@ -136,7 +141,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
       data: company,
     });
   } catch (error) {
-	console.log(error);
+    console.log(error);
     customResponse.error(res, error.message);
   }
 });
