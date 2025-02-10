@@ -3,11 +3,11 @@ const asyncHandler = require("../middleware/asyncHandler");
 const customResponse = require("../utils/customResponse");
 const Service = require("../models/service");
 const company = require("../models/company");
-const user = require("../models/user");
+const User = require("../models/user");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    const allUser = await User.find();
+    const allUser = await Artist.find();
 
     customResponse.success(res, allUser);
   } catch (error) {
@@ -167,14 +167,16 @@ exports.update = asyncHandler(async (req, res, next) => {
       ...req.body,
       photo: req.file?.filename,
     };
+    
 
-    const upDateUserData = await User.findByIdAndUpdate(
+    const upDateUserData = await Artist.findByIdAndUpdate(
       req.params.id,
       updatedData,
       {
         new: true,
       }
     );
+
 
     customResponse.success(res, upDateUserData);
   } catch (error) {
