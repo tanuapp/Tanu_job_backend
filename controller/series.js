@@ -67,7 +67,12 @@ exports.viewsIncrement = asyncHandler(async (req, res, next) => {
 exports.getTopSeries = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await Model.find()
-      .populate("pages")
+    .populate("categories").populate({
+      path: "pages",
+      populate: {
+        path: "category"
+      }}
+    )
       .sort({ views: -1 })
       .limit(5);
     const total = await Model.countDocuments();
