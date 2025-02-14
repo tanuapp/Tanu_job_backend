@@ -83,7 +83,7 @@ exports.getTopSeries = asyncHandler(async (req, res, next) => {
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    const allUser = await Model.find().populate({
+    const allUser = await Model.find().populate("categories").populate({
       path: "pages",
       populate: {
         path: "category"
@@ -218,7 +218,7 @@ exports.update = asyncHandler(async (req, res, next) => {
 
 exports.get = asyncHandler(async (req, res, next) => {
   try {
-    const allText = await Model.findById(req.params.id).populate({
+    const allText = await Model.findById(req.params.id).populate("categories").populate({
       path: "pages",
       populate: {
         path: "category"

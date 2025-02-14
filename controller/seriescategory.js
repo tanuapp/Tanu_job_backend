@@ -2,6 +2,7 @@ const Model = require("../models/seriescategory");
 const asyncHandler = require("../middleware/asyncHandler");
 const mongoose = require("mongoose");
 const customResponse = require("../utils/customResponse");
+const Series = require("../models/series");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -25,7 +26,9 @@ exports.create = asyncHandler(async (req, res, next) => {
       photo: req.file ? req.file.filename : "no-img.png",
       parent: parentId ? parentId : null,
     });
-
+    await Series.findByIdAndUpdate(req.body.series, {
+      $push: { categories: user._id },
+    }); // 
     customResponse.success(res, user);
   } catch (error) {
     customResponse.error(res, error.message);
@@ -65,8 +68,9 @@ exports.deleteModel = async function deleteUser(req, res, next) {
   try {
     const deletePost = await Model.findByIdAndDelete(req.params.id, {
       new: true,
-    });
-// Add this line
+    });   await Series.findByIdAndUpdate(req.body.series, {
+      $push: { categories: user._id },
+    }); // 
     customResponse.success(res, deletePost);
   } catch (error) {
     customResponse.error(res, error.message);
