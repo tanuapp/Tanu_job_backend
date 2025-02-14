@@ -6,7 +6,14 @@ const seriescategorySchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-
+  series: {
+    type: Schema.Types.ObjectId,
+    ref: "Series",
+    required: true,
+  },
+  photo: {
+    type: String,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -14,7 +21,7 @@ const seriescategorySchema = new mongoose.Schema({
   children: [
     {
       type: Schema.Types.ObjectId,
-      ref: "Series",
+      ref: "NewJournal",
     },
   ], // Add this field
 });

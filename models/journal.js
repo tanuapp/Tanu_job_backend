@@ -38,7 +38,11 @@ const newJournalSchema = new Schema({
     type: String,
     unique: true,
   },
-
+  category: {
+    type: Schema.Types.ObjectId,
+    ref: "SeriesCategory",
+    required: true,
+  },
   textcolor: String,
   slug: {
     type: String,
