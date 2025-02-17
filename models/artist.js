@@ -11,6 +11,11 @@ const artistSchema = new Schema({
     required: [true, "Утасны дугаар заавал бичнэ үү!"],
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
+  firebase_token: String,
+  isAndroid: {
+    type: Boolean,
+    default: false,
+  },
   email: {
     type: String,
     sparse: true,
@@ -39,9 +44,13 @@ const artistSchema = new Schema({
   },
 });
 
-artistSchema.pre("save", async function () {
+artistSchema.pre("save", async function (next) {
+  if (!this.pin) {
+    return next(); // Skip hashing if pin is not set
+  }
   const salt = await bcrypt.genSalt(10);
   this.pin = await bcrypt.hash(this.pin, salt);
+  next();
 });
 
 artistSchema.methods.checkPassword = async function (pin) {
@@ -49,8 +58,6 @@ artistSchema.methods.checkPassword = async function (pin) {
 };
 
 artistSchema.methods.getJsonWebToken = function () {
-  console.log("HGjgh");
-  console.log(process.env.JWT_SECRET);
   let token = jwt.sign(
     { Id: this._id, phone: this.phone },
     process.env.JWT_SECRET,

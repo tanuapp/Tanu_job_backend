@@ -8,6 +8,7 @@ const { sendEmail } = require("../utils/mailService");
 const customResponse = require("../utils/customResponse");
 const OTP = require("../models/otp");
 const Artist = require("../models/artist");
+const Company = require("../models/company");
 
 function generateOTP(length = 4) {
   let otp = "";
@@ -81,23 +82,36 @@ exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await Appointment.find({
       user: req.userId,
+      // status: true,
     }).populate({
-      path: "schedule", // First, populate the 'schedule' field
+      path: "schedule", // Populate the 'schedule' field
       populate: [
         {
-          path: "serviceId",
+          path: "serviceId", // Populate 'serviceId'
           model: "Service",
         },
         {
           path: "artistId",
-          model: "Artist", // Specify the model name for 'artistId'
+          model: "Artist", // Populate 'artistId'
         },
       ],
     });
 
+    const lol = await Promise.all(
+      allUser.map(async (list, index) => {
+        const company = await Company.findById(
+          list.schedule.serviceId.companyId
+        );
+        return {
+          company: company,
+          ...list.toObject(),
+        };
+      })
+    );
+
     res.status(200).json({
       success: true,
-      data: allUser,
+      data: lol,
     });
   } catch (error) {
     customResponse.error(res, error.message);
@@ -554,19 +568,27 @@ exports.updateUserFCM = asyncHandler(async (req, res, next) => {
     console.log(req.userId);
 
     const userFind = await User.findById(req.userId);
+
+    const artistFind = await Artist.findById(req.userId);
     console.log(userFind);
 
-    if (!userFind) {
+    if (!userFind && !artistFind) {
       return res.status(400).json({
         success: false,
         message: "Бүртгэлгүй",
       });
     }
 
-    userFind.firebase_token = token;
-    userFind.isAndroid = isAndroid;
-    await userFind.save();
-
+    if (userFind) {
+      userFind.firebase_token = token;
+      userFind.isAndroid = isAndroid;
+      await userFind.save();
+    }
+    if (artistFind) {
+      artistFind.firebase_token = token;
+      artistFind.isAndroid = isAndroid;
+      await artistFind.save();
+    }
     res.status(200).json({
       success: true,
     });

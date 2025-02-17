@@ -14,8 +14,11 @@ const customResponse = require("../utils/customResponse");
 
 exports.createqpay = asyncHandler(async (req, res) => {
   try {
+    console.log("what");
     const customer = await customerModel.findById(req.userId);
     const qpay_token = await qpay.makeRequest();
+
+    console.log("what1");
     const { phone } = customer;
     const currentDateTime = new Date();
     const randomToo = Math.floor(Math.random() * 99999);

@@ -3,6 +3,7 @@ const asyncHandler = require("../middleware/asyncHandler");
 
 exports.protect = asyncHandler(async (req, res, next) => {
   try {
+    console.log(req.headers.authorization);
     if (!req.headers.authorization) {
       return res.status(200).json({
         success: false,
@@ -11,15 +12,17 @@ exports.protect = asyncHandler(async (req, res, next) => {
     }
     const token = req.headers.authorization.split(" ")[1];
 
+    console.log(token);
+
     if (!token) {
       return res.status(200).json({
         success: false,
         msg: "Токен хоосон байна",
       });
     }
-    
-    const tokenObj = jwt.verify(token, process.env.JWT_SECRET);
 
+    const tokenObj = jwt.verify(token, process.env.JWT_SECRET);
+    req.token = token;
     req.userId = tokenObj.Id;
     req.userRole = tokenObj.role;
     next();

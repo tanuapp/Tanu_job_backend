@@ -10,6 +10,10 @@ const appointmentSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Schedule",
   },
+  company: {
+    type: Schema.Types.ObjectId,
+    ref: "Company",
+  },
   user: {
     type: Schema.Types.ObjectId,
     ref: "Customer",
