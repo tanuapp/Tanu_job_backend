@@ -54,7 +54,7 @@ function cyrillicToEnglishSlugify(text) {
 
 exports.getAllModel = asyncHandler(async (req, res, next) => {
   try {
-    const data = await Model.find();
+    const data = await Model.find().populate("category");
 
     res.status(200).json({
       success: true,

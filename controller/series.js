@@ -67,7 +67,12 @@ exports.viewsIncrement = asyncHandler(async (req, res, next) => {
 exports.getTopSeries = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await Model.find()
-      .populate("pages")
+    .populate("categories").populate({
+      path: "pages",
+      populate: {
+        path: "category"
+      }}
+    )
       .sort({ views: -1 })
       .limit(5);
     const total = await Model.countDocuments();
@@ -83,7 +88,12 @@ exports.getTopSeries = asyncHandler(async (req, res, next) => {
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    const allUser = await Model.find().populate("pages");
+    const allUser = await Model.find().populate("categories").populate({
+      path: "pages",
+      populate: {
+        path: "category"
+      }
+    });
     const total = await Model.countDocuments();
     res.status(200).json({
       success: true,
@@ -213,7 +223,12 @@ exports.update = asyncHandler(async (req, res, next) => {
 
 exports.get = asyncHandler(async (req, res, next) => {
   try {
-    const allText = await Model.findById(req.params.id).populate("pages");
+    const allText = await Model.findById(req.params.id).populate("categories").populate({
+      path: "pages",
+      populate: {
+        path: "category"
+      }}
+    );
     return res.status(200).json({
       success: true,
       data: allText,

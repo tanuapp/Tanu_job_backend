@@ -20,6 +20,7 @@ const errorHandler = require("./middleware/error.js");
 // Routes
 const onlineContractRouter = require("./routes/onlineContractRouter.js");
 const categoryRoutes = require("./routes/category.js");
+const seriescategoryRoutes = require("./routes/seriescategory.js");
 const userRoutes = require("./routes/user.js");
 const companyRoutes = require("./routes/company.js");
 const serviceRoutes = require("./routes/service.js");
@@ -121,6 +122,7 @@ app.use("/api/v1/district", districtRoute);
 app.use("/api/v1/subdistrict", subDistrictRoute);
 app.use("/api/v1/area", areaRoute);
 app.use("/api/v1/category", categoryRoutes);
+app.use("/api/v1/seriescategory", seriescategoryRoutes);
 app.use("/api/v1/company", companyRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/service", serviceRoutes);

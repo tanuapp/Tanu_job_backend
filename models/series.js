@@ -17,6 +17,12 @@ const seriesSchema = new Schema({
     default: "TuvshinBat",
   },
   title: String,
+  categories: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "SeriesCategory",
+    },
+  ],
   pages: {
     type: [mongoose.Types.ObjectId],
     ref: "NewJournal",

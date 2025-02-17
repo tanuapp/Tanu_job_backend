@@ -33,7 +33,7 @@ router.route("/").post(upload.single("file"), create).get(getAll);
 router
   .route("/:id")
   .put(upload.single("file"), update)
-  .delete(protect, authorize("user"), deleteModel)
+  .delete( deleteModel)
   .get(get);
 
 module.exports = router;
