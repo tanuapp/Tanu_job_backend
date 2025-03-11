@@ -5,6 +5,7 @@ const { Schema } = mongoose;
 const companySchema = new mongoose.Schema({
   name: { type: String },
   description: { type: String },
+  banknumber: { type: String },
   address: { type: String },
   category: { type: [Schema.Types.ObjectId], ref: "Category", required: true },
   views: { type: Number, default: 0 },
