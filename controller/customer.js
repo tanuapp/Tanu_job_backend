@@ -48,6 +48,40 @@ exports.validatePhone = asyncHandler(async (req, res) => {
   return res.status(200).json({ success: true });
 });
 
+
+exports.getOtpAgain = asyncHandler(async (req, res, next) => {
+  try {
+    const otp = generateOTP();
+    const {phone} = req.body;
+    const dat =await User.findOne({
+      phone
+    })
+    if(!dat){
+      res.status(400).json({
+        success:true,
+        data: "Бүртгэлгүй байна"
+      })
+    }
+   const p = await OTP.findByIdAndUpdate(
+      {
+        customer: dat._id,
+      },
+      {
+        otp,
+        // customer: user._id,
+      }
+    );
+    res.status(200).json({
+      success: true,
+      count: total,
+      data: allUser,
+    });
+  } catch (error) {
+    customResponse.server(res, error.message);
+  }
+});
+
+
 exports.validateEmail = asyncHandler(async (req, res) => {
   const { email } = req.body;
 

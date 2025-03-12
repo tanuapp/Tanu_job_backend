@@ -3,6 +3,7 @@ const upload = require("../middleware/fileUpload");
 const { protect } = require("../middleware/protect");
 const { authorize } = require("../middleware/protect");
 const {
+  getOtpAgain,
   registerWithEmail,
   registerWithPhone,
   registerVerify,
@@ -23,6 +24,7 @@ const {
 } = require("../controller/customer");
 const router = express.Router();
 
+router.route("/otp-again").post( getOtpAgain);
 router.route("/order").get(protect, getCustomerAppointments);
 router
   .route("/updateOwn/:id")
