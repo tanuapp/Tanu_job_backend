@@ -9,6 +9,7 @@ const customResponse = require("../utils/customResponse");
 const OTP = require("../models/otp");
 const Artist = require("../models/artist");
 const Company = require("../models/company");
+const customer = require("../models/customer");
 
 function generateOTP(length = 4) {
   let otp = "";
@@ -56,25 +57,46 @@ exports.getOtpAgain = asyncHandler(async (req, res, next) => {
     const dat =await User.findOne({
       phone
     })
-    if(!dat){
-      res.status(400).json({
-        success:true,
-        data: "Бүртгэлгүй байна"
-      })
+    console.log(dat)
+
+    const p = await OTP.findOne({
+      customer: dat._id.toString(),
+    })
+
+
+    if(p){
+
+      await OTP.findOneAndUpdate(
+        {
+          customer: dat._id.toString(),
+        },
+
+        {
+          otp,  
+          // customer: user._id,
+        }
+      );
+    }else{
+
+      await OTP.create(
+   
+        {
+          otp,   customer: dat._id.toString(),
+          // customer: user._id,
+        }
+      );
     }
-   const p = await OTP.findByIdAndUpdate(
-      {
-        customer: dat._id,
-      },
-      {
-        otp,
-        // customer: user._id,
-      }
-    );
+  
+
+   
+
+
+
+    
+    await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
+
     res.status(200).json({
       success: true,
-      count: total,
-      data: allUser,
     });
   } catch (error) {
     customResponse.server(res, error.message);
