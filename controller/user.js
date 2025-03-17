@@ -33,12 +33,7 @@ exports.create = asyncHandler(async (req, res, next) => {
         error: "Утасны дугаар бүртгэлтэй байна",
       });
     }
-    if (exinstingEmail) {
-      return res.status(200).json({
-        success: false,
-        error: "И-мэйл бүртгэлтэй байна",
-      });
-    }
+
 
     const inputData = {
       ...req.body,
