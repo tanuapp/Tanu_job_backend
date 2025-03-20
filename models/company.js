@@ -48,6 +48,26 @@ const companySchema = new mongoose.Schema({
     type: mongoose.Types.ObjectId,
     ref: "SubDistrict",
   },
+  isHome : {
+    type : Boolean,
+    default : false
+  },
+  isService : {
+    type : Boolean,
+    default : false
+  },
+  isEmployee : {
+    type : Boolean,
+    default : false
+  },
+  isTimeTable : {
+    type : Boolean,
+    default : false
+  },
+  isEmployee : {
+    type : Boolean,
+    default : false
+  },
   latitude: { type: String },
   longitude: { type: String },
   createdAt: { type: Date, default: Date.now },
