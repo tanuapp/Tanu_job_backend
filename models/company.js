@@ -22,7 +22,7 @@ const companySchema = new mongoose.Schema({
     default: 0,
   },
   phone: { type: String, required: true },
-  open: { type: String },
+  timetable : [] , 
   numberOfArtist: {
     type: Number,
     default: 0,
@@ -31,7 +31,6 @@ const companySchema = new mongoose.Schema({
     type: Number,
     default: 5,
   },
-  close: { type: String },
   contract: { type: String },
   companyOwner: { type: Schema.Types.ObjectId, ref: "User" },
   logo: { type: String },

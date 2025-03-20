@@ -24,8 +24,8 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     console.log(req.body);
+    console.log("create is here");
     const existingUser = await User.findOne({ phone: req.body.phone });
-    const exinstingEmail = await User.findOne({ email: req.body.email });
 
     if (existingUser) {
       return res.status(200).json({
@@ -33,7 +33,7 @@ exports.create = asyncHandler(async (req, res, next) => {
         error: "Утасны дугаар бүртгэлтэй байна",
       });
     }
-
+  
 
     const inputData = {
       ...req.body,
@@ -54,17 +54,18 @@ exports.create = asyncHandler(async (req, res, next) => {
 });
 
 exports.Login = asyncHandler(async (req, res, next) => {
-  try {
-    const { phone, password, email, isEmail } = req.body;
-    const userIdentifier = isEmail ? { email } : { phone };
-    const user = await User.findOne(userIdentifier).select("+password");
+  try {console.log(req.body)
+    const { phone, password } = req.body;
+ 
+    const pop = Number(phone)
+
+    const user = await User.findOne({phone : pop}).select("+password")
+  
 
     if (!user) {
-      return res.status(404).json({
+      return res.status(401).json({
         success: false,
-        message: isEmail
-          ? "Имейл бүртгэлгүй байна."
-          : "Утасны дугаар бүртгэлгүй байна.",
+        message: "Утасны дугаар бүртгэлгүй байна."
       });
     }
 

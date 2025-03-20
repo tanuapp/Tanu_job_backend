@@ -131,6 +131,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
 
     const company = await Model.create({
       ...req.body,
+      timetable: req.body.timetable ? JSON.parse(req.body.timetable || "[]") : [],
       logo,
       sliderImages,
       category: JSON.parse(req.body.category || "[]") || [],
@@ -157,6 +158,7 @@ exports.update = asyncHandler(async (req, res, next) => {
         : old.sliderImages;
 
     const company = await Model.findByIdAndUpdate(req.params.id, {
+      timetable: req.body.timetable ? JSON.parse(req.body.timetable) : old.timetable,
       ...req.body,
       logo,
       sliderImages,

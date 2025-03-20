@@ -8,6 +8,7 @@ const userSchema = new Schema({
     type: String,
     // required: [true, "Утасны дугаар заавал бичнэ үү!"],
     unique: [true, "Утасны дугаар бүртгэлтэй байна"],
+    sparse: true,
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
   password: {
@@ -39,6 +40,7 @@ const userSchema = new Schema({
   email: {
     type: String,
     unique: true,
+    sparse: true
   },
   booked: {
     type: [Schema.Types.ObjectId],
@@ -56,6 +58,7 @@ userSchema.pre("save", async function () {
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
+
 userSchema.methods.checkPassword = async function (pass) {
   return await bcrypt.compare(pass, this.password);
 };
