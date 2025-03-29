@@ -10,6 +10,8 @@ const companySchema = new mongoose.Schema({
     enum: ["ХААН Банк", "Голомт Банк", "ХасБанк", "Төрийн банк", "Капитрон банк","Ариг банк"],
   },
   banknumber: { type: String },
+  bankowner: { type: String },
+  email: { type: String },
   
   address: { type: String },
   category: { type: [Schema.Types.ObjectId], ref: "Category", required: true },
@@ -22,6 +24,8 @@ const companySchema = new mongoose.Schema({
     default: 0,
   },
   phone: { type: String, required: true },
+  ordercancelhour: { type: String},
+  advancepayment: { type: String},
   timetable : [] , 
   numberOfArtist: {
     type: Number,
@@ -52,22 +56,8 @@ const companySchema = new mongoose.Schema({
     type : Boolean,
     default : false
   },
-  isService : {
-    type : Boolean,
-    default : false
-  },
-  isEmployee : {
-    type : Boolean,
-    default : false
-  },
-  isTimeTable : {
-    type : Boolean,
-    default : false
-  },
-  isEmployee : {
-    type : Boolean,
-    default : false
-  },
+
+
   latitude: { type: String },
   longitude: { type: String },
   createdAt: { type: Date, default: Date.now },

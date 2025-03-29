@@ -148,6 +148,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
 });
 
 exports.update = asyncHandler(async (req, res, next) => {
+  console.log(req.body,"datas irle")
   try {
     const old = await Model.findById(req.params.id);
     const logo =

@@ -20,7 +20,6 @@ const scheduleSchema = new mongoose.Schema({
     type: Schema.Types.ObjectId,
     ref: "Company",
   },
-  duration: String,
   day_of_the_week: {
     type: String,
     enum: ["Даваа", "Мягмар", "Лхагва", "Пүрэв", "Баасан", "Бямба", "Ням"],

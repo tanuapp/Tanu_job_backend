@@ -28,7 +28,7 @@ router
     ]),
     createModel
   )
-  .get(protect, getAll);
+  .get( getAll);
 
 router
   .route("/:id")
