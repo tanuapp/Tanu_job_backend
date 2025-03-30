@@ -7,11 +7,13 @@ const {
   getAllPopulated,
   update,
   deleteModel,
+  endAppointment,
   declineAppointment,
   getAvailableTimes,
 } = require("../controller/appointment");
 const router = express.Router();
 
+router.route("/end/:id").post(endAppointment);
 router.route("/decline/:id").post(declineAppointment);
 router.route("/available").post(getAvailableTimes);
 router.route("/populated").get(getAllPopulated);

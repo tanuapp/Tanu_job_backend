@@ -62,11 +62,15 @@ exports.update = asyncHandler(async (req, res, next) => {
 exports.get = asyncHandler(async (req, res, next) => {
   try {
     const allText = await Model.findById(req.params.id);
+    const all = await Model.findById(req.params.id).populate("artistId");
     allText.views++;
     await allText.save();
     return res.status(200).json({
       success: true,
-      data: allText,
+      data: {
+        ...allText.toObject(),
+        artist: all.artistId,
+      },
     });
   } catch (error) {
     customResponse.error(res, error.message);

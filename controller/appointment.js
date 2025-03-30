@@ -1,7 +1,6 @@
 const Model = require("../models/appointment");
 const Appointment = require("../models/appointment");
 const customResponse = require("../utils/customResponse");
-// consrt
 const Schedule = require("../models/schedule");
 const User = require("../models/customer");
 const Dayoff = require("../models/dayoff");
@@ -9,6 +8,7 @@ const path = require("path");
 const fs = require("fs");
 const QRCode = require("qrcode");
 const asyncHandler = require("../middleware/asyncHandler");
+const { generateCredential, send } = require("../utils/khan");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -149,7 +149,6 @@ exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
   customResponse.success(res, availableSchedules);
 });
 
-
 exports.getAvailableTimesByArtist = asyncHandler(async (req, res, next) => {
   try {
     const { date, artistId } = req.body;
@@ -185,6 +184,19 @@ exports.getAvailableTimesByArtist = asyncHandler(async (req, res, next) => {
     customResponse.success(res, availableSchedules);
   } catch (error) {
     customResponse.error(res, error.message);
+  }
+});
+
+exports.endAppointment = asyncHandler(async (req, res, next) => {
+  try {
+    const token = await generateCredential();
+
+    await send(token, "5925589985", "Дөлгөөн", "050000", 100, "hello ");
+
+    customResponse.success(res, "Амжилттай цуцлалаа");
+  } catch (error) {
+    console.log(error);
+    customResponse.error(res, error);
   }
 });
 
