@@ -77,7 +77,8 @@ exports.create = asyncHandler(async (req, res, next) => {
     };
 
     const p = await Model.find({
-      ...req.body,
+      date: req.body.date,
+      schedule: req.body.schedule,
     });
 
     if (p) {
