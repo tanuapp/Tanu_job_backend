@@ -70,10 +70,19 @@ exports.getAllPopulated = asyncHandler(async (req, res) => {
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
+    // const io = req.app.get("io");
     const appointmentData = {
       ...req.body,
       user: req.userId,
     };
+
+    const p = await Model.find({
+      ...req.body,
+    });
+
+    if (p) {
+      customResponse.error(res, "Өөр захиалга үүссэн байна ");
+    }
 
     const appointment = await Model.create(appointmentData);
 

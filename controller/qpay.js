@@ -146,7 +146,7 @@ exports.callback = asyncHandler(async (req, res, next) => {
         appointment,
         { status: true },
         { new: true }
-      );
+      ).populate("schedule");
       const scheduleOne = await schedule.findById(ap.schedule.toString());
       console.log(scheduleOne);
       const service = await Service.findById(scheduleOne.serviceId.toString());
@@ -161,8 +161,17 @@ exports.callback = asyncHandler(async (req, res, next) => {
         { status: "paid" },
         { new: true }
       );
-      console.log("paymendDone");
+
       io.emit("paymentDone");
+
+      if (ap && ap.schedule) {
+        io.emit("realtime", {
+          service: ap.schedule.serviceId,
+          artist: ap.schedule.artistId,
+          date: ap.date instanceof Date ? ap.date.toISOString() : ap.date,
+          appointment: ap,
+        });
+      }
       // const Company = await serviceModel.findById(Service);
       // let input = {
       //   Artist,

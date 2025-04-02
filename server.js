@@ -19,6 +19,7 @@ const errorHandler = require("./middleware/error.js");
 
 // Routes
 const onlineContractRouter = require("./routes/onlineContractRouter.js");
+const optionRouter = require("./routes/option.js");
 const categoryRoutes = require("./routes/category.js");
 const seriescategoryRoutes = require("./routes/seriescategory.js");
 const userRoutes = require("./routes/user.js");
@@ -117,6 +118,7 @@ async function initializeFirebase() {
 }
 
 initializeFirebase();
+app.use("/api/v1/option", optionRouter);
 app.use("/api/v1/contract", onlineContractRouter);
 app.use("/api/v1/district", districtRoute);
 app.use("/api/v1/subdistrict", subDistrictRoute);
