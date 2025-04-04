@@ -13,9 +13,6 @@ const customResponse = require("../utils/customResponse");
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
     const categories = await Model.find()
-      .populate("area")
-      .populate("district")
-      .populate("subDistrict")
       .populate("category");
 
     const allUser = await Fav.find({ user: req.userId });
@@ -89,9 +86,6 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
     });
 
     const company = await Model.findById(req.params.id)
-      .populate("district")
-      .populate("subDistrict")
-      .populate("area")
       .populate({
         path: "category",
         model: "Category", // Ensure this model name is correct for categories
@@ -162,7 +156,7 @@ exports.update = asyncHandler(async (req, res, next) => {
       timetable: req.body.timetable ? JSON.parse(req.body.timetable) : old.timetable,
       ...req.body,
       logo,
-      sliderImages,
+      sliderImages,    category: JSON.parse(req.body.category || "[]") || [],
     });
 
     res.status(200).json({
