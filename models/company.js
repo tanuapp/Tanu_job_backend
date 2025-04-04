@@ -11,6 +11,8 @@ const companySchema = new mongoose.Schema({
   },
   banknumber: { type: String },
   bankowner: { type: String },
+  open: { type: String },
+  close: { type: String },
   email: { type: String },
   
   address: { type: String },
