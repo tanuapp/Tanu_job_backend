@@ -110,12 +110,12 @@ exports.create = asyncHandler(async (req, res, next) => {
   }
 });
 exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
-  const { date, service } = req.body;
+  const { date, service, artist } = req.body;
 
-  if (!date || !service) {
+  if (!date || !service || !artist) {
     return res.status(400).json({
       success: false,
-      message: "Date and service are required",
+      message: "Date and service, artist are required",
     });
   }
 
@@ -132,6 +132,7 @@ exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
   const schedules = await Schedule.find({
     day_of_the_week: selectedDayOfWeek,
     serviceId: service,
+    artistId: artist,
   })
     .populate("artistId")
     .populate("serviceId");

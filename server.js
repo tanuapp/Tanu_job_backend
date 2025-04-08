@@ -45,6 +45,7 @@ const seriesRoute = require("./routes/series.js");
 const emailRoute = require("./routes/email.js");
 const notRoute = require("./routes/notification.js");
 const bgRoute = require("./routes/bgremove.js");
+const storyRoute = require("./routes/story.js");
 const companyArtistRequestRoute = require("./routes/company_artist_request.js");
 
 // Multer setup
@@ -141,6 +142,7 @@ app.use("/api/v1/mongoose", mongooseRoute);
 app.use("/api/v1/email", emailRoute);
 app.use("/api/v1/series", seriesRoute);
 app.use("/api/v1/bg", bgRoute);
+app.use("/api/v1/story", storyRoute);
 app.use("/api/v1/direct-payment", direct_paymentRoute);
 app.use("/api/v1/company-artist-request", companyArtistRequestRoute);
 
