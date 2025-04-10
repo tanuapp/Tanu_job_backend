@@ -41,6 +41,7 @@ const companySchema = new mongoose.Schema({
   companyOwner: { type: Schema.Types.ObjectId, ref: "User" },
   logo: { type: String },
   sliderImages: { type: [String] },
+  gallery: { type: [String] },
   companyNumber: { type: Number, unique: true, default: 1000 },
 
   isHome : {
