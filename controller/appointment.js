@@ -71,9 +71,19 @@ exports.getAllPopulated = asyncHandler(async (req, res) => {
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     // const io = req.app.get("io");
+
+    const { schedule } = req.body;
+
+    if (!schedule) {
+      customResponse.error(res, "Захиалга хийх хуваарь оруулна уу");
+    }
+
+    const sch = await Schedule.findById(schedule);
+
     const appointmentData = {
       ...req.body,
       user: req.userId,
+      company: sch.companyId,
     };
 
     const p = await Model.find({
