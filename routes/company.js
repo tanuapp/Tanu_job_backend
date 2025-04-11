@@ -25,6 +25,8 @@ router
     upload.fields([
       { name: "logo", maxCount: 1 },
       { name: "sliderIMG", maxCount: 8 },
+      { name: "gallery", maxCount: 10 },
+
     ]),
     createModel
   )
@@ -38,6 +40,7 @@ router
     upload.fields([
       { name: "logo", maxCount: 1 },
       { name: "sliderIMG", maxCount: 8 },
+      { name: "gallery", maxCount: 10 },
     ]),
     update
   )

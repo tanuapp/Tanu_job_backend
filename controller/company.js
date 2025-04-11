@@ -151,11 +151,16 @@ exports.update = asyncHandler(async (req, res, next) => {
       req.files && req.files.sliderIMG
         ? req.files.sliderIMG.map((file) => file.filename)
         : old.sliderImages;
+    const gallery =
+      req.files && req.files.sliderIMG
+        ? req.files.sliderIMG.map((file) => file.filename)
+        : old.sliderImages;
 
     const company = await Model.findByIdAndUpdate(req.params.id, {
       timetable: req.body.timetable ? JSON.parse(req.body.timetable) : old.timetable,
       ...req.body,
       logo,
+      gallery,
       sliderImages,    category: JSON.parse(req.body.category || "[]") || [],
     });
 
