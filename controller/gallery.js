@@ -4,7 +4,9 @@ const customResponse = require("../utils/customResponse");
 
 exports.getAllModel = asyncHandler(async (req, res, next) => {
   try {
-    const allUser = await Model.find();
+    const allUser = await Model.findOne( {
+      company: req.params.id,
+    });
 
     customResponse.success(res, allUser);
   } catch (error) {

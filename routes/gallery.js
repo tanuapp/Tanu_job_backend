@@ -14,13 +14,13 @@ router.route("/").post(upload.fields([
 
   { name: "gallery", maxCount: 10 },
 
-]),createModel).get(getAllModel);
+]),createModel)
 
 
 router.route("/:id").put(upload.fields([
 
   { name: "gallery", maxCount: 10 },
   
-]),updateModel).delete(deleteModel).get(getModel);
+]),updateModel).delete(deleteModel).get(getAllModel);
 
 module.exports = router;
