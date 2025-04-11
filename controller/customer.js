@@ -49,60 +49,47 @@ exports.validatePhone = asyncHandler(async (req, res) => {
   return res.status(200).json({ success: true });
 });
 
-
 exports.getOtpAgain = asyncHandler(async (req, res, next) => {
   try {
     const otp = generateOTP();
-    const {phone} = req.body;
-    const dat =await User.findOne({
-      phone
-    })
-    console.log(dat)
+    const { phone } = req.body;
+    const dat = await User.findOne({
+      phone,
+    });
 
     const p = await OTP.findOne({
       customer: dat._id.toString(),
-    })
+    });
 
-
-    if(p){
-
+    if (p) {
       await OTP.findOneAndUpdate(
         {
           customer: dat._id.toString(),
         },
 
         {
-          otp,  
+          otp,
           // customer: user._id,
         }
       );
-    }else{
-
-      await OTP.create(
-   
-        {
-          otp,   customer: dat._id.toString(),
-          // customer: user._id,
-        }
-      );
+    } else {
+      await OTP.create({
+        otp,
+        customer: dat._id.toString(),
+        // customer: user._id,
+      });
     }
-  
 
-   
-
-
-
-    
     await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
 
     res.status(200).json({
       success: true,
     });
   } catch (error) {
+    console.log(error);
     customResponse.server(res, error.message);
   }
 });
-
 
 exports.validateEmail = asyncHandler(async (req, res) => {
   const { email } = req.body;
@@ -236,12 +223,8 @@ exports.registerWithPhone = asyncHandler(async (req, res, next) => {
   try {
     const { pin, phone } = req.body;
 
-    if (!pin) {
-      return res.status(200).json({
-        success: false,
-        message: "PIN кодоо оруулна уу",
-      });
-    }
+    console.log(req.body);
+
     let existingUser = await User.findOne({ phone });
 
     if (existingUser) {
@@ -283,6 +266,7 @@ exports.registerWithPhone = asyncHandler(async (req, res, next) => {
       message: "Бүртгэл амжилттай. Нэг удаагийн нууц үг илгээгдлээ",
     });
   } catch (error) {
+    console.log(error);
     customResponse.error(res, error.message);
   }
 });
@@ -387,7 +371,7 @@ exports.registerWithEmail = asyncHandler(async (req, res, next) => {
 // OTP verification endpoint
 exports.registerVerify = asyncHandler(async (req, res, next) => {
   try {
-    const { otp, phone, email, isEmail, count } = req.body;
+    const { otp, phone, email, isEmail, count, pin } = req.body;
 
     if (Number(count) < 3) {
       res.status(400).json({
@@ -399,7 +383,7 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
     let existingUser;
 
     if (isEmail && email) {
-      existingUser = await User.findOne({ email });
+      existingUser = await User.findOneAndUpdate({ email }, { pin });
 
       if (!existingUser) {
         return res.status(200).json({
@@ -408,7 +392,12 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
         });
       }
     } else {
-      existingUser = await User.findOne({ phone });
+      existingUser = await User.findOneAndUpdate(
+        { phone },
+        {
+          pin,
+        }
+      );
 
       if (!existingUser) {
         return res.status(200).json({

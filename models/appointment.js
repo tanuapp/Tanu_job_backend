@@ -14,6 +14,16 @@ const appointmentSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Company",
   },
+  phone: {
+    type: String,
+  },
+  name: {
+    type: String,
+  },
+  isManual: {
+    type: Boolean,
+    default: false,
+  },
   user: {
     type: Schema.Types.ObjectId,
     ref: "Customer",
