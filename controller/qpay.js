@@ -144,7 +144,7 @@ exports.callback = asyncHandler(async (req, res, next) => {
     ) {
       const ap = await Appointment.findByIdAndUpdate(
         appointment,
-        { status: true },
+        { status: "paid" },
         { new: true }
       ).populate("schedule");
       const scheduleOne = await schedule.findById(ap.schedule.toString());

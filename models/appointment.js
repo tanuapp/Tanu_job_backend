@@ -32,10 +32,10 @@ const appointmentSchema = new Schema({
     type: String,
     default: "no-qr.png",
   },
-
   status: {
-    type: Boolean,
-    default: false,
+    type: String,
+    enum: ["pending", "paid", "expired", "declined"],
+    default: "pending",
   },
 
   createdAt: {

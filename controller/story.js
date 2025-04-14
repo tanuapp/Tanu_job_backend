@@ -5,12 +5,16 @@ const customResponse = require("../utils/customResponse");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    const categories = await Model.find();
-    const total = await Model.countDocuments();
+    const now = new Date();
+    const stories = await Model.find({ endsAt: { $gt: now } }).populate(
+      "company"
+    );
+    const total = await Model.countDocuments({ endsAt: { $gt: now } });
+
     res.status(200).json({
       success: true,
       count: total,
-      data: categories,
+      data: stories,
     });
   } catch (error) {
     customResponse.error(res, error.message);
