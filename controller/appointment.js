@@ -149,7 +149,7 @@ exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
     .populate("serviceId");
   const appointments = await Appointment.find({
     date: date,
-    status: true,
+    status: "paid",
   });
   if (!schedules || schedules.length === 0) {
     return res.status(404).json({
