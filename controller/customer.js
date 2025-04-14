@@ -125,6 +125,7 @@ exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await Appointment.find({
       user: req.userId,
+      status: "paid",
       // status: true,
     }).populate({
       path: "schedule", // Populate the 'schedule' field
@@ -151,6 +152,10 @@ exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
         };
       })
     );
+    console.log("hello2");
+    console.log("hello1");
+    console.log("hello");
+    console.log(lol);
 
     res.status(200).json({
       success: true,
