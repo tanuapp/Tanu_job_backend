@@ -178,15 +178,19 @@ exports.getMe = asyncHandler(async (req, res, next) => {
     }
     const tokenObj = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(tokenObj.Id);
+    const tokens = user.getJsonWebToken();
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "Хэрэглэгч олдсонгүй",
       });
     }
+    console.log(user);
+    console.log(tokens);
     return res.status(200).json({
       success: true,
       data: user,
+      token: tokens,
     });
   } catch (error) {
     customResponse.error(res, error.message);
