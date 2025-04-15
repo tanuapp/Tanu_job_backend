@@ -47,7 +47,9 @@ exports.declineAppointment = asyncHandler(async (req, res, next) => {
 exports.getAllPopulated = asyncHandler(async (req, res) => {
   try {
     // Fetch all users and populate related fields
-    const allUser = await Model.find()
+    const allUser = await Model.find({
+      status: "paid"
+    })
       .populate({
         path: "schedule",
         populate: [
@@ -89,10 +91,12 @@ exports.create = asyncHandler(async (req, res, next) => {
     const p = await Model.find({
       date: req.body.date,
       schedule: req.body.schedule,
-      status: true,
+      status: "paid",
     });
 
-    if (p) {
+    console.log(p)
+
+    if (p.length > 0) {
       customResponse.error(res, "Өөр захиалга үүссэн байна ");
     }
 

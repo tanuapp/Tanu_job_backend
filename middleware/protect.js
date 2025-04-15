@@ -3,7 +3,7 @@ const asyncHandler = require("../middleware/asyncHandler");
 
 exports.protect = asyncHandler(async (req, res, next) => {
   try {
-    console.log(req.headers.authorization);
+    // console.log(req.headers.authorization);
     if (!req.headers.authorization) {
       return res.status(200).json({
         success: false,
