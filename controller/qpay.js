@@ -146,12 +146,20 @@ exports.callback = asyncHandler(async (req, res, next) => {
         appointment,
         { status: "paid" },
         { new: true }
-      ).populate("schedule");
+      )
+        .populate({
+          path: "schedule",
+          populate: [
+            { path: "serviceId", model: "Service" },
+            { path: "artistId", model: "Artist" },
+          ],
+        })
+        .populate("user");
       const scheduleOne = await schedule.findById(ap.schedule._id);
       console.log(scheduleOne);
-      const service = await Service.findById(scheduleOne.serviceId.toString());
+      const service = await Service.findById(scheduleOne.serviceId._id);
       console.log(service);
-      const pcm = await company.findById(service.companyId.toString());
+      const pcm = await company.findById(service.companyId);
       if (pcm) {
         pcm.done++;
         await pcm.save();
