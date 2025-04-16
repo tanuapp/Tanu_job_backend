@@ -29,10 +29,10 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 exports.declineAppointment = asyncHandler(async (req, res, next) => {
   try {
     const decline = await Model.findById(req.params.id);
-    if (decline.status == false) {
+    if (decline.status == "pending") {
       customResponse.error(res, "Таны захиалга баталгаажаагүй байна");
     }
-    decline.status = false;
+    decline.status = "declined";
     await decline.save();
     const user = await User.findById(decline.user);
     user.coupon++;
