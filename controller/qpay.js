@@ -147,7 +147,7 @@ exports.callback = asyncHandler(async (req, res, next) => {
         { status: "paid" },
         { new: true }
       ).populate("schedule");
-      const scheduleOne = await schedule.findById(ap.schedule.toString());
+      const scheduleOne = await schedule.findById(ap.schedule._id);
       console.log(scheduleOne);
       const service = await Service.findById(scheduleOne.serviceId.toString());
       console.log(service);
