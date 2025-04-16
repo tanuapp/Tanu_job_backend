@@ -10,9 +10,11 @@ const {
   endAppointment,
   declineAppointment,
   getAvailableTimes,
+  getArtistAppointments
 } = require("../controller/appointment");
 const router = express.Router();
 
+router.route("/artist").get(protect,getArtistAppointments);
 router.route("/end/:id").post(endAppointment);
 router.route("/decline/:id").post(declineAppointment);
 router.route("/available").post(getAvailableTimes);

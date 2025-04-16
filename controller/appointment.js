@@ -226,6 +226,32 @@ exports.endAppointment = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
+  try {
+    const  p = await Appointment.find({
+      status: {$ne: "pending"  },
+    }).populate({
+      path: "schedule", // Populate the 'schedule' field
+      populate: [
+        {
+          path: "serviceId", // Populate 'serviceId'
+          model: "Service",
+        },
+        {
+          path: "artistId",
+          model: "Artist", // Populate 'artistId'
+        },
+      ],
+    });
+
+   const sda = p.filter((el)=>el.schedule.artistId._id == req.userId)
+    customResponse.success(res, sda);
+  } catch (error) {
+    console.log(error);
+    customResponse.error(res, error);
+  }
+});
+
 exports.update = asyncHandler(async (req, res, next) => {
   try {
     const updatedData = {
