@@ -6,11 +6,14 @@ const commentSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  //   photo: String,
   user: {
     type: Schema.Types.ObjectId,
     ref: "Customer",
     default: null,
+  },
+  companyId: {
+    type: Schema.Types.ObjectId,
+    ref: "Company",
   },
   status: {
     type: Boolean,

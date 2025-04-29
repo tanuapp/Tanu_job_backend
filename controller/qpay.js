@@ -3,88 +3,122 @@ const asyncHandler = require("../middleware/asyncHandler.js");
 const invoiceModel = require("../models/invoice.js");
 const qpay = require("../middleware/qpay");
 const customerModel = require("../models/customer.js");
+const companyModel = require("../models/company.js");
 const Appointment = require("../models/appointment.js");
+const Option = require("../models/option.js");
 const Service = require("../models/service.js");
-// const khan = require("../middleware/khaan");
-// const uniqid = require("uniqid");
 const schedule = require("../models/schedule.js");
-const service = require("../models/service.js");
 const company = require("../models/company.js");
 const customResponse = require("../utils/customResponse");
 
 exports.createqpay = asyncHandler(async (req, res) => {
   try {
-    console.log("what");
-    const customer = await customerModel.findById(req.userId);
     const qpay_token = await qpay.makeRequest();
 
-    console.log("what1");
-    const { phone } = customer;
+    const invoice = await invoiceModel
+      .findById(req.params.id)
+      .populate("appointment");
+    if (!invoice) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Invoice not found" });
+    }
+
+    console.log(invoice);
+
+    let amount = 0;
+    const durationMap = {
+      one: 1,
+      six: 6,
+      year: 12,
+    };
+
+    if (invoice.isOption) {
+      const opt = await Option.findById(invoice.package);
+      if (!opt) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Package not found" });
+      }
+
+      const durationInMonths = durationMap[invoice.appointment.duration];
+      amount = Number(opt.price * durationInMonths * (1 - invoice.discount));
+    } else {
+      const { appointment } = invoice;
+      if (!appointment) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Appointment not found" });
+      }
+      const service = await Service.findById(appointment.service);
+      if (!service) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Service not found" });
+      }
+      amount = Number(service.price);
+    }
+
     const currentDateTime = new Date();
     const randomToo = Math.floor(Math.random() * 99999);
-    const sender_invoice_no =
-      currentDateTime.getFullYear() +
-      "-" +
-      ("0" + (currentDateTime.getMonth() + 1)).slice(-2) +
-      "-" +
-      ("0" + currentDateTime.getDate()).slice(-2) +
-      "-" +
-      ("0" + currentDateTime.getHours()).slice(-2) +
-      "-" +
-      ("0" + currentDateTime.getMinutes()).slice(-2) +
-      "-" +
-      ("0" + currentDateTime.getSeconds()).slice(-2) +
-      "-" +
-      ("00" + currentDateTime.getMilliseconds()).slice(-3) +
-      randomToo;
+    const sender_invoice_no = `${currentDateTime
+      .toISOString()
+      .replace(/[:.]/g, "-")}-${randomToo}`;
 
-    const invoice = {
+    const invoicePayload = {
       invoice_code: process.env.invoice_code,
-      sender_invoice_no: sender_invoice_no,
+      sender_invoice_no,
       sender_branch_code: "branch",
       invoice_receiver_code: "terminal",
       invoice_receiver_data: {
-        phone: `${phone}`,
+        phone: `${req.body.phone || ""}`,
       },
       invoice_description: process.env.invoice_description,
-      callback_url: process.env.AppRentCallBackUrl + sender_invoice_no,
-      lines: [],
-    };
-    const invoiceLine = {
-      tax_product_code: `${randomToo}`,
-      line_description: `Мөнх-Эрдэнэ`,
-      line_quantity: 10,
-      line_unit_price: 1,
-    };
-    invoice.lines.push(invoiceLine);
-
-    const header = {
-      headers: { Authorization: `Bearer ${qpay_token.access_token}` },
+      callback_url: `${process.env.AppRentCallBackUrl}${sender_invoice_no}`,
+      lines: [
+        {
+          tax_product_code: `${randomToo}`,
+          line_description: `Мөнх-Эрдэнэ`,
+          line_quantity: 1,
+          line_unit_price: amount,
+        },
+      ],
     };
 
     const response = await axios.post(
       process.env.qpayUrl + "invoice",
-      invoice,
-      header
+      invoicePayload,
+      { headers: { Authorization: `Bearer ${qpay_token.access_token}` } }
     );
 
+    console.log("1212");
+    console.log("1212");
+    console.log("1212");
+    // console.log(response.data)
+
     if (response.status === 200) {
+      console.log(req.params.id);
+
+      console.log("helo");
+      console.log("helo");
+      console.log("helo");
       const invoiceUpdate = await invoiceModel.findByIdAndUpdate(
         req.params.id,
         {
           sender_invoice_id: sender_invoice_no,
           qpay_invoice_id: response.data.invoice_id,
-          price: invoiceLine.line_unit_price,
+          price: amount,
         },
         { new: true }
       );
+      console.log(invoiceUpdate);
       return res
         .status(200)
         .json({ success: true, invoice: invoiceUpdate, data: response.data });
     }
   } catch (error) {
     console.error(error);
-    res.status(200).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -93,31 +127,29 @@ exports.callback = asyncHandler(async (req, res, next) => {
     const io = req.app.get("io");
     const qpay_token = await qpay.makeRequest();
     const { access_token } = qpay_token;
-    var sender_invoice_no = req.params.id;
+
+    console.log(req.params.id);
+
     const record = await invoiceModel.findOne({
-      sender_invoice_id: sender_invoice_no,
+      sender_invoice_id: req.params.id,
     });
-    console.log("recorded", record);
-    if (record.length === 0) {
+
+    if (!record) {
       return res.status(404).json({
         success: false,
         message: "Invoice not found",
       });
     }
-    const { qpay_invoice_id, _id, appointment, amount } = record;
-    // print
-    const app = await Appointment.findById(appointment);
-    console.log("appointment done");
-    const sche = await schedule.findById(app.schedule.toString());
-
-    console.log("schedule done");
-    const services = await Service.findById(sche.serviceId.toString());
-    console.log("services done");
-    services.done++;
-    await services.save();
-
+    const { qpay_invoice_id, _id, appointment, status } = record;
+    const ordersLL = await Appointment.findById(appointment);
+    if (status == "paid") {
+      return res.status(200).json({
+        success: true,
+        message: "Төлөгдсөн байна",
+        order: ordersLL,
+      });
+    }
     const rentId = _id;
-
     var request = {
       object_type: "INVOICE",
       object_id: qpay_invoice_id,
@@ -137,104 +169,74 @@ exports.callback = asyncHandler(async (req, res, next) => {
       request,
       header
     );
-
+    console.log(result.data);
     if (
       result.data.count == 1 &&
       result.data.rows[0].payment_status == "PAID"
     ) {
-      const ap = await Appointment.findByIdAndUpdate(
-        appointment,
-        { status: "paid" },
-        { new: true }
-      )
-        .populate({
-          path: "schedule",
-          populate: [
-            { path: "serviceId", model: "Service" },
-            { path: "artistId", model: "Artist" },
-          ],
-        })
-        .populate("user");
-      const scheduleOne = await schedule.findById(ap.schedule._id);
-      console.log(scheduleOne);
-      const service = await Service.findById(scheduleOne.serviceId._id);
-      console.log(service);
-      const pcm = await company.findById(service.companyId);
-      if (pcm) {
-        pcm.done++;
-        await pcm.save();
+      record.status = "paid";
+      await record.save();
+
+      console.log("gfgf");
+
+      const app = await Appointment.findById(appointment);
+      if (!app) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Appointment not found" });
       }
-      await invoiceModel.findByIdAndUpdate(
-        rentId,
-        { status: "paid" },
-        { new: true }
-      );
+
+      app.status = "paid";
+      await app.save();
+
+      if (app.isOption) {
+      } else {
+        const sche = await schedule.findById(app.schedule.toString());
+
+        const services = await Service.findById(sche.serviceId.toString());
+        console.log(services);
+
+        console.log("gfgf");
+        services.done++;
+        await services.save();
+
+        const updatedApp = await Appointment.findByIdAndUpdate(
+          appointment,
+          { status: "paid" },
+          { new: true }
+        ).populate("schedule");
+
+        console.log("gfgf");
+        const updatedSchedule = await schedule.findById(
+          updatedApp.schedule.toString()
+        );
+        const service = await Service.findById(
+          updatedSchedule.serviceId.toString()
+        );
+        const pcm = await company.findById(service.companyId.toString());
+
+        if (pcm) {
+          pcm.done++;
+          await pcm.save();
+        }
+        console.log("irjin");
+      }
 
       io.emit("paymentDone");
-
-      if (ap && ap.schedule) {
-        io.emit("realtime", {
-          service: ap.schedule.serviceId,
-          artist: ap.schedule.artistId,
-          date: ap.date instanceof Date ? ap.date.toISOString() : ap.date,
-          appointment: ap,
-        });
-      }
-      // const Company = await serviceModel.findById(Service);
-      // let input = {
-      //   Artist,
-      //   Customer,
-      //   Service,
-      //   start: tsagAwah,
-      //   Company: Company?.companyId,
-      // };
-
-      // const orderAddToCustomer = await customerOrder.create({
-      //   Customer: Customer,
-      //   ognoo: tsagAwah,
-      //   Service: Service,
-      // });
-      // console.log("Миний захиалгад ажилттай  нэмэгдлээ", orderAddToCustomer);
-
-      // var khan_token = await khan.makeRequest();
-      // const header = {
-      //   headers: {
-      //     Authorization: "Bearer " + khan_token.access_token,
-      //     "Content-Type": "application/json",
-      //   },
-      // };
-      // const transferid = uniqid();
-      // const mnaiOrlogo = price / 10;
-      // const companyOrlogo = price - mnaiOrlogo;
-      // const reqBody = {
-      //   fromAccount: "5037820742",
-      //   toAccount: "5075778806",
-      //   toCurrency: "MNT",
-      //   amount: companyOrlogo,
-      //   description: "2024-06-08 орлого",
-      //   currency: "MNT",
-      //   loginName: "info.tanullc@gmail.com",
-      //   tranPassword: "lol1234MOLL$$",
-      //   transferid: transferid,
-      // };
-
-      // await axios.post(
-      //   process.env.khanUrl + `transfer/domestic`,
-      //   reqBody,
-      //   header
-      // );
 
       return res.status(200).json({
         success: true,
         message: "Төлөлт амжилттай",
+        order: app,
       });
     } else {
-      return res.status(200).json({
+      return res.status(401).json({
         success: false,
         message: "Төлөлт амжилтгүй",
       });
     }
   } catch (error) {
-    customResponse.error(res, error.message);
+    console.log(error.response.data);
+    res.status(500).json({ success: false, error: error.message });
   }
 });

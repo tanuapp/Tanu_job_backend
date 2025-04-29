@@ -2,17 +2,29 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const optionSchema = new mongoose.Schema({
-  homeBanner: {
-    type: Boolean,
-    default: false,
+  name:{
+    type: String,
+    required: true,
+  },
+  title:{
+    type: String,
+    required: true,
+  },
+  description:{
+    type: String,
+    required: true,
+  },
+  price: {
+    type: Number,
+    default: 0,
   },
   employeeCount: {
     type: Number,
     default: 1,
   },
-  branch: {
-    type: Number,
-    default: 1,
+  homeBanner: {
+    type: Boolean,
+    default: false,
   },
   suggestion: {
     type: Boolean,

@@ -26,6 +26,8 @@ exports.protect = asyncHandler(async (req, res, next) => {
     req.token = token;
     req.userId = tokenObj.Id;
     req.userRole = tokenObj.role;
+    req.companyId = '680199d95a39e0609e4addc5';
+    console.log("Company ID from token:", req.companyId);
     next();
   } catch (error) {
     return res.status(200).json({

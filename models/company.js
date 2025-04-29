@@ -47,8 +47,9 @@ const companySchema = new mongoose.Schema({
     type : Boolean,
     default : false
   },
-
-
+  
+  package: { type: [Schema.Types.ObjectId], ref: "Option", },
+  
   latitude: { type: String },
   longitude: { type: String },
   createdAt: { type: Date, default: Date.now },

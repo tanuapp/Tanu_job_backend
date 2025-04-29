@@ -1,11 +1,30 @@
+const { Type } = require("@aws-sdk/client-s3");
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const invoiceSchema = new Schema({
   appointment: {
-    type: Schema.Types.ObjectId,
-    ref: "Appointment",
-    required: true,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Appointment',
+    
+  },
+  package: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Option",
+
+  },
+  
+  companyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Company',
+ 
+  },
+  discount:{
+    type: Number,
+  },
+  isOption: {
+    type: Boolean,
+    default: false,
   },
   amount: {
     type: Number,
