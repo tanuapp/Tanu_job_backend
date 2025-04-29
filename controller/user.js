@@ -19,8 +19,6 @@ exports.getAll = asyncHandler(async (req, res, next) => {
   }
 });
 
-
-
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     console.log(req.body);

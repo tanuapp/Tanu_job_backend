@@ -74,9 +74,9 @@ exports.create = asyncHandler(async (req, res, next) => {
   try {
     // const io = req.app.get("io");
 
-    const { schedule } = req.body;
+    const { schedule, isOption } = req.body;
 
-    if (!schedule) {
+    if (!schedule && !isOption) {
       customResponse.error(res, "Захиалга хийх хуваарь оруулна уу");
     }
 
@@ -85,7 +85,7 @@ exports.create = asyncHandler(async (req, res, next) => {
     const appointmentData = {
       ...req.body,
       user: req.userId,
-      company: sch.companyId,
+      company: sch?.companyId  ? sch?.companyId : null,
     };
 
     const p = await Model.find({
@@ -96,7 +96,9 @@ exports.create = asyncHandler(async (req, res, next) => {
 
     console.log(p)
 
-    if (p.length > 0) {
+    const mgl = p.filter((item)=>item.option != null && item.option != undefined)
+
+    if (p.length > 0 && p.length != mgl.length) {
       customResponse.error(res, "Өөр захиалга үүссэн байна ");
     }
 

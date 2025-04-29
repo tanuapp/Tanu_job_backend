@@ -4,8 +4,21 @@ const { Schema } = mongoose;
 const appointmentSchema = new Schema({
   date: {
     type: String,
-    required: [true, "Та заавал захиалга хийх өдрөө оруулна уу!"],
   },
+  isOption:{
+    type:Boolean,
+    default: false
+  },
+  option: {
+    type: Schema.Types.ObjectId,
+    ref: "Option",
+  },
+  duration: {
+    type: String,
+    enum: ["one", "six", "year"],
+    default: "one",
+  },
+
   schedule: {
     type: Schema.Types.ObjectId,
     ref: "Schedule",

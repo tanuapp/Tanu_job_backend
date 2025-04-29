@@ -48,6 +48,7 @@ const bgRoute = require("./routes/bgremove.js");
 const storyRoute = require("./routes/story.js");
 const galleryRoute = require("./routes/gallery.js");
 const companyArtistRequestRoute = require("./routes/company_artist_request.js");
+const commentRoute = require("./routes/comment.js");
 
 // Multer setup
 const multer = require("multer");
@@ -147,6 +148,7 @@ app.use("/api/v1/story", storyRoute);
 app.use("/api/v1/gallery", galleryRoute);
 app.use("/api/v1/direct-payment", direct_paymentRoute);
 app.use("/api/v1/company-artist-request", companyArtistRequestRoute);
+app.use("/api/v1/comment", commentRoute);
 
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));

@@ -1,8 +1,14 @@
 const express = require("express");
 const router = express.Router();
-const { createqpay, callback } = require("../controller/qpay.js");
+const {
+  createqpay,
+  callback,
+} = require("../controller/qpay.js");
 const { protect } = require("../middleware/protect.js");
 
-router.route("/:id").post(protect, createqpay);
-router.route("/callback/:id").get(callback);
+router.post("/:id", protect, createqpay);
+
+// 3. Callback
+router.get("/callback/:id", callback);
+
 module.exports = router;
