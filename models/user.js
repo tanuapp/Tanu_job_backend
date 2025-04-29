@@ -27,14 +27,13 @@ const userSchema = new Schema({
   first_name: String,
   role: {
     type: String,
-    // 0 = Tanu super admin, 1 = Tanu ded admin, 2 = Baiguullagiin Admin, 3 = Baiguullagiin ded admin
     enum: ["admin", "user"],
     default: "user",
   },
   permission: {
-    type: [String],
-    enum: ["settings", "employee", "statistic", "banner", "dayoff"],
-    default: [],
+    type: String,
+    enum: ["super_admin","sub_admin"],
+    default: ["super_admin"],
   },
   last_name: String,
   email: {
