@@ -14,14 +14,14 @@ const userSchema = new Schema({
   password: {
     type: String,
   },
-  pin: String,
+  name: String,
   status: {
     type: Boolean,
     default: false,
   },
   photo: String,
   companyId: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Types.ObjectId,
     ref: "Company",
   },
   first_name: String,
@@ -31,16 +31,16 @@ const userSchema = new Schema({
     enum: ["admin", "user"],
     default: "user",
   },
-  permission: {
-    type: [String],
-    enum: ["settings", "employee", "statistic", "banner", "dayoff"],
-    default: [],
+
+  userRole: {
+    type: mongoose.Types.ObjectId,
+    ref: "UserRole",
   },
   last_name: String,
   email: {
     type: String,
     unique: true,
-    sparse: true
+    sparse: true,
   },
   booked: {
     type: [Schema.Types.ObjectId],

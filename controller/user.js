@@ -7,7 +7,12 @@ const { read } = require("fs");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    const allUser = await User.find();
+    const allUser = await User.find().populate({
+      path: "userRole",
+      populate: {
+        path: "role",
+      },
+    });
     const total = await User.countDocuments();
     res.status(200).json({
       success: true,
@@ -18,8 +23,6 @@ exports.getAll = asyncHandler(async (req, res, next) => {
     customResponse.server(res, error.message);
   }
 });
-
-
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
@@ -33,7 +36,6 @@ exports.create = asyncHandler(async (req, res, next) => {
         error: "Утасны дугаар бүртгэлтэй байна",
       });
     }
-  
 
     const inputData = {
       ...req.body,
@@ -54,18 +56,18 @@ exports.create = asyncHandler(async (req, res, next) => {
 });
 
 exports.Login = asyncHandler(async (req, res, next) => {
-  try {console.log(req.body)
+  try {
+    console.log(req.body);
     const { phone, password } = req.body;
- 
-    const pop = Number(phone)
 
-    const user = await User.findOne({phone : pop}).select("+password")
-  
+    const pop = Number(phone);
+
+    const user = await User.findOne({ phone: pop }).select("+password");
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Утасны дугаар бүртгэлгүй байна."
+        message: "Утасны дугаар бүртгэлгүй байна.",
       });
     }
 

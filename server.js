@@ -31,6 +31,7 @@ const tanuBannerRoutes = require("./routes/tanuBanner");
 const appointmentRoutes = require("./routes/appointment.js");
 const scheduleRoutes = require("./routes/schedule.js");
 const artistRoutes = require("./routes/artist.js");
+const personRoutes = require("./routes/person.js");
 const customerRoutes = require("./routes/customer.js");
 const qpayRoutes = require("./routes/qpay.js");
 const invoiceRoutes = require("./routes/invoice.js");
@@ -47,6 +48,8 @@ const notRoute = require("./routes/notification.js");
 const bgRoute = require("./routes/bgremove.js");
 const storyRoute = require("./routes/story.js");
 const galleryRoute = require("./routes/gallery.js");
+const roleRoute = require("./routes/role.js");
+const userRoleRoute = require("./routes/user_role.js");
 const companyArtistRequestRoute = require("./routes/company_artist_request.js");
 
 // Multer setup
@@ -132,6 +135,7 @@ app.use("/api/v1/schedule", scheduleRoutes);
 app.use("/api/v1/customer", customerRoutes);
 app.use("/api/v1/qpay", qpayRoutes);
 app.use("/api/v1/artist", artistRoutes);
+app.use("/api/v1/person", personRoutes);
 app.use("/api/v1/invoice", invoiceRoutes);
 app.use("/api/v1/dayoff", dayoffRoutes);
 app.use("/api/v1/calendar", calendarRoutes);
@@ -147,6 +151,8 @@ app.use("/api/v1/story", storyRoute);
 app.use("/api/v1/gallery", galleryRoute);
 app.use("/api/v1/direct-payment", direct_paymentRoute);
 app.use("/api/v1/company-artist-request", companyArtistRequestRoute);
+app.use("/api/v1/role", roleRoute);
+app.use("/api/v1/user-role", userRoleRoute);
 
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));

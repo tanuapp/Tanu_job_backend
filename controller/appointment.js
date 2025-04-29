@@ -9,6 +9,7 @@ const fs = require("fs");
 const QRCode = require("qrcode");
 const asyncHandler = require("../middleware/asyncHandler");
 const { generateCredential, send } = require("../utils/khan");
+const Company = require("../models/company");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -228,26 +229,43 @@ exports.endAppointment = asyncHandler(async (req, res, next) => {
 
 exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
   try {
-    const  p = await Appointment.find({
-      status: {$ne: "pending"  },
+    const appointments = await Appointment.find({
+      status: { $ne: "pending" },
     }).populate({
-      path: "schedule", // Populate the 'schedule' field
+      path: "schedule",
       populate: [
         {
-          path: "serviceId", // Populate 'serviceId'
+          path: "serviceId",
           model: "Service",
+        },  {
+          path: "companyId",
+          model: "Company",
         },
-        {
-          path: "artistId",
-          model: "Artist", // Populate 'artistId'
-        },
-      ],
-    });
 
-   const sda = p.filter((el)=>el.schedule.artistId._id == req.userId)
-    customResponse.success(res, sda);
+     
+    
+      ],
+    }).populate("user").populate("company");
+
+    const filteredAppointments = appointments
+      .filter((appointment) => {
+        const artist = appointment.schedule?.artistId;
+        return artist && artist._id.toString() === req.userId;
+      })
+      .map((appointment) => {
+        return {
+         _id: appointment._id,
+         open: appointment.schedule?.companyId?.open,
+         close: appointment.schedule?.companyId?.close,
+         serviceName: appointment.schedule?.serviceId?.service_name,
+         serviceId: appointment.schedule?.serviceId?._id,
+         userName: appointment.user?.first_name,   userPhone: appointment.user?.phone,
+        };
+      });
+
+    customResponse.success(res, filteredAppointments);
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching artist appointments:", error);
     customResponse.error(res, error);
   }
 });

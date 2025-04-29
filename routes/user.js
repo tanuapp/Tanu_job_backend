@@ -15,10 +15,7 @@ const router = express.Router();
 router.route("/login").post(Login);
 router.route("/").post(create).get(getAll);
 
-router
-  .route("/:id")
-  .put(protect, update)
-  .delete(protect, authorize("admin"), deleteModel)
-  .get(get);
+router.route("/:id").put(protect, update).delete(deleteModel).get(get);
+// .delete(protect, authorize("admin"), deleteModel)  
 
 module.exports = router;

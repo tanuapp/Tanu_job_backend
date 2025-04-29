@@ -26,11 +26,10 @@ router
       { name: "logo", maxCount: 1 },
       { name: "sliderIMG", maxCount: 8 },
       { name: "gallery", maxCount: 10 },
-
     ]),
     createModel
   )
-  .get( getAll);
+  .get(getAll);
 
 router
   .route("/:id")
@@ -48,6 +47,6 @@ router
     // isActive && protect, isActive && authorize("admin"),
     deleteModel
   )
-  .get(protect,getCompanyPopulate);
+  .get(protect, getCompanyPopulate);
 
 module.exports = router;
