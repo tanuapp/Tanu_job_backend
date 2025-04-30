@@ -9,6 +9,7 @@ const fs = require("fs");
 const QRCode = require("qrcode");
 const asyncHandler = require("../middleware/asyncHandler");
 const { generateCredential, send } = require("../utils/khan");
+const Company = require("../models/company");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -29,10 +30,10 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 exports.declineAppointment = asyncHandler(async (req, res, next) => {
   try {
     const decline = await Model.findById(req.params.id);
-    if (decline.status == false) {
+    if (decline.status == "pending") {
       customResponse.error(res, "Таны захиалга баталгаажаагүй байна");
     }
-    decline.status = false;
+    decline.status = "declined";
     await decline.save();
     const user = await User.findById(decline.user);
     user.coupon++;
@@ -224,6 +225,49 @@ exports.endAppointment = asyncHandler(async (req, res, next) => {
     customResponse.success(res, "Амжилттай цуцлалаа");
   } catch (error) {
     console.log(error);
+    customResponse.error(res, error);
+  }
+});
+
+exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
+  try {
+    const appointments = await Appointment.find({
+      status: { $ne: "pending" },
+    }).populate({
+      path: "schedule",
+      populate: [
+        {
+          path: "serviceId",
+          model: "Service",
+        },  {
+          path: "companyId",
+          model: "Company",
+        },
+
+     
+    
+      ],
+    }).populate("user").populate("company");
+
+    const filteredAppointments = appointments
+      .filter((appointment) => {
+        const artist = appointment.schedule?.artistId;
+        return artist && artist._id.toString() === req.userId;
+      })
+      .map((appointment) => {
+        return {
+         _id: appointment._id,
+         open: appointment.schedule?.companyId?.open,
+         close: appointment.schedule?.companyId?.close,
+         serviceName: appointment.schedule?.serviceId?.service_name,
+         serviceId: appointment.schedule?.serviceId?._id,
+         userName: appointment.user?.first_name,   userPhone: appointment.user?.phone,
+        };
+      });
+
+    customResponse.success(res, filteredAppointments);
+  } catch (error) {
+    console.error("Error fetching artist appointments:", error);
     customResponse.error(res, error);
   }
 });

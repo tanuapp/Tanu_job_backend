@@ -15,43 +15,55 @@ exports.createqpay = asyncHandler(async (req, res) => {
   try {
     const qpay_token = await qpay.makeRequest();
 
-    const invoice = await invoiceModel.findById(req.params.id).populate("appointment");
+    const invoice = await invoiceModel
+      .findById(req.params.id)
+      .populate("appointment");
     if (!invoice) {
-      return res.status(404).json({ success: false, message: "Invoice not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Invoice not found" });
     }
 
-    console.log(invoice)
+    console.log(invoice);
 
     let amount = 0;
     const durationMap = {
       one: 1,
       six: 6,
-      year: 12
+      year: 12,
     };
 
     if (invoice.isOption) {
       const opt = await Option.findById(invoice.package);
       if (!opt) {
-        return res.status(400).json({ success: false, message: "Package not found" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Package not found" });
       }
-      
+
       const durationInMonths = durationMap[invoice.appointment.duration];
       amount = Number(opt.price * durationInMonths * (1 - invoice.discount));
     } else {
       const { appointment } = invoice;
       if (!appointment) {
-        return res.status(400).json({ success: false, message: "Appointment not found" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Appointment not found" });
       }
       const service = await Service.findById(appointment.service);
       if (!service) {
-        return res.status(400).json({ success: false, message: "Service not found" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Service not found" });
       }
       amount = Number(service.price);
     }
 
     const currentDateTime = new Date();
     const randomToo = Math.floor(Math.random() * 99999);
-    const sender_invoice_no = `${currentDateTime.toISOString().replace(/[:.]/g, '-')}-${randomToo}`;
+    const sender_invoice_no = `${currentDateTime
+      .toISOString()
+      .replace(/[:.]/g, "-")}-${randomToo}`;
 
     const invoicePayload = {
       invoice_code: process.env.invoice_code,
@@ -59,7 +71,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
       sender_branch_code: "branch",
       invoice_receiver_code: "terminal",
       invoice_receiver_data: {
-        phone: `${req.body.phone || ''}`,
+        phone: `${req.body.phone || ""}`,
       },
       invoice_description: process.env.invoice_description,
       callback_url: `${process.env.AppRentCallBackUrl}${sender_invoice_no}`,
@@ -69,7 +81,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
           line_description: `Мөнх-Эрдэнэ`,
           line_quantity: 1,
           line_unit_price: amount,
-        }
+        },
       ],
     };
 
@@ -79,18 +91,17 @@ exports.createqpay = asyncHandler(async (req, res) => {
       { headers: { Authorization: `Bearer ${qpay_token.access_token}` } }
     );
 
-    console.log("1212")
-    console.log("1212")
-    console.log("1212")
+    console.log("1212");
+    console.log("1212");
+    console.log("1212");
     // console.log(response.data)
 
     if (response.status === 200) {
+      console.log(req.params.id);
 
-      console.log(req.params.id)
-      
-    console.log("helo")
-    console.log("helo")
-    console.log("helo")
+      console.log("helo");
+      console.log("helo");
+      console.log("helo");
       const invoiceUpdate = await invoiceModel.findByIdAndUpdate(
         req.params.id,
         {
@@ -100,8 +111,10 @@ exports.createqpay = asyncHandler(async (req, res) => {
         },
         { new: true }
       );
-      console.log(invoiceUpdate)
-      return res.status(200).json({ success: true, invoice: invoiceUpdate, data: response.data });
+      console.log(invoiceUpdate);
+      return res
+        .status(200)
+        .json({ success: true, invoice: invoiceUpdate, data: response.data });
     }
   } catch (error) {
     console.error(error);
@@ -115,7 +128,7 @@ exports.callback = asyncHandler(async (req, res, next) => {
     const qpay_token = await qpay.makeRequest();
     const { access_token } = qpay_token;
 
-    console.log(req.params.id)
+    console.log(req.params.id);
 
     const record = await invoiceModel.findOne({
       sender_invoice_id: req.params.id,
@@ -127,11 +140,9 @@ exports.callback = asyncHandler(async (req, res, next) => {
         message: "Invoice not found",
       });
     }
-    const { qpay_invoice_id, _id,  appointment,status } = record;
+    const { qpay_invoice_id, _id, appointment, status } = record;
     const ordersLL = await Appointment.findById(appointment);
-    if (
-      status == "paid" 
-    ) {
+    if (status == "paid") {
       return res.status(200).json({
         success: true,
         message: "Төлөгдсөн байна",
@@ -166,54 +177,52 @@ exports.callback = asyncHandler(async (req, res, next) => {
       record.status = "paid";
       await record.save();
 
+      console.log("gfgf");
 
-     
-
-      console.log("gfgf")
-
-
-     
       const app = await Appointment.findById(appointment);
       if (!app) {
-        return res.status(404).json({ success: false, message: "Appointment not found" });
+        return res
+          .status(404)
+          .json({ success: false, message: "Appointment not found" });
       }
-      
+
       app.status = "paid";
       await app.save();
 
-      if(app.isOption){
-
-      }else{
+      if (app.isOption) {
+      } else {
         const sche = await schedule.findById(app.schedule.toString());
-    
+
         const services = await Service.findById(sche.serviceId.toString());
-        console.log(services)
-    
-        console.log("gfgf")
+        console.log(services);
+
+        console.log("gfgf");
         services.done++;
         await services.save();
-    
+
         const updatedApp = await Appointment.findByIdAndUpdate(
           appointment,
           { status: "paid" },
           { new: true }
         ).populate("schedule");
-    
-        console.log("gfgf")
-        const updatedSchedule = await schedule.findById(updatedApp.schedule.toString());
-        const service = await Service.findById(updatedSchedule.serviceId.toString());
+
+        console.log("gfgf");
+        const updatedSchedule = await schedule.findById(
+          updatedApp.schedule.toString()
+        );
+        const service = await Service.findById(
+          updatedSchedule.serviceId.toString()
+        );
         const pcm = await company.findById(service.companyId.toString());
-    
+
         if (pcm) {
           pcm.done++;
           await pcm.save();
         }
-        console.log("irjin")
-       
+        console.log("irjin");
       }
-     
-      io.emit("paymentDone");
 
+      io.emit("paymentDone");
 
       return res.status(200).json({
         success: true,

@@ -12,8 +12,7 @@ const customResponse = require("../utils/customResponse");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    const categories = await Model.find()
-      .populate("category");
+    const categories = await Model.find().populate("category");
 
     const allUser = await Fav.find({ user: req.userId });
 
@@ -85,11 +84,10 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
       company: req.params.id,
     });
 
-    const company = await Model.findById(req.params.id)
-      .populate({
-        path: "category",
-        model: "Category", // Ensure this model name is correct for categories
-      });
+    const company = await Model.findById(req.params.id).populate({
+      path: "category",
+      model: "Category", // Ensure this model name is correct for categories
+    });
 
     const comp = {
       ...company.toObject(),
@@ -125,7 +123,9 @@ exports.createModel = asyncHandler(async (req, res, next) => {
 
     const company = await Model.create({
       ...req.body,
-      timetable: req.body.timetable ? JSON.parse(req.body.timetable || "[]") : [],
+      timetable: req.body.timetable
+        ? JSON.parse(req.body.timetable || "[]")
+        : [],
       logo,
       sliderImages,
       category: JSON.parse(req.body.category || "[]") || [],
@@ -142,7 +142,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
 });
 
 exports.update = asyncHandler(async (req, res, next) => {
-  console.log(req.body,"datas irle")
+  console.log(req.body, "datas irle");
   try {
     const old = await Model.findById(req.params.id);
     const logo =
@@ -152,12 +152,14 @@ exports.update = asyncHandler(async (req, res, next) => {
         ? req.files.sliderIMG.map((file) => file.filename)
         : old.sliderImages;
 
-
     const company = await Model.findByIdAndUpdate(req.params.id, {
-      timetable: req.body.timetable ? JSON.parse(req.body.timetable) : old.timetable,
+      timetable: req.body.timetable
+        ? JSON.parse(req.body.timetable)
+        : old.timetable,
       ...req.body,
       logo,
-      sliderImages,    category: JSON.parse(req.body.category || "[]") || [],
+      sliderImages,
+      category: JSON.parse(req.body.category || "[]") || [],
     });
 
     res.status(200).json({

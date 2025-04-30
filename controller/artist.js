@@ -4,6 +4,19 @@ const customResponse = require("../utils/customResponse");
 const Service = require("../models/service");
 const company = require("../models/company");
 const User = require("../models/user");
+const OTP = require("../models/artistOTP");
+const sendMessage = require("../utils/callpro");
+
+function generateOTP(length = 4) {
+  let otp = "";
+  const characters = "0123456789";
+
+  for (let i = 0; i < length; i++) {
+    otp += characters[Math.floor(Math.random() * characters.length)];
+  }
+
+  return otp;
+}
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -58,11 +71,13 @@ exports.create = asyncHandler(async (req, res, next) => {
 exports.checkArtistPhone = asyncHandler(async (req, res, next) => {
   try {
     const body = req.body;
+    console.log(body)
+
     const existingUser = await Artist.findOne({ phone: body.phone });
     if (!existingUser) {
       return res.status(400).json({
         success: false,
-        message: "Утас бүртгэлгүй байна",
+        message: "Утас бүртгэлгүй байна ",
       });
     }
     return res.status(200).json({
@@ -94,15 +109,46 @@ exports.checkArtistEmail = asyncHandler(async (req, res, next) => {
 
 exports.registerArtist = asyncHandler(async (req, res, next) => {
   try {
+    console.log(req.body);
+    let existingUser = await Artist.findOne({ phone: req.body.phone }); // Fixed query
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Утасны дугаар бүртгэлтэй байна",
+      });
+    }
     const body = req.body;
-    const artister = await company.findById(body.companyId);
-    artister.numberOfArtist++;
-    await artister.save();
+    // const artister = await company.findById(body.companyId);
+    // artister.numberOfArtist++;
+    // await artister.save();
     const inputData = {
       ...body,
       photo: req.file?.filename ? req.file.filename : "no user photo",
     };
     const user = await Artist.create(inputData);
+        const otp = generateOTP();
+        if (existingUser) {
+          await OTP.findByIdAndUpdate(
+            {
+              artist: user._id,
+            },
+            {
+              otp,
+              artist: user._id,
+            }
+          );
+        console.log("irj bnn221")
+
+        } else {
+          await OTP.create({
+            otp,
+            artist: user._id,
+          });
+        }
+        console.log("irj bnn123")
+    
+        await sendMessage(req.body.phone, `Таны нэг удаагийн нууц үг: ${otp}`); // Fixed syntax
     const token = user.getJsonWebToken();
 
     customResponse.success(res, user, token);
@@ -222,4 +268,72 @@ exports.deleteModel = async function deleteUser(req, res, next) {
   }
 };
 
+exports.registerVerify = asyncHandler(async (req, res, next) => {
+  try {
+    const { otp, phone, count, pin } = req.body;
+
+    console.log(req.body)
+
+    if (Number(count) < 3) {
+      return res.status(400).json({
+        success: false,
+        message: "Та түр хүлээн дахин оролдоно уу",
+      });
+    }
+
+    const existingUser = await Artist.findOneAndUpdate(
+      { phone },
+      { pin }
+    );
+
+    if (!existingUser) {
+    console.log("Утасны дугаар бүртгэлгүй байна");
+    return res.status(200).json({
+      success: false,
+      message: "Утасны дугаар бүртгэлгүй байна",
+    });
+    }
+    console.log("yavaa otp verufy3")
+
+    const userOtp = await OTP.findOne({
+      artist: existingUser._id,
+    });
+    // console.log("yavaa otp verufy4",artist)
+    console.log("yavaa otp verufy22",existingUser._id)
+
+    if (!userOtp) {
+      return res.status(200).json({
+        success: false,
+        message: "OTP not found. Please request a new one.111",
+      });
+    }
+    console.log("irj bna otp")
+
+    // Correct OTP comparison
+    if (otp !== userOtp.otp) {
+      return res.status(200).json({
+        success: false,
+        message: "Буруу нэг удаагийн нууц үг 111",
+      });
+    }
+
+    existingUser.status = true;
+    await existingUser.save();
+    console.log("irj bna1")
+
+    // If OTP is correct, generate JWT token
+    const token = existingUser.getJsonWebToken();
+
+    // Optionally, delete the OTP after successful verification
+    await OTP.deleteOne({ artist: existingUser._id });
+console.log("irj bna2")
+    return res.status(200).json({
+      success: true,
+      token,
+      data: existingUser,
+    });
+  } catch (error) {
+    customResponse.error(res, error.message);
+  }
+});
 // Энд дуусаж байгаа шүүү

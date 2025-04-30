@@ -6,40 +6,41 @@ const {
   Login,
   create,
   deleteModel,
-  getArtistServices,
+  getPersonServices,
   get,
+  registerWithPhone,
+  registerVerify,
+  getPersonCompany,
   getAll,
   update,
-  registerVerify,
-  registerArtist,
-  checkArtistEmail,
-  checkArtistPhone,
-} = require("../controller/artist");
-const {
-  getPersonType
+  registerPerson,
+  checkPersonEmail,
+  checkPersonPhone,
 } = require("../controller/person");
 const router = express.Router();
+router.route("/register-verify").post(registerVerify);
 
-router.route("/getArtistServices/:id").get(getArtistServices);
+router.route("/getPersonServices/:id").get(getPersonServices);
 
 router.route("/login").post(Login);
 router.route("/register").post(upload.single("file"), create);
 router.route("/").get(getAll);
 
-router.route("/checkArtistEmail").post(checkArtistEmail);
+router.route("/checkPersonEmail").post(checkPersonEmail);
 
-router.route("/registerArtist").post(registerArtist);
-router.route("/type").get(protect,getPersonType);
-router.route("/register-verify").post(registerVerify);
+router.route("/company").get(protect, getPersonCompany);
+router.route("/registerPerson").post(registerPerson);
 
-router.route("/checkArtistPhone").post(checkArtistPhone);
+router.route("/checkPersonPhone").post(checkPersonPhone);
+
+router.route("/register/phone").post(registerWithPhone);
 
 router.route("/").post(upload.single("file"), create).get(getAll);
 
 router
   .route("/:id")
   .put(upload.single("file"), update)
-  .delete( deleteModel)
+  .delete(deleteModel)
   .get(get);
 
 module.exports = router;
