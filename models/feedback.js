@@ -2,14 +2,14 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const FeedBackSchema = new mongoose.Schema({
-  userId: {
+  companyId: {
     type: Schema.Types.ObjectId,
-    ref: "Customer",
+    ref: "Company",
   },
   description: String,
   createdAt: {
     type: Date,
     default: Date.now,
   },
-});
+}); 
 module.exports = mongoose.model("FeedBack", FeedBackSchema);
