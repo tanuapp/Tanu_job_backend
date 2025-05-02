@@ -287,9 +287,6 @@ exports.register = asyncHandler(async (req, res, next) => {
     }
     const existingUser = await User.findOne({ phone: req.body.phone });
     const exinstingEmail = await User.findOne({ email: req.body.email });
-    const artister = await company.findById(req.body.companyId);
-    artister.numberOfArtist++;
-    await artister.save();
 
     if (existingUser) {
       return res.status(200).json({
@@ -306,7 +303,6 @@ exports.register = asyncHandler(async (req, res, next) => {
 
     const inputData = {
       ...req.body,
-      companyId: artister._id.toString(),
       photo: req.file?.filename ? req.file.filename : "no user photo",
     };
 
