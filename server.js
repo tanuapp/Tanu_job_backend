@@ -48,10 +48,10 @@ const notRoute = require("./routes/notification.js");
 const bgRoute = require("./routes/bgremove.js");
 const storyRoute = require("./routes/story.js");
 const galleryRoute = require("./routes/gallery.js");
-const roleRoute = require("./routes/role.js");
 const userRoleRoute = require("./routes/user_role.js");
 const companyArtistRequestRoute = require("./routes/company_artist_request.js");
 const commentRoute = require("./routes/comment.js");
+const agentRoute = require("./routes/agent.js");
 
 // Multer setup
 const multer = require("multer");
@@ -127,6 +127,7 @@ app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/seriescategory", seriescategoryRoutes);
 app.use("/api/v1/company", companyRoutes);
 app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/user-role", userRoleRoute);
 app.use("/api/v1/service", serviceRoutes);
 app.use("/api/v1/feedback", feedbackRoutes);
 app.use("/api/v1/banner", bannerRoutes);
@@ -153,6 +154,7 @@ app.use("/api/v1/gallery", galleryRoute);
 app.use("/api/v1/direct-payment", direct_paymentRoute);
 app.use("/api/v1/company-artist-request", companyArtistRequestRoute);
 app.use("/api/v1/comment", commentRoute);
+app.use("/api/v1/agent", agentRoute);
 
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));

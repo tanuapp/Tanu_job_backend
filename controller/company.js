@@ -12,7 +12,9 @@ const customResponse = require("../utils/customResponse");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    const categories = await Model.find().populate("category");
+    const categories = await Model.find()
+      .populate("category")
+      .populate("onlineContract");
 
     const allUser = await Fav.find({ user: req.userId });
 
@@ -84,10 +86,12 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
       company: req.params.id,
     });
 
-    const company = await Model.findById(req.params.id).populate({
-      path: "category",
-      model: "Category", // Ensure this model name is correct for categories
-    });
+    const company = await Model.findById(req.params.id)
+      .populate({
+        path: "category",
+        model: "Category", // Ensure this model name is correct for categories
+      })
+      .populate("onlineContract");
 
     const comp = {
       ...company.toObject(),
@@ -173,7 +177,7 @@ exports.update = asyncHandler(async (req, res, next) => {
 
 exports.get = asyncHandler(async (req, res, next) => {
   try {
-    const allText = await Model.findById(req.params.id);
+    const allText = await Model.findById(req.params.id).populate("category");
     allText.views++;
     await allText.save();
     return res.status(200).json({
