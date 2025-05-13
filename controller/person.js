@@ -226,11 +226,16 @@ exports.get = asyncHandler(async (req, res, next) => {
 
 exports.getPersonCompany = asyncHandler(async (req, res, next) => {
   try {
-    console.log("sending");
-
-    const companyUser = await company.findOne({
+    // console.log("sending");
+    console.log(req.userId)
+    let companyUser = await company.findOne({
       companyOwner: req.userId,
     });
+
+    if(!companyUser){
+      const sda = await Artist.findById(req.userId);
+      companyUser = await company.findById(sda.companyId);
+    }
 
     const artistList = await Artist.find({
       companyId: companyUser._id,
@@ -264,6 +269,8 @@ exports.getPersonCompany = asyncHandler(async (req, res, next) => {
       model: "Category", // Ensure this model name is correct for categories
     });
 
+    
+
     const comp = {
       ...companys.toObject(),
       isSaved: allUser ? true : false,
@@ -289,6 +296,7 @@ exports.getPersonCompany = asyncHandler(async (req, res, next) => {
       data: p,
     });
   } catch (error) {
+    console.log(error)
     customResponse.error(res, error.message);
   }
 });
@@ -437,7 +445,7 @@ exports.getPersonServices = asyncHandler(async (req, res, next) => {
 exports.getPersonType = asyncHandler(async (req, res, next) => {
   try {
     const user = await Person.findById(req.userId);
-    const artist = await artist.findById(req.userId);
+    // const artist = await artist.findById(req.userId);
 
     customResponse.success(res, {
       type: user ? false : true,

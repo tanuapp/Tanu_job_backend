@@ -5,18 +5,31 @@ const { Schema } = mongoose;
 const companySchema = new mongoose.Schema({
   name: { type: String },
   description: { type: String },
-  banks: { 
+  banks: {
     type: String,
-    enum: ["ХААН Банк", "Голомт Банк", "ХасБанк", "Төрийн банк", "Капитрон банк","Ариг банк"],
+    enum: [
+      "ХААН Банк",
+      "Голомт Банк",
+      "ХасБанк",
+      "Төрийн банк",
+      "Капитрон банк",
+      "Ариг банк",
+    ],
   },
   banknumber: { type: String },
   bankowner: { type: String },
   open: { type: String },
   close: { type: String },
   email: { type: String },
-  
+  companyCode: { type: String },
+
   address: { type: String },
   category: { type: [Schema.Types.ObjectId], ref: "Category", required: true },
+
+  onlineContract: {
+    type: Schema.Types.ObjectId,
+    ref: "onlineContract",
+  },
   views: { type: Number, default: 0 },
   done: { type: Number, default: 0 },
   status: {
@@ -25,10 +38,12 @@ const companySchema = new mongoose.Schema({
     enum: [0, 1, 2],
     default: 0,
   },
-  phone: { type: String, required: true },
-  ordercancelhour: { type: String},
-  advancepayment: { type: String},
-  timetable : [] , 
+  agent: String,
+
+  phone: { type: String },
+  ordercancelhour: { type: String },
+  advancepayment: { type: String },
+  timetable: [],
   numberOfArtist: {
     type: Number,
     default: 0,
@@ -43,9 +58,9 @@ const companySchema = new mongoose.Schema({
   sliderImages: { type: [String] },
   companyNumber: { type: Number, unique: true, default: 1000 },
 
-  isHome : {
-    type : Boolean,
-    default : false
+  isHome: {
+    type: Boolean,
+    default: false,
   },
   
   package: { type: Schema.Types.ObjectId, ref: "Option"},

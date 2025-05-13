@@ -233,8 +233,9 @@ exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
   try {
     const appointments = await Appointment.find({
       status: { $ne: "pending" },
+    
     }).populate({
-      path: "schedule",
+      path: "schedule user",
       populate: [
         {
           path: "serviceId",
@@ -243,11 +244,12 @@ exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
           path: "companyId",
           model: "Company",
         },
-
+        
      
     
       ],
     }).populate("user").populate("company");
+    // console.log(appointments)
 
     const filteredAppointments = appointments
       .filter((appointment) => {
@@ -261,9 +263,11 @@ exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
          close: appointment.schedule?.companyId?.close,
          serviceName: appointment.schedule?.serviceId?.service_name,
          serviceId: appointment.schedule?.serviceId?._id,
-         userName: appointment.user?.first_name,   userPhone: appointment.user?.phone,
+         userName: appointment.user?.first_name || "Дөлгөөн",   userPhone: appointment.user?.phone || "88200314",
         };
       });
+
+      console.log(filteredAppointments)
 
     customResponse.success(res, filteredAppointments);
   } catch (error) {

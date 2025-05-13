@@ -7,12 +7,7 @@ const { read } = require("fs");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    const allUser = await User.find().populate({
-      path: "userRole",
-      populate: {
-        path: "role",
-      },
-    });
+    const allUser = await User.find().populate("userRole");
     const total = await User.countDocuments();
     res.status(200).json({
       success: true,
@@ -114,7 +109,7 @@ exports.update = asyncHandler(async (req, res, next) => {
 
 exports.get = asyncHandler(async (req, res, next) => {
   try {
-    const allText = await User.findById(req.params.id);
+    const allText = await User.findById(req.params.id).populate("userRole");
     const company = await Company.findOne({
       companyOwner: req.params.id,
     });
