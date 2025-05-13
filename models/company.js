@@ -71,15 +71,15 @@ const companySchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-// Increment companyNumber automatically
+
 companySchema.pre("save", async function (next) {
   if (this.isNew) {
     try {
-      // Find and increment the counter in the CompanyCounter collection
+ 
       const counter = await CompanyCounter.findOneAndUpdate(
         { name: "companyNumber" }, // The name of the counter we are incrementing
-        { $inc: { seq: 1 } }, // Increment the sequence by 1
-        { new: true, upsert: true } // Return the updated document, create it if not found
+        { $inc: { seq: 1 } }, 
+        { new: true, upsert: true } 
       );
 
       // Set the company's companyNumber to the updated sequence value

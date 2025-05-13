@@ -61,14 +61,13 @@ customerSchema.methods.checkPassword = async function (pin) {
   return await bcrypt.compare(pin, this.pin);
 };
 
-// Generate JSON Web Token
+
 customerSchema.methods.getJsonWebToken = function () {
   return jwt.sign({ Id: this._id, phone: this.phone }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIREDIN,
   });
 };
 
-// Hash pin if it's being updated
 customerSchema.pre("findOneAndUpdate", async function (next) {
   if (!this._update.pin) return next();
   const salt = await bcrypt.genSalt(10);
