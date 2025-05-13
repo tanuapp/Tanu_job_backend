@@ -15,7 +15,7 @@ const appointmentSchema = new Schema({
   },
   duration: {
     type: String,
-    enum: ["one", "six", "year"],
+    enum: ["one", "six", "year" ,"free"],
     default: "one",
   },
 
