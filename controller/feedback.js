@@ -5,7 +5,7 @@ const customResponse = require("../utils/customResponse");
 
 exports.getAllModel = asyncHandler(async (req, res, next) => {
   try {
-    const allUser = await Model.find().populate("companyId" , "name logo");
+    const allUser = await Model.find().populate("companyId" , "name logo rating email phone");
     const total = await Model.countDocuments();
     res.status(200).json({
       success: true,
