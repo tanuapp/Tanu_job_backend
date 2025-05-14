@@ -57,13 +57,12 @@ const companySchema = new mongoose.Schema({
   logo: { type: String },
   sliderImages: { type: [String] },
   companyNumber: { type: Number, unique: true, default: 1000 },
-
   isHome: {
     type: Boolean,
     default: false,
   },
-  
   package: { type: Schema.Types.ObjectId, ref: "Option"},
+  isPackage:{type:Boolean , default:false},
   packageEndDate:{type :Date },
   latitude: { type: String },
   longitude: { type: String },
