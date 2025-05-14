@@ -57,13 +57,12 @@ const companySchema = new mongoose.Schema({
   logo: { type: String },
   sliderImages: { type: [String] },
   companyNumber: { type: Number, unique: true, default: 1000 },
-
   isHome: {
     type: Boolean,
     default: false,
   },
-  
   package: { type: Schema.Types.ObjectId, ref: "Option"},
+  isPackage:{type:Boolean , default:false},
   packageEndDate:{type :Date },
   latitude: { type: String },
   longitude: { type: String },
@@ -77,12 +76,11 @@ companySchema.pre("save", async function (next) {
     try {
  
       const counter = await CompanyCounter.findOneAndUpdate(
-        { name: "companyNumber" }, // The name of the counter we are incrementing
+        { name: "companyNumber" }, 
         { $inc: { seq: 1 } }, 
         { new: true, upsert: true } 
       );
 
-      // Set the company's companyNumber to the updated sequence value
       this.companyNumber = counter.seq;
       next();
     } catch (error) {

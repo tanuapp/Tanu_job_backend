@@ -39,7 +39,6 @@ exports.create = asyncHandler(async (req, res, next) => {
 
     const userRole = await Model.create(inputData);
 
-    // Update the associated User document with the created UserRole
     await User.findByIdAndUpdate(userRole.user, { userRole: userRole._id });
 
     res.status(200).json({
@@ -100,4 +99,3 @@ exports.deleteModel = async function deleteUser(req, res, next) {
   }
 };
 
-// Энд дуусаж байгаа шүүү
