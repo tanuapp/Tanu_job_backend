@@ -143,4 +143,3 @@ exports.deleteModel = async function deleteUser(req, res, next) {
   }
 };
 
-// Энд дуусаж байгаа шүүү

@@ -18,7 +18,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
   try {
     const result = await Model.create({
       ...req.body,
-      file: req.file ? req.file.filename : "no-file.png", // Handle both image and video
+      file: req.file ? req.file.filename : "no-file.png",
     });
 
     customResponse.success(res, result);
@@ -32,7 +32,7 @@ exports.updateModel = asyncHandler(async (req, res, next) => {
     const old = await Model.findById(req.params.id);
     const result = await Model.findByIdAndUpdate(req.params.id, {
       ...req.body,
-      file: req.file ? req.file.filename : old.file, // Handle both image and video
+      file: req.file ? req.file.filename : old.file,
     });
 
     customResponse.success(res, result);
