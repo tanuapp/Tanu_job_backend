@@ -76,12 +76,11 @@ companySchema.pre("save", async function (next) {
     try {
  
       const counter = await CompanyCounter.findOneAndUpdate(
-        { name: "companyNumber" }, // The name of the counter we are incrementing
+        { name: "companyNumber" }, 
         { $inc: { seq: 1 } }, 
         { new: true, upsert: true } 
       );
 
-      // Set the company's companyNumber to the updated sequence value
       this.companyNumber = counter.seq;
       next();
     } catch (error) {

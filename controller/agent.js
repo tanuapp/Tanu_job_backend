@@ -5,7 +5,7 @@ const customResponse = require("../utils/customResponse");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    // Agent-уудыг авах
+
     const agents = await Model.find().lean();
 
     // Agent бүрийн компанийн тоог бодитоор тооцоолж шинэчилнэ
@@ -13,12 +13,11 @@ exports.getAll = asyncHandler(async (req, res, next) => {
       agents.map(async (agent) => {
         const total = await Company.countDocuments({ agent: agent.agent });
 
-        // Agent model дээр totalcompany-г шинэчилж хадгалах
         await Model.findByIdAndUpdate(agent._id, {
           totalcompany: String(total),
         });
 
-        // Харуулах мэдээлэлд totalcompany-г шинэчилж өгнө
+     
         return {
           ...agent,
           totalcompany: String(total),
