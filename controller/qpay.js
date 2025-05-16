@@ -18,13 +18,12 @@ exports.createqpay = asyncHandler(async (req, res) => {
     const invoice = await invoiceModel
       .findById(req.params.id)
       .populate("appointment");
+
     if (!invoice) {
       return res
         .status(404)
         .json({ success: false, message: "Invoice not found" });
     }
-
-    console.log(invoice);
 
     let amount = 0;
     const durationMap = {
@@ -44,18 +43,31 @@ exports.createqpay = asyncHandler(async (req, res) => {
       const durationInMonths = durationMap[invoice.appointment.duration];
       amount = Number(opt.price * durationInMonths * (1 - invoice.discount));
     } else {
-      const { appointment } = invoice;
+      const appointment = invoice.appointment;
       if (!appointment) {
         return res
           .status(400)
           .json({ success: false, message: "Appointment not found" });
       }
-      const service = await Service.findById(appointment.service);
+
+      const populatedAppointment = await Appointment.findById(
+        appointment._id
+      ).populate({ path: "schedule", populate: { path: "serviceId" } });
+
+      const schedule = populatedAppointment.schedule;
+      if (!schedule) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Schedule not found" });
+      }
+
+      const service = await Service.findById(schedule.serviceId);
       if (!service) {
         return res
           .status(400)
           .json({ success: false, message: "Service not found" });
       }
+
       amount = Number(service.price);
     }
 
@@ -88,20 +100,14 @@ exports.createqpay = asyncHandler(async (req, res) => {
     const response = await axios.post(
       process.env.qpayUrl + "invoice",
       invoicePayload,
-      { headers: { Authorization: `Bearer ${qpay_token.access_token}` } }
+      {
+        headers: {
+          Authorization: `Bearer ${qpay_token.access_token}`,
+        },
+      }
     );
 
-    console.log("1212");
-    console.log("1212");
-    console.log("1212");
-    // console.log(response.data)
-
     if (response.status === 200) {
-      console.log(req.params.id);
-
-      console.log("helo");
-      console.log("helo");
-      console.log("helo");
       const invoiceUpdate = await invoiceModel.findByIdAndUpdate(
         req.params.id,
         {
@@ -111,10 +117,12 @@ exports.createqpay = asyncHandler(async (req, res) => {
         },
         { new: true }
       );
-      console.log(invoiceUpdate);
-      return res
-        .status(200)
-        .json({ success: true, invoice: invoiceUpdate, data: response.data });
+
+      return res.status(200).json({
+        success: true,
+        invoice: invoiceUpdate,
+        data: response.data,
+      });
     }
   } catch (error) {
     console.error(error);
