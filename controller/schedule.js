@@ -19,16 +19,14 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
-    const user = await Model.create({
-      ...req.body,
-    });
+    const user = await Model.create({ ...req.body });
 
     res.status(200).json({
       success: true,
-
       data: user,
     });
   } catch (error) {
+    console.error("❌ Schedule create error:", error.message);
     customResponse.error(res, error.message);
   }
 });
