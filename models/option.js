@@ -10,6 +10,9 @@ const optionSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  color:{
+    type: String,
+  },
   description:{
     type: String,
     required: true,
