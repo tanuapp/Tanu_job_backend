@@ -71,7 +71,7 @@ exports.create = asyncHandler(async (req, res, next) => {
 exports.checkArtistPhone = asyncHandler(async (req, res, next) => {
   try {
     const body = req.body;
-    console.log(body)
+    console.log(body);
 
     const existingUser = await Artist.findOne({ phone: body.phone });
     if (!existingUser) {
@@ -127,28 +127,27 @@ exports.registerArtist = asyncHandler(async (req, res, next) => {
       photo: req.file?.filename ? req.file.filename : "no user photo",
     };
     const user = await Artist.create(inputData);
-        const otp = generateOTP();
-        if (existingUser) {
-          await OTP.findByIdAndUpdate(
-            {
-              artist: user._id,
-            },
-            {
-              otp,
-              artist: user._id,
-            }
-          );
-        console.log("irj bnn221")
-
-        } else {
-          await OTP.create({
-            otp,
-            artist: user._id,
-          });
+    const otp = generateOTP();
+    if (existingUser) {
+      await OTP.findByIdAndUpdate(
+        {
+          artist: user._id,
+        },
+        {
+          otp,
+          artist: user._id,
         }
-        console.log("irj bnn123")
-    
-        await sendMessage(req.body.phone, `Таны нэг удаагийн нууц үг: ${otp}`); // Fixed syntax
+      );
+      console.log("irj bnn221");
+    } else {
+      await OTP.create({
+        otp,
+        artist: user._id,
+      });
+    }
+    console.log("irj bnn123");
+
+    await sendMessage(req.body.phone, `Таны нэг удаагийн нууц үг: ${otp}`); // Fixed syntax
     const token = user.getJsonWebToken();
 
     customResponse.success(res, user, token);
@@ -208,23 +207,52 @@ exports.Login = asyncHandler(async (req, res, next) => {
 });
 
 exports.update = asyncHandler(async (req, res, next) => {
+  console.log("", req.body);
   try {
-    const updatedData = {
-      ...req.body,
-      photo: req.file?.filename,
-    };
-    
+    const artistId = req.params.id;
+    const updatedData = { ...req.body };
+    console.log("1", req.body);
+    if (req.file?.filename) {
+      updatedData.photo = req.file.filename;
+    }
+    console.log("2", updatedData);
+    // ✅ Хэрвээ companyNumber ирсэн бол companyId-г олж, `updatedData` дээр оноох
+    if (req.body.companyNumber) {
+      const foundCompany = await company.findOne({
+        companyNumber: Number(req.body.companyNumber),
+      });
+      console.log("3", req.body);
 
-    const upDateUserData = await Artist.findByIdAndUpdate(
-      req.params.id,
-      updatedData,
-      {
-        new: true,
+      console.log("ollo2", foundCompany);
+      if (!foundCompany) {
+        return res.status(400).json({
+          success: false,
+          message: "Компанийн дугаар буруу байна",
+        });
       }
+
+      // 🧷 Шууд `companyId`-г онооно
+      updatedData.companyId = foundCompany._id;
+      console.log("ollo23", updatedData);
+      // 🧮 Компанийн artist тоог нэмэгдүүлэх (хэрэв хүсвэл)
+      foundCompany.numberOfArtist += 1;
+      await foundCompany.save();
+    }
+
+    const updatedArtist = await Artist.findByIdAndUpdate(
+      artistId,
+      updatedData,
+      { new: true }
     );
+    console.log("yes", updatedArtist);
+    if (!updatedArtist) {
+      return res.status(404).json({
+        success: false,
+        message: "Artist олдсонгүй",
+      });
+    }
 
-
-    customResponse.success(res, upDateUserData);
+    customResponse.success(res, updatedArtist);
   } catch (error) {
     customResponse.error(res, error.message);
   }
@@ -272,7 +300,7 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
   try {
     const { otp, phone, count, pin } = req.body;
 
-    console.log(req.body)
+    console.log(req.body);
 
     if (Number(count) < 3) {
       return res.status(400).json({
@@ -281,33 +309,39 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
       });
     }
 
-    const existingUser = await Artist.findOneAndUpdate(
-      { phone },
-      { pin }
-    );
+    const existingUser = await Artist.findOneAndUpdate({ phone }, { pin });
 
     if (!existingUser) {
-    console.log("Утасны дугаар бүртгэлгүй байна");
-    return res.status(200).json({
-      success: false,
-      message: "Утасны дугаар бүртгэлгүй байна",
-    });
+      console.log("Утасны дугаар бүртгэлгүй байна");
+      return res.status(200).json({
+        success: false,
+        message: "Утасны дугаар бүртгэлгүй байна",
+      });
     }
-    console.log("yavaa otp verufy3")
+    console.log("yavaa otp verufy3");
 
     const userOtp = await OTP.findOne({
       artist: existingUser._id,
     });
     // console.log("yavaa otp verufy4",artist)
-    console.log("yavaa otp verufy22",existingUser._id)
+    console.log("yavaa otp verufy22", existingUser._id);
 
     if (!userOtp) {
+      // Шинээр нэмэх нөхцөл
+      if (existingUser.status === true) {
+        return res.status(200).json({
+          success: true,
+          token: existingUser.getJsonWebToken(),
+          data: existingUser,
+        });
+      }
+
       return res.status(200).json({
         success: false,
-        message: "OTP not found. Please request a new one.111",
+        message: "OTP not found. Please request a new one.",
       });
     }
-    console.log("irj bna otp")
+    console.log("irj bna otp");
 
     // Correct OTP comparison
     if (otp !== userOtp.otp) {
@@ -319,14 +353,14 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
 
     existingUser.status = true;
     await existingUser.save();
-    console.log("irj bna1")
+    console.log("irj bna1");
 
     // If OTP is correct, generate JWT token
     const token = existingUser.getJsonWebToken();
 
     // Optionally, delete the OTP after successful verification
     await OTP.deleteOne({ artist: existingUser._id });
-console.log("irj bna2")
+    console.log("irj bna2");
     return res.status(200).json({
       success: true,
       token,

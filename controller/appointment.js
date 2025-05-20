@@ -58,8 +58,7 @@ exports.getAllPopulated = asyncHandler(async (req, res) => {
           { path: "artistId", model: "Artist" },
         ],
       })
-      .populate("user")
-      .populate("company");
+      .populate("user");
 
     // Filter users who have a populated schedule with a serviceId
     const filteredUsers = allUser.filter(
