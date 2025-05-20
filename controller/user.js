@@ -65,7 +65,7 @@ exports.registerWithPhone = asyncHandler(async (req, res, next) => {
         success: false,
         message: "Утасны дугаар бүртгэлтэй байна",
       });
-    }w
+    }
 
     const inputData = {
       ...req.body,
