@@ -15,6 +15,11 @@ exports.createqpay = asyncHandler(async (req, res) => {
   try {
     const qpay_token = await qpay.makeRequest();
 
+    const invoice = await invoiceModel.findById(req.params.id).populate({
+      path: "appointment",
+      populate: { path: "company", model: "Company" },
+    });
+
     const invoice = await invoiceModel
       .findById(req.params.id)
       .populate("appointment");
@@ -70,7 +75,10 @@ exports.createqpay = asyncHandler(async (req, res) => {
 
       amount = Number(service.price);
     }
-
+    const packageData = await Option.findById(invoice.package);
+    const packageName = (packageData?.name || "Багц").toUpperCase();
+    const companyData = await companyModel.findById(invoice.companyId);
+    const companyName = (companyData?.name || "Компани").toUpperCase();
     const currentDateTime = new Date();
     const randomToo = Math.floor(Math.random() * 99999);
     const sender_invoice_no = `${currentDateTime
@@ -85,7 +93,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
       invoice_receiver_data: {
         phone: `${req.body.phone || ""}`,
       },
-      invoice_description: process.env.invoice_description,
+      invoice_description: `${packageName}_${companyName}`,
       callback_url: `${process.env.AppRentCallBackUrl}${sender_invoice_no}`,
       lines: [
         {

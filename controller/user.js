@@ -1,9 +1,264 @@
 const User = require("../models/user");
 const Company = require("../models/company");
 const asyncHandler = require("../middleware/asyncHandler");
-const mongoose = require("mongoose");
 const customResponse = require("../utils/customResponse");
-const { read } = require("fs");
+const UserOtp = require("../models/userOtp");
+const sendMessage = require("../utils/callpro");
+
+function generateOTP(length = 4) {
+  let otp = "";
+  const characters = "0123456789";
+  for (let i = 0; i < length; i++) {
+    otp += characters[Math.floor(Math.random() * characters.length)];
+  }
+  return otp;
+}
+
+const validatePhone = async (phone) => {
+  const user = await User.findOne({ phone }).select("+password");
+  return !!user;
+};
+
+// Phone validation
+exports.validatePhone = asyncHandler(async (req, res) => {
+  const { phone } = req.body;
+  if (!phone) return customResponse.error(res, "Утасны дугаараа оруулна уу");
+
+  const exists = await validatePhone(phone);
+  if (!exists) return customResponse.error(res, "Утас бүртгэлгүй байна");
+
+  res.status(200).json({ success: true });
+});
+
+// Get OTP again
+exports.getOtpAgain = asyncHandler(async (req, res) => {
+  try {
+    const { phone } = req.body;
+    const user = await User.findOne({ phone });
+    if (!user) return customResponse.error(res, "Хэрэглэгч олдсонгүй");
+
+    const otp = generateOTP();
+    await UserOtp.findOneAndUpdate(
+      { customer: user._id },
+      { otp, customer: user._id },
+      { upsert: true }
+    );
+
+    await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    customResponse.server(res, error.message);
+  }
+});
+
+// Register with phone
+exports.registerWithPhone = asyncHandler(async (req, res, next) => {
+  try {
+    const { password, phone } = req.body;
+
+    console.log(req.body);
+
+    let existingUser = await User.findOne({ phone });
+
+    if (existingUser) {
+      res.status(400).json({
+        success: false,
+        message: "Утасны дугаар бүртгэлтэй байна",
+      });
+    }w
+
+    const inputData = {
+      ...req.body,
+      photo: req.file ? req.file.filename : "no-img.png",
+    };
+
+    const user = await User.create(inputData);
+
+    const otp = generateOTP();
+    if (existingUser) {
+      await UserOtp.findByIdAndUpdate(
+        {
+          user: user._id,
+        },
+        {
+          otp,
+          user: user._id,
+        }
+      );
+    } else {
+      await UserOtp.create({
+        otp,
+        user: user._id,
+      });
+    }
+
+    await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
+
+    return res.status(200).json({
+      success: true,
+      message: "Бүртгэл амжилттай. Нэг удаагийн нууц үг илгээгдлээ",
+    });
+  } catch (error) {
+    console.log(error);
+    customResponse.error(res, error.message);
+  }
+});
+
+// OTP Verification  
+exports.registerVerify = asyncHandler(async (req, res) => {
+  try {
+    const { otp, phone, count, password } = req.body;
+
+    if (Number(count) < 3) {
+      return res.status(400).json({
+        success: false,
+        message: "Та түр хүлээн дахин оролдоно уу",
+      });
+    }
+
+    const user = await User.findOne({ phone });
+    if (!user) return customResponse.error(res, "Утас бүртгэлгүй байна");
+ 
+    const userOtp = await UserOtp.findOne({ user: user._id });
+    if (!userOtp || userOtp.otp !== otp) {
+      return res
+        .status(200)
+        .json({ success: false, message: "Буруу нэг удаагийн нууц үг" });
+    }
+
+    user.password = password;
+    user.status = true;
+    await user.save();
+
+    const token = user.getJsonWebToken();
+    await UserOtp.deleteOne({ user: user._id });
+
+    res.status(200).json({ success: true, token, data: user });
+  } catch (error) {
+    customResponse.error(res, error.message);
+  }
+});
+
+exports.forgotPassword = asyncHandler(async (req, res) => {
+  const { phone } = req.body;
+
+  const user = await User.findOne({ phone });
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "Хэрэглэгч олдсонгүй эсвэл мэдээлэл буруу байна.",
+    });
+  }
+  const otp = generateOTP();
+
+  await UserOtp.findOneAndUpdate(
+    { user: user._id },
+    { otp },
+    { upsert: true, new: true }
+  );
+
+  try {
+    await sendMessage(
+      phone,
+      `Таны  нууц үг сэргээхэд ашиглах баталгаажуулах  код: ${otp}`
+    );
+    return res.status(200).json({
+      success: true,
+      message: "Баталгаажуулах код амжилттай илгээгдлээ.",
+    });
+  } catch (error) {
+    console.error("OTP илгээх алдаа:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "OTP илгээх явцад алдаа гарлаа.",
+    });
+  }
+});
+ 
+exports.resetPasswordWithOtp = asyncHandler(async (req, res) => {
+  const { phone, otp, newPassword } = req.body;
+
+  const user = await User.findOne({ phone });
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "Хэрэглэгч олдсонгүй.",
+    });
+  }
+
+  const userOtp = await UserOtp.findOne({ customer: user._id });
+  if (!userOtp || userOtp.otp !== otp) {
+    return res.status(400).json({
+      success: false,
+      message: "Баталгаажуулах код буруу байна.",
+    });
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  await UserOtp.deleteOne({ customer: user._id });
+
+  return res.status(200).json({
+    success: true,
+    message: "Нууц үг амжилттай шинэчлэгдлээ.",
+  });
+});
+
+exports.loginWithPhone = asyncHandler(async (req, res, next) => {
+  try {
+    const { phone, password } = req.body;
+
+    // Validate input
+    if (!phone || !password) {
+      return res.status(200).json({
+        success: false,
+        message: "Утасны дугаар болон нууц үгээ  оруулна уу",
+      });
+    }
+
+    // Find user or artist by phone
+    const user = await User.findOne({ phone }).select("+password");
+
+    // await User.findOneAndUpdate(
+    //   { phone },
+    //   {
+    //     password: "2211",
+    //   }
+    // );
+
+    if (!user) {
+      return customResponse.error(res, "Утасны дугаар бүртгэлгүй байна");
+    }
+
+    // Authenticate user
+
+    const isMatch = await user.checkPassword(password);
+    if (!isMatch) {
+      return customResponse.error(
+        res,
+        "Нэвтрэх нэр эсвэл нууц үг буруу байна!"
+      );
+    }
+
+    const token = user.getJsonWebToken();
+    return res.status(200).json({
+      success: true,
+      isArtist: false,
+      token,
+      data: user,
+    });
+  } catch (error) {
+    console.log(error);
+    return customResponse.error(res, error.message);
+  }
+});
+
+
+// OTRTSDFSF
+// OTRTSDFSF
+// OTRTSDFSF
+// OTRTSDFSF
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -18,7 +273,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
     customResponse.server(res, error.message);
   }
 });
-
+   
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     console.log(req.body);
@@ -142,4 +397,3 @@ exports.deleteModel = async function deleteUser(req, res, next) {
     customResponse.server(res, error.message);
   }
 };
-

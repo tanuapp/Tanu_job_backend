@@ -21,7 +21,7 @@ function generateOTP(length = 4) {
 
   return otp;
 }
-
+  
 const validatePhone = async (phone) => {
   const user = await User.findOne({ phone }).select("+pin");
   return user ? true : false;
@@ -373,7 +373,7 @@ exports.registerWithEmail = asyncHandler(async (req, res, next) => {
   }
 });
 
-// OTP verification endpoint
+// OTP verification endpoint  
 exports.registerVerify = asyncHandler(async (req, res, next) => {
   try {
     const { otp, phone, email, isEmail, count, pin } = req.body;
