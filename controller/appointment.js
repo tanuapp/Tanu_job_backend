@@ -201,7 +201,7 @@ exports.getAvailableTimesByArtist = asyncHandler(async (req, res, next) => {
     if (!schedules || schedules.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "No schedules found for this day",
+        message: "No schedules found for this day 1111",
       });
     }
 
