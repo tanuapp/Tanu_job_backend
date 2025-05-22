@@ -20,7 +20,7 @@ async function removeBackground(name, retries = 3) {
       form,
       {
         headers: {
-          "x-api-key": "sandbox_e3ec83f9013fc7832d389318246406a4aa7cc202",
+          "x-api-key": "e3ec83f9013fc7832d389318246406a4aa7cc202",
           Accept: "image/png, application/json",
           ...form.getHeaders(),
         },
@@ -38,10 +38,15 @@ async function removeBackground(name, retries = 3) {
   } catch (error) {
     if (retries > 0) {
       console.log(`Retrying... Attempts left: ${retries}`);
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
-      return removeBackground(name, retries - 1); // Retry the function
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      return removeBackground(name, retries - 1);
     }
-    console.error("❌ Error removing background:", error.message);
+
+    console.error("❌ Full error removing background:", error.message);
+    if (error.response?.data) {
+      const errText = Buffer.from(error.response.data).toString("utf-8");
+      console.error("📄 API Error Response:", errText);
+    }
   }
 }
 
