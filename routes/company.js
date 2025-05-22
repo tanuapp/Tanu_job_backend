@@ -12,6 +12,7 @@ const {
   getCompanyBanner,
   deleteModel,
   addContract,
+  deleteSliderImage,
 } = require("../controller/company");
 const router = express.Router();
 
@@ -24,7 +25,7 @@ router
   .post(
     upload.fields([
       { name: "logo", maxCount: 1 },
-      { name: "sliderIMG", maxCount: 8 },
+      { name: "sliderImages", maxCount: 8 },
       { name: "gallery", maxCount: 10 },
     ]),
     createModel
@@ -38,7 +39,7 @@ router
     // isActive && authorize("admin"),
     upload.fields([
       { name: "logo", maxCount: 1 },
-      { name: "sliderIMG", maxCount: 8 },
+      { name: "sliderImages", maxCount: 10 },
       { name: "gallery", maxCount: 10 },
     ]),
     update
@@ -46,7 +47,11 @@ router
   .delete(
     // isActive && protect, isActive && authorize("admin"),
     deleteModel
+   
   )
+  
   .get(getCompanyPopulate);
+
+// router.delete("/company/:companyId/banner/:bannerName", deleteSliderImage);
 
 module.exports = router;
