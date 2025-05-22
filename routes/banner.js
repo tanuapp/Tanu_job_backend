@@ -10,10 +10,10 @@ const {
 } = require("../controller/banner");
 const router = express.Router();
 
-router.route("/").post(upload.single("file"), createModel).get(getAllModel);
+router.route("/").post(upload.single("photo"), createModel).get(getAllModel);
 router
   .route("/:id")
-  .put(upload.single("file"), updateModel)
+  .put(upload.single("photo"), updateModel)
   .delete(deleteModel)
   .get(getModel);
 

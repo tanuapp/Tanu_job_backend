@@ -20,10 +20,6 @@ exports.createqpay = asyncHandler(async (req, res) => {
       populate: { path: "company", model: "Company" },
     });
 
-    const invoice = await invoiceModel
-      .findById(req.params.id)
-      .populate("appointment");
-
     if (!invoice) {
       return res
         .status(404)

@@ -53,9 +53,9 @@ const companySchema = new mongoose.Schema({
     default: 5,
   },
   contract: { type: String },
-  companyOwner: { type: Schema.Types.ObjectId, ref: "User" },
+  companyOwner: { type: Schema.Types.ObjectId, ref: "User" },   
   logo: { type: String },
-  sliderImages: { type: [String] },
+  sliderImages: [String],
   companyNumber: { type: Number, unique: true, default: 1000 },
   isHome: {
     type: Boolean,

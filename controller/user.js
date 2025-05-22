@@ -39,8 +39,8 @@ exports.getOtpAgain = asyncHandler(async (req, res) => {
 
     const otp = generateOTP();
     await UserOtp.findOneAndUpdate(
-      { customer: user._id },
-      { otp, customer: user._id },
+      { user: user._id },
+      { otp, user: user._id },
       { upsert: true }
     );
 
@@ -65,7 +65,7 @@ exports.registerWithPhone = asyncHandler(async (req, res, next) => {
         success: false,
         message: "Утасны дугаар бүртгэлтэй байна",
       });
-    }w
+    }
 
     const inputData = {
       ...req.body,
@@ -104,7 +104,6 @@ exports.registerWithPhone = asyncHandler(async (req, res, next) => {
   }
 });
 
-// OTP Verification  
 exports.registerVerify = asyncHandler(async (req, res) => {
   try {
     const { otp, phone, count, password } = req.body;
@@ -118,7 +117,7 @@ exports.registerVerify = asyncHandler(async (req, res) => {
 
     const user = await User.findOne({ phone });
     if (!user) return customResponse.error(res, "Утас бүртгэлгүй байна");
- 
+
     const userOtp = await UserOtp.findOne({ user: user._id });
     if (!userOtp || userOtp.otp !== otp) {
       return res
@@ -174,7 +173,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
     });
   }
 });
- 
+
 exports.resetPasswordWithOtp = asyncHandler(async (req, res) => {
   const { phone, otp, newPassword } = req.body;
 
@@ -254,7 +253,6 @@ exports.loginWithPhone = asyncHandler(async (req, res, next) => {
   }
 });
 
-
 // OTRTSDFSF
 // OTRTSDFSF
 // OTRTSDFSF
@@ -273,7 +271,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
     customResponse.server(res, error.message);
   }
 });
-   
+
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     console.log(req.body);
