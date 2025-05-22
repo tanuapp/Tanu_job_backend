@@ -120,10 +120,14 @@ exports.createModel = asyncHandler(async (req, res, next) => {
     console.log(req.body);
     const logo =
       req.files && req.files.logo ? req.files.logo[0].filename : "no-logo.png";
-    const sliderImages =
-      req.files && req.files.sliderIMG
-        ? req.files.sliderIMG.map((file) => file.filename)
-        : [];
+      
+    const uploadedFiles = [];
+    if (req.files && req.files.sliderImages && Array.isArray(req.files.sliderImages)) {
+      for (let file of req.files.sliderImages) {
+        uploadedFiles.push(file.filename);
+      }
+    }
+
 
     const company = await Model.create({
       ...req.body,
@@ -131,7 +135,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
         ? JSON.parse(req.body.timetable || "[]")
         : [],
       logo,
-      sliderImages,
+      sliderImages :uploadedFiles,
       category: JSON.parse(req.body.category || "[]") || [],
     });
 
@@ -146,25 +150,52 @@ exports.createModel = asyncHandler(async (req, res, next) => {
 });
 
 exports.update = asyncHandler(async (req, res, next) => {
-  console.log(req.body, "datas irle");
+  console.log(req.body, "datas irlee");
+
   try {
     const old = await Model.findById(req.params.id);
+
+    // 🖼️ Logo зураг
     const logo =
       req.files && req.files.logo ? req.files.logo[0].filename : old.logo;
-    const sliderImages =
-      req.files && req.files.sliderIMG
-        ? req.files.sliderIMG.map((file) => file.filename)
+
+    // 🖼️ Slider зургууд
+    let uploadedFiles = [];
+
+    if (
+      req.files &&
+      req.files.sliderImages &&
+      Array.isArray(req.files.sliderImages)
+    ) {
+      const newUploaded = req.files.sliderImages.map((file) => file.filename);
+
+      // Client-аас ирсэн хуучин зургууд
+      const existingSliderImages = req.body.existingSliderImages;
+      const oldImages = Array.isArray(existingSliderImages)
+        ? existingSliderImages
+        : existingSliderImages
+        ? [existingSliderImages]
         : old.sliderImages;
 
-    const company = await Model.findByIdAndUpdate(req.params.id, {
-      timetable: req.body.timetable
-        ? JSON.parse(req.body.timetable)
-        : old.timetable,
-      ...req.body,
-      logo,
-      sliderImages,
-      category: JSON.parse(req.body.category || "[]") || [],
-    });
+      uploadedFiles = [...oldImages, ...newUploaded];
+    } else {
+      // Зураг ирээгүй бол хуучныг үлдээ
+      uploadedFiles = old.sliderImages;
+    }
+
+    const company = await Model.findByIdAndUpdate(
+      req.params.id,
+      {
+        timetable: req.body.timetable
+          ? JSON.parse(req.body.timetable)
+          : old.timetable,
+        ...req.body,
+        logo,
+        sliderImages: uploadedFiles,
+        category: JSON.parse(req.body.category || "[]") || [],
+      },
+      { new: true }
+    );
 
     res.status(200).json({
       success: true,
@@ -203,3 +234,4 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+

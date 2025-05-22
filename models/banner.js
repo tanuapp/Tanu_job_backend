@@ -5,13 +5,6 @@ const BannerSchema = new mongoose.Schema({
   photo: {
     type: String,
   },
-  order: {
-    type: Number,
-  },
-  status: {
-    type: Boolean,
-    default: false,
-  },
   companyId: {
     type: Schema.Types.ObjectId,
     ref: "Company",
