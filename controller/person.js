@@ -90,6 +90,34 @@ exports.checkPersonPhone = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+
+exports.personUpdateTheirOwnInformation = asyncHandler(
+  async (req, res, next) => {
+    try {
+      console.log("req.params.id", req.params.id);
+      console.log("body", req.body);
+      // if (req.userId != req.params.id) {
+      //   return res.status(200).json({
+      //     success: false,
+      //     msg: "Та зөвхөн өөрийн мэдээллийг өөрчлөж болно",
+      //   });
+      // }
+      const old = await Person.findById(req.params.id);
+      const data = await Person.findByIdAndUpdate(req.params.id, {
+        ...req.body,
+        photo: req.file ? req.file.filename : old.photo,
+      });
+      const token = old.getJsonWebToken();
+      return res.status(200).json({
+        success: true,
+        data,
+        token,
+      });
+    } catch (error) {
+      customResponse.error(res, error.message);
+    }
+  }
+);
 exports.checkPersonEmail = asyncHandler(async (req, res, next) => {
   try {
     const body = req.body;
@@ -227,12 +255,12 @@ exports.get = asyncHandler(async (req, res, next) => {
 exports.getPersonCompany = asyncHandler(async (req, res, next) => {
   try {
     // console.log("sending");
-    console.log(req.userId)
+    console.log(req.userId);
     let companyUser = await company.findOne({
       companyOwner: req.userId,
     });
 
-    if(!companyUser){
+    if (!companyUser) {
       const sda = await Artist.findById(req.userId);
       companyUser = await company.findById(sda.companyId);
     }
@@ -269,8 +297,6 @@ exports.getPersonCompany = asyncHandler(async (req, res, next) => {
       model: "Category", // Ensure this model name is correct for categories
     });
 
-    
-
     const comp = {
       ...companys.toObject(),
       isSaved: allUser ? true : false,
@@ -296,7 +322,7 @@ exports.getPersonCompany = asyncHandler(async (req, res, next) => {
       data: p,
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     customResponse.error(res, error.message);
   }
 });

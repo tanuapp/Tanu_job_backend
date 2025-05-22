@@ -257,10 +257,36 @@ exports.update = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
-
+exports.artistUpdateTheirOwnInformation = asyncHandler(
+  async (req, res, next) => {
+    try {
+      console.log("req.params.id", req.params.id);
+      console.log("body", req.body);
+      // if (req.userId != req.params.id) {
+      //   return res.status(200).json({
+      //     success: false,
+      //     msg: "Та зөвхөн өөрийн мэдээллийг өөрчлөж болно",
+      //   });
+      // }
+      const old = await Artist.findById(req.params.id);
+      const data = await Artist.findByIdAndUpdate(req.params.id, {
+        ...req.body,
+        photo: req.file ? req.file.filename : old.photo,
+      });
+      const token = old.getJsonWebToken();
+      return res.status(200).json({
+        success: true,
+        data,
+        token,
+      });
+    } catch (error) {
+      customResponse.error(res, error.message);
+    }
+  }
+);
 exports.get = asyncHandler(async (req, res, next) => {
   try {
-    const allText = await User.findById(req.params.id);
+    const allText = await Artist.findById(req.params.id);
     return res.status(200).json({
       success: true,
       data: allText,
