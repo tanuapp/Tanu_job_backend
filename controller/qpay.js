@@ -17,7 +17,6 @@ exports.createqpay = asyncHandler(async (req, res) => {
 
     const invoice = await invoiceModel.findById(req.params.id).populate({
       path: "appointment",
-      populate: { path: "company", model: "Company" },
     });
 
     if (!invoice) {
@@ -27,12 +26,16 @@ exports.createqpay = asyncHandler(async (req, res) => {
     }
 
     let amount = 0;
+    let packageName = "Багц";
+    let companyName = "Компани";
+
     const durationMap = {
       one: 1,
       six: 6,
       year: 12,
     };
 
+    // 🎯 Option-based invoice (package)
     if (invoice.isOption) {
       const opt = await Option.findById(invoice.package);
       if (!opt) {
@@ -40,41 +43,54 @@ exports.createqpay = asyncHandler(async (req, res) => {
           .status(400)
           .json({ success: false, message: "Package not found" });
       }
-
       const durationInMonths = durationMap[invoice.appointment.duration];
       amount = Number(opt.price * durationInMonths * (1 - invoice.discount));
-    } else {
-      const appointment = invoice.appointment;
+      packageName = (opt.name || "Багц").toUpperCase();
+    }
+
+    // 🎯 Appointment-based invoice (service)
+    else {
+      const appointment = await Appointment.findById(
+        invoice.appointment._id
+      ).populate({
+        path: "schedule",
+        populate: {
+          path: "serviceId",
+          populate: {
+            path: "companyId",
+            model: "Company",
+            select: "name advancePayment",
+          },
+        },
+      });
+
       if (!appointment) {
         return res
           .status(400)
           .json({ success: false, message: "Appointment not found" });
       }
 
-      const populatedAppointment = await Appointment.findById(
-        appointment._id
-      ).populate({ path: "schedule", populate: { path: "serviceId" } });
+      const schedule = appointment.schedule;
+      const service = schedule?.serviceId;
+      const company = service?.companyId;
 
-      const schedule = populatedAppointment.schedule;
-      if (!schedule) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Schedule not found" });
+      if (!service || !company) {
+        return res.status(400).json({
+          success: false,
+          message: "Schedule, Service, or Company missing",
+        });
       }
 
-      const service = await Service.findById(schedule.serviceId);
-      if (!service) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Service not found" });
-      }
+      const servicePrice = parseFloat(service.price);
+      const advancePercent = parseFloat(company.advancePayment || 0);
+      companyName = (company.name || "Компани").toUpperCase();
 
-      amount = Number(service.price);
+      amount = invoice.isAdvance
+        ? Math.floor((servicePrice * advancePercent) / 100) // урьдчилгаа
+        : servicePrice; // бүрэн төлбөр
     }
-    const packageData = await Option.findById(invoice.package);
-    const packageName = (packageData?.name || "Багц").toUpperCase();
-    const companyData = await companyModel.findById(invoice.companyId);
-    const companyName = (companyData?.name || "Компани").toUpperCase();
+
+    // ✅ Sender invoice ID
     const currentDateTime = new Date();
     const randomToo = Math.floor(Math.random() * 99999);
     const sender_invoice_no = `${currentDateTime
@@ -94,7 +110,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
       lines: [
         {
           tax_product_code: `${randomToo}`,
-          line_description: `Мөнх-Эрдэнэ`,
+          line_description: `Үйлчилгээ`,
           line_quantity: 1,
           line_unit_price: amount,
         },
@@ -102,7 +118,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
     };
 
     const response = await axios.post(
-      process.env.qpayUrl + "invoice",
+      `${process.env.qpayUrl}invoice`,
       invoicePayload,
       {
         headers: {
@@ -129,8 +145,8 @@ exports.createqpay = asyncHandler(async (req, res) => {
       });
     }
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, error: error.message });
+    console.error("❌ createqpay error:", error.message);
+    return res.status(500).json({ success: false, error: error.message });
   }
 });
 
