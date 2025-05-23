@@ -77,6 +77,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       path: "serviceId",
       populate: {
         path: "companyId",
+        model: "Company",
         select: "advancePayment",
       },
     });
