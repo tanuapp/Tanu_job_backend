@@ -1,18 +1,26 @@
 const { removeBackground } = require("../utils/bgRemove");
-
 const asyncHandler = require("../middleware/asyncHandler");
+const path = require("path");
+const fs = require("fs");
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    if (req.file) {
-      await removeBackground(req.file.filename);
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ success: false, message: "No file uploaded" });
     }
 
-    res.status(200).json({
-      success: true,
-    });
+    const filename = req.file.filename;
+    await removeBackground(filename); // Process file
+
+    // Send the processed image back
+    const outputPath = path.join(__dirname, `../public/uploads/${filename}`);
+    const imageBuffer = fs.readFileSync(outputPath);
+
+    res.setHeader("Content-Type", "image/png");
+    res.send(imageBuffer); // ⬅️ send binary image
   } catch (error) {
-    //     customResponse.error(res, error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 });
