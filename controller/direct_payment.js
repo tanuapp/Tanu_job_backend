@@ -17,7 +17,7 @@ exports.completeAppointment = asyncHandler(async (req, res, next) => {
       path: "serviceId",
       populate: {
         path: "companyId",
-        select: "advancepayment",
+        select: "advancePayment",
       },
     },
   });
@@ -33,7 +33,7 @@ exports.completeAppointment = asyncHandler(async (req, res, next) => {
       .json({ success: false, message: "Холбогдсон мэдээлэл дутуу байна" });
 
   const total = parseFloat(service.price);
-  const advancePercent = parseFloat(company.advancepayment || 0);
+  const advancePercent = parseFloat(company.advancePayment || 0);
   const advance = Math.floor((total * advancePercent) / 100);
   const remaining = total - advance;
 
@@ -77,7 +77,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       path: "serviceId",
       populate: {
         path: "companyId",
-        select: "advancepayment",
+        select: "advancePayment",
       },
     });
 
@@ -85,7 +85,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
     const company = service.companyId;
 
     const price = parseFloat(service.price); // нийт үнэ
-    const advancePercent = parseFloat(company.advancepayment || 0); // хувь
+    const advancePercent = parseFloat(company.advancePayment || 0); // хувь
     const advanceAmount = Math.floor((price * advancePercent) / 100); // урьдчилгаа
 
     // Appointment үүсгэнэ
@@ -106,12 +106,14 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
 
     app.qr = `${app._id}-qr.png`;
     await app.save();
-
+    console.log("advanceAmount", advanceAmount);
+    console.log("QR код амжилттай үүссэн:", qrFilePath);
     // Invoice үүсгэнэ – урьдчилгаа төлбөрөөр
     const inv = await Invoice.create({
       amount: advanceAmount,
       appointment: app._id,
     });
+    console.log(" invoice:", inv);
 
     // QPay рүү илгээх
     const duk = await axios.post(
