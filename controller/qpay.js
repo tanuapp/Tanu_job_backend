@@ -151,7 +151,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
   }
 });
 
-exports.callback = asyncHandler(async (req, res, next) => {
+exports.callback = asyncHandler(async (req, res) => {
   console.log("📥 [CALLBACK] QPay webhook ирлээ:");
   console.log("🔸 req.params:", req.params);
   console.log("🔸 req.query:", req.query);
@@ -200,7 +200,7 @@ exports.callback = asyncHandler(async (req, res, next) => {
     console.log("🔍 QPay-д төлбөр шалгаж байна:", record.qpay_invoice_id);
 
     const checkResponse = await axios.post(
-      process.env.qpayUrl + "payment/check",
+      `${process.env.qpayUrl}payment/check`,
       {
         object_type: "INVOICE",
         object_id: record.qpay_invoice_id,
@@ -220,7 +220,7 @@ exports.callback = asyncHandler(async (req, res, next) => {
 
     const isPaid =
       checkResponse.data.count === 1 &&
-      checkResponse.data.rows[0].payment_status === "PAID";
+      checkResponse.data.rows[0]?.payment_status === "PAID";
 
     if (!isPaid) {
       console.warn("💳 Төлбөр амжилттай хийгдээгүй байна");
@@ -263,11 +263,21 @@ exports.callback = asyncHandler(async (req, res, next) => {
     company.done++;
     await company.save();
 
-    const totalAmount = record.price;
-    const commission = company.commissionRate || 0;
+    const totalAmount = Number(record.price);
+    const commission = Number(company.commissionRate || 0);
     const payout = Math.floor(totalAmount * ((100 - commission) / 100));
 
-    console.log("🏦 Khan Bank руу мөнгө шилжүүлж байна:", payout, "MNT");
+    console.log("💰 Total price:", totalAmount);
+    console.log("📉 Commission rate:", commission, "%");
+    console.log("🏦 Khan-д шилжүүлэх дүн (payout):", payout, "MNT");
+
+    if (!payout || isNaN(payout) || payout <= 0) {
+      console.warn("❌ payout утга буруу байна:", payout);
+      return res.status(500).json({
+        success: false,
+        message: "Шилжүүлэх дүн алдаатай байна",
+      });
+    }
 
     await axios.post(
       `${process.env.khanUrl}/transfer`,
@@ -294,7 +304,10 @@ exports.callback = asyncHandler(async (req, res, next) => {
       order: app,
     });
   } catch (error) {
-    console.error("❌ QPay Callback Error:", error.message);
+    console.error(
+      "❌ QPay Callback Error:",
+      error.response?.data || error.message
+    );
     return res.status(500).json({
       success: false,
       message: "Системийн алдаа",
