@@ -152,6 +152,11 @@ exports.createqpay = asyncHandler(async (req, res) => {
 });
 
 exports.callback = asyncHandler(async (req, res, next) => {
+  console.log("📥 [CALLBACK] QPay webhook ирлээ:");
+  console.log("🔸 req.params:", req.params);
+  console.log("🔸 req.query:", req.query);
+  console.log("🔸 req.headers:", req.headers);
+  console.log("🔸 req.body:", req.body);
   try {
     const io = req.app.get("io");
     const qpay_token = await qpay.makeRequest();
@@ -175,7 +180,7 @@ exports.callback = asyncHandler(async (req, res, next) => {
         order: record.appointment,
       });
     }
-
+    console.log("🔸 bn2 guys11111111");
     const result = await axios.post(
       process.env.qpayUrl + "payment/check",
       {
@@ -217,7 +222,7 @@ exports.callback = asyncHandler(async (req, res, next) => {
         },
       },
     });
-
+    console.log("🔸 app:", app);
     if (!app) {
       return res
         .status(404)
