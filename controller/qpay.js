@@ -157,16 +157,31 @@ exports.callback = asyncHandler(async (req, res, next) => {
   console.log("🔸 req.query:", req.query);
   console.log("🔸 req.headers:", req.headers);
   console.log("🔸 req.body:", req.body);
+
   try {
     const io = req.app.get("io");
+
     const qpay_token = await qpay.makeRequest();
-    const { access_token } = qpay_token;
+    const access_token = qpay_token?.access_token;
+
+    if (!access_token) {
+      console.error("❌ Access token олдсонгүй");
+      return res.status(500).json({
+        success: false,
+        message: "Access token not received from QPay",
+      });
+    }
+
+    console.log("✅ Access token амжилттай авлаа:", access_token);
+
+    const { id: senderInvoiceId } = req.params;
 
     const record = await invoiceModel.findOne({
-      sender_invoice_id: req.params.id,
+      sender_invoice_id: senderInvoiceId,
     });
 
     if (!record) {
+      console.warn("⚠️ Invoice not found:", senderInvoiceId);
       return res.status(404).json({
         success: false,
         message: "Invoice not found",
@@ -174,14 +189,17 @@ exports.callback = asyncHandler(async (req, res, next) => {
     }
 
     if (record.status === "paid") {
+      console.log("💵 Invoice already paid:", record.qpay_invoice_id);
       return res.status(200).json({
         success: true,
         message: "Төлбөр аль хэдийн амжилттай төлөгдсөн байна",
         order: record.appointment,
       });
     }
-    console.log("🔸 bn2 guys11111111");
-    const result = await axios.post(
+
+    console.log("🔍 QPay-д төлбөр шалгаж байна:", record.qpay_invoice_id);
+
+    const checkResponse = await axios.post(
       process.env.qpayUrl + "payment/check",
       {
         object_type: "INVOICE",
@@ -198,17 +216,21 @@ exports.callback = asyncHandler(async (req, res, next) => {
       }
     );
 
+    console.log("📦 QPay /payment/check хариу:", checkResponse.data);
+
     const isPaid =
-      result.data.count === 1 && result.data.rows[0].payment_status === "PAID";
+      checkResponse.data.count === 1 &&
+      checkResponse.data.rows[0].payment_status === "PAID";
 
     if (!isPaid) {
+      console.warn("💳 Төлбөр амжилттай хийгдээгүй байна");
       return res.status(402).json({
         success: false,
         message: "Төлбөр хараахан амжилттай биш байна",
       });
     }
 
-    // 🔁 Update invoice and appointment status
+    // ✅ төлөв шинэчлэх
     record.status = "paid";
     await record.save();
 
@@ -222,7 +244,7 @@ exports.callback = asyncHandler(async (req, res, next) => {
         },
       },
     });
-    console.log("🔸 app:", app);
+
     if (!app) {
       return res
         .status(404)
@@ -232,7 +254,6 @@ exports.callback = asyncHandler(async (req, res, next) => {
     app.status = "paid";
     await app.save();
 
-    // ✅ Increase done counters
     const service = app.schedule.serviceId;
     const company = service.companyId;
 
@@ -242,10 +263,11 @@ exports.callback = asyncHandler(async (req, res, next) => {
     company.done++;
     await company.save();
 
-    // 💸 Transfer to company bank account via Khan Bank API
     const totalAmount = record.price;
     const commission = company.commissionRate || 0;
     const payout = Math.floor(totalAmount * ((100 - commission) / 100));
+
+    console.log("🏦 Khan Bank руу мөнгө шилжүүлж байна:", payout, "MNT");
 
     await axios.post(
       `${process.env.khanUrl}/transfer`,
