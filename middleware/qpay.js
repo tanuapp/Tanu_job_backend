@@ -3,13 +3,10 @@ const axios = require("axios");
 let cachedToken = null;
 let cachedUntil = null;
 
-/**
- * QPay access token авах, 1 цагийн хугацаатай кэшлэнэ
- */
-const makeRequest = async (force = false) => {
+const makeRequest = async (forceRefresh = false) => {
   const now = Date.now();
 
-  if (!force && cachedToken && cachedUntil && now < cachedUntil) {
+  if (!forceRefresh && cachedToken && cachedUntil && now < cachedUntil) {
     return { access_token: cachedToken };
   }
 
@@ -29,11 +26,11 @@ const makeRequest = async (force = false) => {
     if (response.status === 200 && response.data.access_token) {
       cachedToken = response.data.access_token;
       cachedUntil = now + 55 * 60 * 1000;
-      console.log("✅ QPay шинэ token авлаа:", cachedToken.slice(0, 10), "...");
+      console.log("✅ QPay token авлаа:", cachedToken.slice(0, 15) + "...");
       return { access_token: cachedToken };
+    } else {
+      throw new Error("QPay access_token байхгүй байна");
     }
-
-    throw new Error("access_token байхгүй");
   } catch (err) {
     console.error("❌ QPay Token Error:", err.response?.data || err.message);
     return { access_token: null };
