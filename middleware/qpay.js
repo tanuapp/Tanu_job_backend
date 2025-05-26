@@ -1,64 +1,40 @@
 const axios = require("axios");
 
-async function token() {
-  console.log("111");
-  var session_url = process.env.qpayUrl + "auth/token";
-  console.log(session_url);
-  await axios
-    .post(
-      session_url,
-      {},
-      {
-        auth: {
-          username: process.env.QpayUserName,
-          password: process.env.QpayPassword,
-        },
-      }
-    )
-    .then((res) => {
-      console.log("res.data");
-      console.log(res.data);
-      return res.data;
-    })
-    .catch((error) => {
-      if (error.response) {
-        console.log(error.response.data);
-        console.log(error.response.status);
-        console.log(error.response.headers);
-      } else if (error.request) {
-        console.log(error.request);
-      } else {
-        console.log("Error", error.message);
-      }
-      return res
-        .status(200)
-        .json({ status: 0, statusText: "Service iin aldaa garlaa orchuulah " });
-    });
-  console.log("555");
-}
-
 const makeRequest = async () => {
   try {
+    // Encode username:password -> base64
+    const credentials = Buffer.from(
+      `${process.env.QpayUserName}:${process.env.QpayPassword}`
+    ).toString("base64");
+
     const response = await axios.post(
-      process.env.qpayUrl + "auth/token",
-      {},
+      `${process.env.qpayUrl}auth/token`,
       {
-        auth: {
-          username: process.env.QpayUserName,
-          password: process.env.QpayPassword,
+        grant_type: "client_credentials",
+      },
+      {
+        headers: {
+          Authorization: `Basic ${credentials}`,
+          "Content-Type": "application/json",
         },
       }
     );
+
     if (response.status === 200) {
-      // response - object, eg { status: 200, message: 'OK' }
-      console.log("success stuff");
-      return response.data;
+      console.log("✅ QPay token retrieved successfully");
+      return {
+        access_token: response.data.access_token,
+      };
+    } else {
+      console.warn("⚠️ QPay auth returned non-200 status", response.status);
+      throw new Error("Invalid response from QPay");
     }
-    return response.status;
-  } catch (err) {
-    console.error(err);
-    return "error";
+  } catch (error) {
+    console.error("❌ QPay Auth Error:", error.response?.data || error.message);
+    throw new Error("QPay authentication failed");
   }
 };
 
-module.exports = { token, makeRequest };
+module.exports = {
+  makeRequest,
+};

@@ -108,6 +108,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
     app.qr = `${app._id}-qr.png`;
     await app.save();
     console.log("advanceAmount", advanceAmount);
+
     console.log("QR код амжилттай үүссэн:", qrFilePath);
     // Invoice үүсгэнэ – урьдчилгаа төлбөрөөр
     const inv = await Invoice.create({

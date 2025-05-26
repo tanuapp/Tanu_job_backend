@@ -13,6 +13,7 @@ const customResponse = require("../utils/customResponse");
 
 exports.createqpay = asyncHandler(async (req, res) => {
   try {
+    console.log("🔐 access_token:", qpay_token.access_token);
     const qpay_token = await qpay.makeRequest();
 
     const invoice = await invoiceModel.findById(req.params.id).populate({
