@@ -151,6 +151,14 @@ exports.createqpay = asyncHandler(async (req, res) => {
   }
 });
 
+const axios = require("axios");
+const asyncHandler = require("../middleware/asyncHandler.js");
+const invoiceModel = require("../models/invoice.js");
+const Appointment = require("../models/appointment.js");
+const Service = require("../models/service.js");
+const customResponse = require("../utils/customResponse");
+const qpay = require("../middleware/qpay");
+
 exports.callback = asyncHandler(async (req, res) => {
   console.log("📥 [CALLBACK] QPay webhook ирлээ:");
   console.log("🔸 req.params:", req.params);
@@ -160,20 +168,6 @@ exports.callback = asyncHandler(async (req, res) => {
 
   try {
     const io = req.app.get("io");
-
-    const qpay_token = await qpay.makeRequest();
-    const access_token = qpay_token?.access_token;
-
-    if (!access_token) {
-      console.error("❌ Access token олдсонгүй");
-      return res.status(500).json({
-        success: false,
-        message: "Access token not received from QPay",
-      });
-    }
-
-    console.log("✅ Access token амжилттай авлаа:", access_token);
-
     const { id: senderInvoiceId } = req.params;
 
     const record = await invoiceModel.findOne({
@@ -197,24 +191,54 @@ exports.callback = asyncHandler(async (req, res) => {
       });
     }
 
-    console.log("🔍 QPay-д төлбөр шалгаж байна:", record.qpay_invoice_id);
+    const checkPaymentStatus = async (token) => {
+      return await axios.post(
+        `${process.env.qpayUrl}payment/check`,
+        {
+          object_type: "INVOICE",
+          object_id: record.qpay_invoice_id,
+          offset: {
+            page_number: 1,
+            page_limit: 100,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    };
 
-    const checkResponse = await axios.post(
-      `${process.env.qpayUrl}payment/check`,
-      {
-        object_type: "INVOICE",
-        object_id: record.qpay_invoice_id,
-        offset: {
-          page_number: 1,
-          page_limit: 100,
-        },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-        },
+    let qpay_token = await qpay.makeRequest();
+    let access_token = qpay_token?.access_token;
+
+    if (!access_token) {
+      return res.status(500).json({
+        success: false,
+        message: "QPay access token not received",
+      });
+    }
+
+    console.log("✅ Access token амжилттай авлаа:", access_token);
+
+    let checkResponse;
+
+    try {
+      checkResponse = await checkPaymentStatus(access_token);
+    } catch (err) {
+      const errData = err.response?.data || {};
+      console.warn("⚠️ Initial token error:", errData);
+
+      if (errData.code === "InvalidAccessToken") {
+        console.log("🔄 Retrying with new token...");
+        qpay_token = await qpay.makeRequest();
+        access_token = qpay_token?.access_token;
+        checkResponse = await checkPaymentStatus(access_token);
+      } else {
+        throw err;
       }
-    );
+    }
 
     console.log("📦 QPay /payment/check хариу:", checkResponse.data);
 
@@ -273,6 +297,7 @@ exports.callback = asyncHandler(async (req, res) => {
     console.log("🏦 Компани банкны мэдээлэл:");
     console.log("🔹 companyOwner1:", company.companyOwner);
     console.log("🔹 bankNumber1:", company.bankNumber);
+
     if (!payout || isNaN(payout) || payout <= 0) {
       console.warn("❌ payout утга буруу байна:", payout);
       return res.status(500).json({
