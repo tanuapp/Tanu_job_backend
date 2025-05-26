@@ -156,8 +156,6 @@ exports.callback = asyncHandler(async (req, res, next) => {
     const qpay_token = await qpay.makeRequest();
     const { access_token } = qpay_token;
 
-    console.log(req.params.id);
-
     const record = await invoiceModel.findOne({
       sender_invoice_id: req.params.id,
     });
@@ -168,103 +166,111 @@ exports.callback = asyncHandler(async (req, res, next) => {
         message: "Invoice not found",
       });
     }
-    const { qpay_invoice_id, _id, appointment, status } = record;
-    const ordersLL = await Appointment.findById(appointment);
-    if (status == "paid") {
+
+    if (record.status === "paid") {
       return res.status(200).json({
         success: true,
-        message: "Төлөгдсөн байна",
-        order: ordersLL,
+        message: "Төлбөр аль хэдийн амжилттай төлөгдсөн байна",
+        order: record.appointment,
       });
     }
-    const rentId = _id;
-    var request = {
-      object_type: "INVOICE",
-      object_id: qpay_invoice_id,
-      offset: {
-        page_number: 1,
-        page_limit: 100,
-      },
-    };
 
-    const header = {
-      headers: { Authorization: `Bearer ${access_token}` },
-    };
-
-    //  төлбөр төлөглдөж байгааа
     const result = await axios.post(
       process.env.qpayUrl + "payment/check",
-      request,
-      header
+      {
+        object_type: "INVOICE",
+        object_id: record.qpay_invoice_id,
+        offset: {
+          page_number: 1,
+          page_limit: 100,
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      }
     );
-    console.log(result.data);
-    if (
-      result.data.count == 1 &&
-      result.data.rows[0].payment_status == "PAID"
-    ) {
-      record.status = "paid";
-      await record.save();
 
-      console.log("gfgf");
+    const isPaid =
+      result.data.count === 1 && result.data.rows[0].payment_status === "PAID";
 
-      const app = await Appointment.findById(appointment);
-      if (!app) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Appointment not found" });
-      }
-
-      app.status = "paid";
-      await app.save();
-
-      if (app.isOption) {
-      } else {
-        const sche = await schedule.findById(app.schedule.toString());
-
-        const services = await Service.findById(sche.serviceId.toString());
-        console.log(services);
-
-        console.log("gfgf");
-        services.done++;
-        await services.save();
-
-        const updatedApp = await Appointment.findByIdAndUpdate(
-          appointment,
-          { status: "paid" },
-          { new: true }
-        ).populate("schedule");
-
-        console.log("gfgf");
-        const updatedSchedule = await schedule.findById(
-          updatedApp.schedule.toString()
-        );
-        const service = await Service.findById(
-          updatedSchedule.serviceId.toString()
-        );
-        const pcm = await company.findById(service.companyId.toString());
-
-        if (pcm) {
-          pcm.done++;
-          await pcm.save();
-        }
-        console.log("irjin");
-      }
-
-      io.emit("paymentDone");
-
-      return res.status(200).json({
-        success: true,
-        message: "Төлөлт амжилттай",
-        order: app,
-      });
-    } else {
-      return res.status(401).json({
+    if (!isPaid) {
+      return res.status(402).json({
         success: false,
-        message: "Төлөлт амжилтгүй",
+        message: "Төлбөр хараахан амжилттай биш байна",
       });
     }
+
+    // 🔁 Update invoice and appointment status
+    record.status = "paid";
+    await record.save();
+
+    const app = await Appointment.findById(record.appointment).populate({
+      path: "schedule",
+      populate: {
+        path: "serviceId",
+        populate: {
+          path: "companyId",
+          select: "name khanAccountNumber commissionRate done",
+        },
+      },
+    });
+
+    if (!app) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Appointment not found" });
+    }
+
+    app.status = "paid";
+    await app.save();
+
+    // ✅ Increase done counters
+    const service = app.schedule.serviceId;
+    const company = service.companyId;
+
+    service.done++;
+    await service.save();
+
+    company.done++;
+    await company.save();
+
+    // 💸 Transfer to company bank account via Khan Bank API
+    const totalAmount = record.price;
+    const commission = company.commissionRate || 0;
+    const payout = Math.floor(totalAmount * ((100 - commission) / 100));
+
+    await axios.post(
+      `${process.env.khanUrl}/transfer`,
+      {
+        fromAccount: process.env.corporateAccountNumber,
+        toAccount: company.khanAccountNumber,
+        amount: payout,
+        currency: "MNT",
+        description: `Шилжүүлэг: ${company.name}`,
+      },
+      {
+        auth: {
+          username: process.env.corporateUserName,
+          password: process.env.corporateTranPass,
+        },
+      }
+    );
+
+    io.emit("paymentDone");
+
+    return res.status(200).json({
+      success: true,
+      message: "Төлбөр амжилттай хийгдэж, мөнгө шилжүүллээ",
+      order: app,
+    });
   } catch (error) {
-    console.log(error.response.data);
-    res.status(500).json({ success: false, error: error.message });
+    console.error("❌ QPay Callback Error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Системийн алдаа",
+      error: error.message,
+    });
   }
 });

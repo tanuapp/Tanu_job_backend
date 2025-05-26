@@ -17,6 +17,7 @@ const companySchema = new mongoose.Schema({
     ],
   },
   banknumber: { type: String },
+  commissionRate: { type: Number, default: 10 },
   bankowner: { type: String },
   open: { type: String },
   close: { type: String },

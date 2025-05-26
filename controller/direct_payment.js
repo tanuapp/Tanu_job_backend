@@ -115,6 +115,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       appointment: app._id,
     });
     console.log(" invoice:", inv);
+    console.log(" invoice:", inv);
 
     // QPay рүү илгээх
     const duk = await axios.post(
