@@ -34,6 +34,9 @@ const invoiceSchema = new Schema({
   sender_invoice_id: {
     type: String,
   },
+  price: {
+    type: Number, // ✅ энэ талбар шаардлагатай
+  },
   qpay_invoice_id: String,
   status: {
     type: String,
