@@ -10,26 +10,21 @@ const Service = require("../models/service.js");
 const schedule = require("../models/schedule.js");
 const company = require("../models/company.js");
 const customResponse = require("../utils/customResponse");
+const { generateCredential } = require("../middleware/khan");
 
 exports.createqpay = asyncHandler(async (req, res) => {
   try {
-    const { access_token } = await qpay.makeRequest();
-    if (!access_token) {
-      return res.status(500).json({
-        success: false,
-        message: "QPay token авахад алдаа гарлаа",
-      });
-    }
+    const qpay_token = await qpay.makeRequest();
+    console.log("🔐 access_token:", qpay_token.access_token);
 
     const invoice = await invoiceModel.findById(req.params.id).populate({
       path: "appointment",
     });
 
     if (!invoice) {
-      return res.status(404).json({
-        success: false,
-        message: "Invoice not found",
-      });
+      return res
+        .status(404)
+        .json({ success: false, message: "Invoice not found" });
     }
 
     let amount = 0;
@@ -46,16 +41,17 @@ exports.createqpay = asyncHandler(async (req, res) => {
     if (invoice.isOption) {
       const opt = await Option.findById(invoice.package);
       if (!opt) {
-        return res.status(400).json({
-          success: false,
-          message: "Package not found",
-        });
+        return res
+          .status(400)
+          .json({ success: false, message: "Package not found" });
       }
       const durationInMonths = durationMap[invoice.appointment.duration];
       amount = Number(opt.price * durationInMonths * (1 - invoice.discount));
       packageName = (opt.name || "Багц").toUpperCase();
-    } else {
-      // 🎯 Appointment-based invoice (service)
+    }
+
+    // 🎯 Appointment-based invoice (service)
+    else {
       const appointment = await Appointment.findById(
         invoice.appointment._id
       ).populate({
@@ -71,10 +67,9 @@ exports.createqpay = asyncHandler(async (req, res) => {
       });
 
       if (!appointment) {
-        return res.status(400).json({
-          success: false,
-          message: "Appointment not found",
-        });
+        return res
+          .status(400)
+          .json({ success: false, message: "Appointment not found" });
       }
 
       const schedule = appointment.schedule;
@@ -93,8 +88,8 @@ exports.createqpay = asyncHandler(async (req, res) => {
       companyName = (company.name || "Компани").toUpperCase();
 
       amount = invoice.isAdvance
-        ? Math.floor((servicePrice * advancePercent) / 100)
-        : servicePrice;
+        ? Math.floor((servicePrice * advancePercent) / 100) // урьдчилгаа
+        : servicePrice; // бүрэн төлбөр
     }
 
     // ✅ Sender invoice ID
@@ -117,7 +112,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
       lines: [
         {
           tax_product_code: `${randomToo}`,
-          line_description: "Үйлчилгээ",
+          line_description: `Үйлчилгээ`,
           line_quantity: 1,
           line_unit_price: amount,
         },
@@ -129,7 +124,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
       invoicePayload,
       {
         headers: {
-          Authorization: `Bearer ${access_token}`,
+          Authorization: `Bearer ${qpay_token.access_token}`,
         },
       }
     );
@@ -150,8 +145,6 @@ exports.createqpay = asyncHandler(async (req, res) => {
         invoice: invoiceUpdate,
         data: response.data,
       });
-    } else {
-      throw new Error("QPay invoice үүсгэхэд алдаа гарлаа");
     }
   } catch (error) {
     console.error("❌ createqpay error:", error.message);
@@ -160,109 +153,64 @@ exports.createqpay = asyncHandler(async (req, res) => {
 });
 
 exports.callback = asyncHandler(async (req, res) => {
-  console.log("📥 [CALLBACK] QPay webhook ирлээ:");
-  console.log("🔸 req.params:", req.params);
-  console.log("🔸 req.query:", req.query);
-  console.log("🔸 req.headers:", req.headers);
-  console.log("🔸 req.body:", req.body);
+  console.log("📥 [CALLBACK] QPay webhook ирлээ");
+  const senderInvoiceId = req.params.id;
 
   try {
     const io = req.app.get("io");
-    const { id: senderInvoiceId } = req.params;
+
+    const qpay_token = await qpay.makeRequest();
+    const qpayAccessToken = qpay_token?.access_token;
+    if (!qpayAccessToken) {
+      return res
+        .status(500)
+        .json({ success: false, message: "QPay токен олдсонгүй" });
+    }
 
     const record = await invoiceModel.findOne({
       sender_invoice_id: senderInvoiceId,
     });
-
     if (!record) {
-      console.warn("⚠️ Invoice not found:", senderInvoiceId);
-      return res.status(404).json({
-        success: false,
-        message: "Invoice not found",
-      });
+      return res
+        .status(404)
+        .json({ success: false, message: "Invoice not found" });
     }
 
     if (record.status === "paid") {
-      console.log("💵 Invoice already paid:", record.qpay_invoice_id);
       return res.status(200).json({
         success: true,
-        message: "Төлбөр аль хэдийн амжилттай төлөгдсөн байна",
+        message: "Төлбөр аль хэдийн хийгдсэн байна",
         order: record.appointment,
       });
     }
 
-    const checkPaymentStatus = async (token) => {
-      return await axios.post(
-        `${process.env.qpayUrl}payment/check`,
-        {
-          object_type: "INVOICE",
-          object_id: record.qpay_invoice_id,
-          offset: {
-            page_number: 1,
-            page_limit: 100,
-          },
+    // QPay төлбөр шалгах
+    const checkResponse = await axios.post(
+      `${process.env.qpayUrl}payment/check`,
+      {
+        object_type: "INVOICE",
+        object_id: record.qpay_invoice_id,
+        offset: { page_number: 1, page_limit: 100 },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${qpayAccessToken}`,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-    };
-
-    let qpay_token = await qpay.makeRequest();
-    let access_token = qpay_token?.access_token;
-
-    if (!access_token) {
-      return res.status(500).json({
-        success: false,
-        message: "QPay access token not received",
-      });
-    }
-
-    console.log("✅ Access token амжилттай авлаа:", access_token);
-
-    let checkResponse;
-
-    try {
-      checkResponse = await checkPaymentStatus(access_token);
-    } catch (err) {
-      const errData = err.response?.data || {};
-      console.warn("⚠️ Initial token error:", errData);
-
-      if (errData.code === "InvalidAccessToken") {
-        console.log("🔄 Retrying with force new token...");
-        const retryToken = await qpay.makeRequest(true); // 🔥 force:true өгнө
-        access_token = retryToken?.access_token;
-
-        if (!access_token) {
-          return res.status(500).json({
-            success: false,
-            message: "QPay retry access_token failed",
-          });
-        }
-
-        checkResponse = await checkPaymentStatus(access_token);
-      } else {
-        throw err;
       }
-    }
-    console.log("access_token:2", access_token);
-    console.log("📦 QPay /payment/check хариу:", checkResponse.data);
+    );
 
     const isPaid =
-      checkResponse.data.count === 1 &&
+      checkResponse.data.count >= 1 &&
       checkResponse.data.rows[0]?.payment_status === "PAID";
 
     if (!isPaid) {
-      console.warn("💳 Төлбөр амжилттай хийгдээгүй байна");
       return res.status(402).json({
         success: false,
-        message: "Төлбөр хараахан амжилттай биш байна",
+        message: "Төлбөр амжилттай хийгдээгүй байна",
       });
     }
 
-    // ✅ төлөв шинэчлэх
+    // Төлөв шинэчлэх
     record.status = "paid";
     await record.save();
 
@@ -272,7 +220,7 @@ exports.callback = asyncHandler(async (req, res) => {
         path: "serviceId",
         populate: {
           path: "companyId",
-          select: "name bankNumber commissionRate done companyOwner",
+          select: "name bankNumber commissionRate done companyOwner bankCode",
         },
       },
     });
@@ -295,38 +243,48 @@ exports.callback = asyncHandler(async (req, res) => {
     company.done++;
     await company.save();
 
+    // Khan банк руу шилжүүлэг хийх
     const totalAmount = Number(record.price);
     const commission = Number(company.commissionRate || 0);
     const payout = Math.floor(totalAmount * ((100 - commission) / 100));
 
-    console.log("💰 Total price:", totalAmount);
-    console.log("📉 Commission rate:", commission, "%");
-    console.log("🏦 Khan-д шилжүүлэх дүн (payout):", payout, "MNT");
-    console.log("🏦 Компани банкны мэдээлэл:");
-    console.log("🔹 companyOwner1:", company.companyOwner);
-    console.log("🔹 bankNumber1:", company.bankNumber);
-
     if (!payout || isNaN(payout) || payout <= 0) {
-      console.warn("❌ payout утга буруу байна:", payout);
-      return res.status(500).json({
-        success: false,
-        message: "Шилжүүлэх дүн алдаатай байна",
-      });
+      return res
+        .status(500)
+        .json({ success: false, message: "Шилжүүлэх дүн алдаатай байна" });
     }
 
-    await axios.post(
-      `${process.env.khanUrl}/transfer`,
+    const khanToken = await generateCredential();
+    if (!khanToken) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Khan токен олдсонгүй" });
+    }
+
+    const transferType =
+      company.bankCode === "050000" ? "domestic" : "interbank";
+
+    const transferResponse = await axios.post(
+      `${process.env.corporateEndPoint}transfer/${transferType}`,
       {
         fromAccount: process.env.corporateAccountNumber,
         toAccount: company.bankNumber,
+        toAccountName: company.companyOwner,
+        toBank: company.bankCode,
         amount: payout,
+        description: `Шилжүүлэг: ${
+          company.name
+        } ${new Date().toLocaleDateString("mn-MN")}`,
+        toCurrency: "MNT",
         currency: "MNT",
-        description: `Шилжүүлэг: ${company.name} `,
+        loginName: process.env.corporateEmail,
+        tranPassword: process.env.corporateTranPass,
+        transferid: "001",
       },
       {
-        auth: {
-          username: process.env.corporateUserName,
-          password: process.env.corporateTranPass,
+        headers: {
+          Authorization: `Bearer ${khanToken}`,
+          "Content-Type": "application/json",
         },
       }
     );
@@ -335,14 +293,11 @@ exports.callback = asyncHandler(async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Төлбөр амжилттай хийгдэж, мөнгө шилжүүллээ",
+      message: "Төлбөр амжилттай хийгдэж, мөнгө Khan-д шилжүүллээ",
       order: app,
     });
   } catch (error) {
-    console.error(
-      "❌ QPay Callback Error:",
-      error.response?.data || error.message
-    );
+    console.error("❌ Callback Error:", error.response?.data || error.message);
     return res.status(500).json({
       success: false,
       message: "Системийн алдаа",

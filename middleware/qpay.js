@@ -1,18 +1,11 @@
 const axios = require("axios");
 
-let cachedToken = null;
-let cachedUntil = null;
-
-const makeRequest = async (forceRefresh = false) => {
-  const now = Date.now();
-
-  if (!forceRefresh && cachedToken && cachedUntil && now < cachedUntil) {
-    return { access_token: cachedToken };
-  }
-
-  try {
-    const session_url = process.env.qpayUrl + "auth/token";
-    const response = await axios.post(
+async function token() {
+  console.log("111");
+  var session_url = process.env.qpayUrl + "auth/token";
+  console.log(session_url);
+  await axios
+    .post(
       session_url,
       {},
       {
@@ -21,20 +14,51 @@ const makeRequest = async (forceRefresh = false) => {
           password: process.env.QpayPassword,
         },
       }
-    );
+    )
+    .then((res) => {
+      console.log("res.data");
+      console.log(res.data);
+      return res.data;
+    })
+    .catch((error) => {
+      if (error.response) {
+        console.log(error.response.data);
+        console.log(error.response.status);
+        console.log(error.response.headers);
+      } else if (error.request) {
+        console.log(error.request);
+      } else {
+        console.log("Error", error.message);
+      }
+      return res
+        .status(200)
+        .json({ status: 0, statusText: "Service iin aldaa garlaa orchuulah " });
+    });
+  console.log("555");
+}
 
-    if (response.status === 200 && response.data.access_token) {
-      cachedToken = response.data.access_token;
-      cachedUntil = now + 55 * 60 * 1000;
-      console.log("✅ QPay token авлаа:", cachedToken.slice(0, 15) + "...");
-      return { access_token: cachedToken };
-    } else {
-      throw new Error("QPay access_token байхгүй байна");
+const makeRequest = async () => {
+  try {
+    const response = await axios.post(
+      process.env.qpayUrl + "auth/token",
+      {},
+      {
+        auth: {
+          username: process.env.QpayUserName,
+          password: process.env.QpayPassword,
+        },
+      }
+    );
+    if (response.status === 200) {
+      // response - object, eg { status: 200, message: 'OK' }
+      console.log("success stuff");
+      return response.data;
     }
+    return response.status;
   } catch (err) {
-    console.error("❌ QPay Token Error:", err.response?.data || err.message);
-    return { access_token: null };
+    console.error(err);
+    return "error";
   }
 };
 
-module.exports = { makeRequest };
+module.exports = { token, makeRequest };
