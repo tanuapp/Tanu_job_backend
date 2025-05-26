@@ -13,17 +13,23 @@ const customResponse = require("../utils/customResponse");
 
 exports.createqpay = asyncHandler(async (req, res) => {
   try {
-    const qpay_token = await qpay.makeRequest();
-    console.log("🔐 access_token:", qpay_token.access_token);
+    const { access_token } = await qpay.makeRequest();
+    if (!access_token) {
+      return res.status(500).json({
+        success: false,
+        message: "QPay token авахад алдаа гарлаа",
+      });
+    }
 
     const invoice = await invoiceModel.findById(req.params.id).populate({
       path: "appointment",
     });
 
     if (!invoice) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Invoice not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Invoice not found",
+      });
     }
 
     let amount = 0;
@@ -40,17 +46,16 @@ exports.createqpay = asyncHandler(async (req, res) => {
     if (invoice.isOption) {
       const opt = await Option.findById(invoice.package);
       if (!opt) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Package not found" });
+        return res.status(400).json({
+          success: false,
+          message: "Package not found",
+        });
       }
       const durationInMonths = durationMap[invoice.appointment.duration];
       amount = Number(opt.price * durationInMonths * (1 - invoice.discount));
       packageName = (opt.name || "Багц").toUpperCase();
-    }
-
-    // 🎯 Appointment-based invoice (service)
-    else {
+    } else {
+      // 🎯 Appointment-based invoice (service)
       const appointment = await Appointment.findById(
         invoice.appointment._id
       ).populate({
@@ -66,9 +71,10 @@ exports.createqpay = asyncHandler(async (req, res) => {
       });
 
       if (!appointment) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Appointment not found" });
+        return res.status(400).json({
+          success: false,
+          message: "Appointment not found",
+        });
       }
 
       const schedule = appointment.schedule;
@@ -87,8 +93,8 @@ exports.createqpay = asyncHandler(async (req, res) => {
       companyName = (company.name || "Компани").toUpperCase();
 
       amount = invoice.isAdvance
-        ? Math.floor((servicePrice * advancePercent) / 100) // урьдчилгаа
-        : servicePrice; // бүрэн төлбөр
+        ? Math.floor((servicePrice * advancePercent) / 100)
+        : servicePrice;
     }
 
     // ✅ Sender invoice ID
@@ -111,7 +117,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
       lines: [
         {
           tax_product_code: `${randomToo}`,
-          line_description: `Үйлчилгээ`,
+          line_description: "Үйлчилгээ",
           line_quantity: 1,
           line_unit_price: amount,
         },
@@ -123,7 +129,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
       invoicePayload,
       {
         headers: {
-          Authorization: `Bearer ${qpay_token.access_token}`,
+          Authorization: `Bearer ${access_token}`,
         },
       }
     );
@@ -144,6 +150,8 @@ exports.createqpay = asyncHandler(async (req, res) => {
         invoice: invoiceUpdate,
         data: response.data,
       });
+    } else {
+      throw new Error("QPay invoice үүсгэхэд алдаа гарлаа");
     }
   } catch (error) {
     console.error("❌ createqpay error:", error.message);
@@ -224,14 +232,23 @@ exports.callback = asyncHandler(async (req, res) => {
 
       if (errData.code === "InvalidAccessToken") {
         console.log("🔄 Retrying with new token...");
-        qpay_token = await qpay.makeRequest();
+        qpay_token = await qpay.makeRequest(); // энэ makeRequest нь зөв access_token агуулсан байх ёстой
         access_token = qpay_token?.access_token;
+        console.log("access_token:1", access_token);
+        // ⚠️ Шинэ token авсан ч access_token байхгүй бол дахин error үүснэ
+        if (!access_token) {
+          return res.status(500).json({
+            success: false,
+            message: "QPay retry access_token failed",
+          });
+        }
+
         checkResponse = await checkPaymentStatus(access_token);
       } else {
         throw err;
       }
     }
-
+    console.log("access_token:2", access_token);
     console.log("📦 QPay /payment/check хариу:", checkResponse.data);
 
     const isPaid =
