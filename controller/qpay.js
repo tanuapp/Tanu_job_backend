@@ -288,7 +288,7 @@ exports.callback = asyncHandler(async (req, res) => {
         toAccount: company.bankNumber,
         amount: payout,
         currency: "MNT",
-        description: `Шилжүүлэг: ${company.name} (${company.bankOwner})`,
+        description: `Шилжүүлэг: ${company.name} `,
       },
       {
         auth: {
