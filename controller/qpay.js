@@ -240,7 +240,7 @@ exports.callback = asyncHandler(async (req, res) => {
         path: "serviceId",
         populate: {
           path: "companyId",
-          select: "name bankNumber commissionRate done bankOwner",
+          select: "name banknumber commissionRate done bankowner",
         },
       },
     });
