@@ -43,7 +43,7 @@ const companySchema = new mongoose.Schema({
 
   phone: { type: String },
   orderCancelHour: { type: Number, default: 2 },
-  advancePayment: { type: Number, default: 0 },
+  advancePayment: { type: Number, default: 10 },
 
   timetable: [],
   numberOfArtist: {
