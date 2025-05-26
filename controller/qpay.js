@@ -270,7 +270,9 @@ exports.callback = asyncHandler(async (req, res) => {
     console.log("💰 Total price:", totalAmount);
     console.log("📉 Commission rate:", commission, "%");
     console.log("🏦 Khan-д шилжүүлэх дүн (payout):", payout, "MNT");
-
+    console.log("🏦 Компани банкны мэдээлэл:");
+    console.log("🔹 bankOwner:", company.bankOwner);
+    console.log("🔹 bankNumber:", company.khanAccountNumber);
     if (!payout || isNaN(payout) || payout <= 0) {
       console.warn("❌ payout утга буруу байна:", payout);
       return res.status(500).json({
