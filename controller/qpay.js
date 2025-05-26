@@ -151,14 +151,6 @@ exports.createqpay = asyncHandler(async (req, res) => {
   }
 });
 
-const axios = require("axios");
-const asyncHandler = require("../middleware/asyncHandler.js");
-const invoiceModel = require("../models/invoice.js");
-const Appointment = require("../models/appointment.js");
-const Service = require("../models/service.js");
-const customResponse = require("../utils/customResponse");
-const qpay = require("../middleware/qpay");
-
 exports.callback = asyncHandler(async (req, res) => {
   console.log("📥 [CALLBACK] QPay webhook ирлээ:");
   console.log("🔸 req.params:", req.params);
