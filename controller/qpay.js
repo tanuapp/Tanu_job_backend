@@ -240,7 +240,7 @@ exports.callback = asyncHandler(async (req, res) => {
         path: "serviceId",
         populate: {
           path: "companyId",
-          select: "name khanAccountNumber commissionRate done",
+          select: "name bankNumber commissionRate done bankOwner",
         },
       },
     });
@@ -272,7 +272,7 @@ exports.callback = asyncHandler(async (req, res) => {
     console.log("🏦 Khan-д шилжүүлэх дүн (payout):", payout, "MNT");
     console.log("🏦 Компани банкны мэдээлэл:");
     console.log("🔹 bankOwner:", company.bankOwner);
-    console.log("🔹 bankNumber:", company.khanAccountNumber);
+    console.log("🔹 bankNumber:", company.bankNumber);
     if (!payout || isNaN(payout) || payout <= 0) {
       console.warn("❌ payout утга буруу байна:", payout);
       return res.status(500).json({
@@ -285,10 +285,10 @@ exports.callback = asyncHandler(async (req, res) => {
       `${process.env.khanUrl}/transfer`,
       {
         fromAccount: process.env.corporateAccountNumber,
-        toAccount: company.khanAccountNumber,
+        toAccount: company.bankNumber,
         amount: payout,
         currency: "MNT",
-        description: `Шилжүүлэг: ${company.name}`,
+        description: `Шилжүүлэг: ${company.name} (${company.bankOwner})`,
       },
       {
         auth: {
