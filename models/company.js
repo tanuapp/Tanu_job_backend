@@ -23,7 +23,7 @@ const companySchema = new mongoose.Schema({
   close: { type: String },
   email: { type: String },
   companyCode: { type: String },
-
+  bankCode: { type: String },
   address: { type: String },
   category: { type: [Schema.Types.ObjectId], ref: "Category", required: true },
 
