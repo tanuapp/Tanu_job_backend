@@ -271,8 +271,8 @@ exports.callback = asyncHandler(async (req, res) => {
     console.log("📉 Commission rate:", commission, "%");
     console.log("🏦 Khan-д шилжүүлэх дүн (payout):", payout, "MNT");
     console.log("🏦 Компани банкны мэдээлэл:");
-    console.log("🔹 bankOwner:", company.bankOwner);
-    console.log("🔹 bankNumber:", company.bankNumber);
+    console.log("🔹 bankOwner:", company.bankowner);
+    console.log("🔹 bankNumber:", company.banknumber);
     if (!payout || isNaN(payout) || payout <= 0) {
       console.warn("❌ payout утга буруу байна:", payout);
       return res.status(500).json({
@@ -285,7 +285,7 @@ exports.callback = asyncHandler(async (req, res) => {
       `${process.env.khanUrl}/transfer`,
       {
         fromAccount: process.env.corporateAccountNumber,
-        toAccount: company.bankNumber,
+        toAccount: company.banknumber,
         amount: payout,
         currency: "MNT",
         description: `Шилжүүлэг: ${company.name} `,
