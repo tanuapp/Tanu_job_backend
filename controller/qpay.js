@@ -11,7 +11,6 @@ const schedule = require("../models/schedule.js");
 const company = require("../models/company.js");
 const customResponse = require("../utils/customResponse");
 const { generateCredential } = require("../middleware/khan");
-const banks = require("../utils/bankList");
 
 exports.createqpay = asyncHandler(async (req, res) => {
   try {
