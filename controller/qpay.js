@@ -231,11 +231,10 @@ exports.callback = asyncHandler(async (req, res) => {
       console.warn("⚠️ Initial token error:", errData);
 
       if (errData.code === "InvalidAccessToken") {
-        console.log("🔄 Retrying with new token...");
-        qpay_token = await qpay.makeRequest(); // энэ makeRequest нь зөв access_token агуулсан байх ёстой
-        access_token = qpay_token?.access_token;
-        console.log("access_token:1", access_token);
-        // ⚠️ Шинэ token авсан ч access_token байхгүй бол дахин error үүснэ
+        console.log("🔄 Retrying with force new token...");
+        const retryToken = await qpay.makeRequest(true); // 🔥 force:true өгнө
+        access_token = retryToken?.access_token;
+
         if (!access_token) {
           return res.status(500).json({
             success: false,
