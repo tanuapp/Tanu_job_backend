@@ -49,15 +49,16 @@ const makeRequest = async () => {
         },
       }
     );
-    if (response.status === 200) {
-      // response - object, eg { status: 200, message: 'OK' }
-      console.log("success stuff");
-      return response.data;
+
+    if (response.status === 200 && response.data.access_token) {
+      console.log("✅ QPay token retrieved successfully");
+      return { access_token: response.data.access_token };
     }
-    return response.status;
+
+    throw new Error("Token response invalid");
   } catch (err) {
-    console.error(err);
-    return "error";
+    console.error("❌ QPay Token Error:", err.response?.data || err.message);
+    return { access_token: null };
   }
 };
 
