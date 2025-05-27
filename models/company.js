@@ -8,7 +8,7 @@ const companySchema = new mongoose.Schema({
   banks: {
     type: String,
     enum: [
-      "ХААН Банк",
+      "Хаан банк",
       "Голомт Банк",
       "ХасБанк",
       "Төрийн банк",

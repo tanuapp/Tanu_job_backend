@@ -21,7 +21,7 @@ function generateOTP(length = 4) {
 
   return otp;
 }
-  
+
 const validatePhone = async (phone) => {
   const user = await User.findOne({ phone }).select("+pin");
   return user ? true : false;
@@ -122,6 +122,8 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 });
 
 exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
+  console.log("bnshde");
+
   try {
     const allUser = await Appointment.find({
       user: req.userId,
@@ -140,7 +142,7 @@ exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
         },
       ],
     });
-
+    console.log("userId", req.userId);
     const lol = await Promise.all(
       allUser.map(async (list, index) => {
         const company = await Company.findById(
@@ -373,7 +375,7 @@ exports.registerWithEmail = asyncHandler(async (req, res, next) => {
   }
 });
 
-// OTP verification endpoint  
+// OTP verification endpoint
 exports.registerVerify = asyncHandler(async (req, res, next) => {
   try {
     const { otp, phone, email, isEmail, count, pin } = req.body;
