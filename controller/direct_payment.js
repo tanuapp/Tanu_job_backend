@@ -8,7 +8,7 @@ const customResponse = require("../utils/customResponse");
 const path = require("path");
 const fs = require("fs");
 const QRCode = require("qrcode");
-
+ 
 exports.createPayment = asyncHandler(async (req, res, next) => {
   try {
     const { schedule, date } = req.body;

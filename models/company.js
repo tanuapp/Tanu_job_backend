@@ -5,19 +5,7 @@ const { Schema } = mongoose;
 const companySchema = new mongoose.Schema({
   name: { type: String },
   description: { type: String },
-  banks: {
-    type: String,
-    enum: [
-      "ХААН Банк",
-      "Голомт Банк",
-      "ХасБанк",
-      "Төрийн банк",
-      "Капитрон банк",
-      "Ариг банк",
-    ],
-  },
-  banknumber: { type: String },
-  bankowner: { type: String },
+
   open: { type: String },
   close: { type: String },
   email: { type: String },
@@ -41,8 +29,22 @@ const companySchema = new mongoose.Schema({
   agent: String,
 
   phone: { type: String },
-  ordercancelhour: { type: String },
-  advancepayment: { type: String },
+  banks: {
+    type: String,
+    enum: [
+      "ХААН Банк",
+      "Голомт Банк",
+      "ХасБанк",
+      "Төрийн Банк",
+      "Капитрон Банк",
+      "Ариг Банк",
+    ],
+  },
+  bankNumber: { type: String },
+  bankOwner: { type: String },
+  advancePayment: { type: String },
+  orderCancelHour: { type: String },
+
   timetable: [],
   numberOfArtist: {
     type: Number,
@@ -53,7 +55,7 @@ const companySchema = new mongoose.Schema({
     default: 5,
   },
   contract: { type: String },
-  companyOwner: { type: Schema.Types.ObjectId, ref: "User" },   
+  companyOwner: { type: Schema.Types.ObjectId, ref: "User" },
   logo: { type: String },
   sliderImages: [String],
   companyNumber: { type: Number, unique: true, default: 1000 },
@@ -61,24 +63,22 @@ const companySchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  package: { type: Schema.Types.ObjectId, ref: "Option"},
-  isPackage:{type:Boolean , default:false},
-  packageEndDate:{type :Date },
+  package: { type: Schema.Types.ObjectId, ref: "Option" },
+  isPackage: { type: Boolean, default: false },
+  packageEndDate: { type: Date },
   latitude: { type: String },
   longitude: { type: String },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
 
-
 companySchema.pre("save", async function (next) {
   if (this.isNew) {
     try {
- 
       const counter = await CompanyCounter.findOneAndUpdate(
-        { name: "companyNumber" }, 
-        { $inc: { seq: 1 } }, 
-        { new: true, upsert: true } 
+        { name: "companyNumber" },
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
       );
 
       this.companyNumber = counter.seq;

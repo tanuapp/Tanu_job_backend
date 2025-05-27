@@ -7,7 +7,8 @@ exports.getAll = asyncHandler(async (req, res, next) => {
   try {
     const now = new Date();
     const stories = await Model.find({ endsAt: { $gt: now } }).populate(
-      "company"
+      "company",
+      "name"
     );
     const total = await Model.countDocuments({ endsAt: { $gt: now } });
 
