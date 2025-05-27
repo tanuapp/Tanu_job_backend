@@ -26,6 +26,32 @@ exports.getAll = asyncHandler(async (req, res, next) => {
     // res.status(500).json({ success: false, message: error.message });
   }
 });
+exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
+  const { date, artist } = req.query;
+
+  if (!date || !artist) {
+    return res.status(400).json({
+      success: false,
+      message: "date болон artist шаардлагатай",
+    });
+  }
+
+  // paid захиалгуудыг олно
+  const appointments = await Appointment.find({
+    date: date,
+    status: "paid",
+  }).populate({
+    path: "schedule",
+    match: { artistId: artist }, // зөвхөн тухайн artist-ынх
+  });
+
+  // 🔍 зөвхөн schedule байгаа захиалгууд
+  const validAppointments = appointments.filter((a) => a.schedule != null);
+
+  const startTimes = validAppointments.map((a) => a.schedule.start);
+  console.log("startTimes", startTimes);
+  return customResponse.success(res, startTimes);
+});
 
 exports.declineAppointment = asyncHandler(async (req, res, next) => {
   try {
@@ -58,8 +84,7 @@ exports.getAllPopulated = asyncHandler(async (req, res) => {
           { path: "artistId", model: "Artist" },
         ],
       })
-      .populate("user")
-      .populate("company");
+      .populate("user");
 
     // Filter users who have a populated schedule with a serviceId
     const filteredUsers = allUser.filter(
@@ -231,52 +256,47 @@ exports.endAppointment = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error);
   }
 });
-
 exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
   try {
+    const artistId = req.userId;
+    console.log("Artist12 ID:", artistId); // ⬅️ энэ аль хэдийн байна
+
     const appointments = await Appointment.find({
       status: { $ne: "pending" },
     })
       .populate({
-        path: "schedule user",
+        path: "schedule",
         populate: [
-          {
-            path: "serviceId",
-            model: "Service",
-          },
-          {
-            path: "companyId",
-            model: "Company",
-          },
+          { path: "serviceId", model: "Service" },
+          { path: "artistId", model: "Artist" },
+          { path: "companyId", model: "Company" },
         ],
       })
       .populate("user")
       .populate("company");
-    // console.log(appointments)
 
+    // 🔽 ЭНЭ ХЭСГИЙН ОРЛОНД DEBUG-КОДОО ХИЙ
     const filteredAppointments = appointments
+      .map((appointment) => {
+        const artist = appointment.schedule?.artistId;
+        console.log("==>", {
+          appointmentId: appointment._id,
+          schedule: appointment.schedule?._id,
+          artistId: artist?._id,
+          match: artist && artist._id.toString() === artistId,
+        });
+        return appointment;
+      })
       .filter((appointment) => {
         const artist = appointment.schedule?.artistId;
-        return artist && artist._id.toString() === req.userId;
-      })
-      .map((appointment) => {
-        return {
-          _id: appointment._id,
-          open: appointment.schedule?.companyId?.open,
-          close: appointment.schedule?.companyId?.close,
-          serviceName: appointment.schedule?.serviceId?.service_name,
-          serviceId: appointment.schedule?.serviceId?._id,
-          userName: appointment.user?.first_name || "Дөлгөөн",
-          userPhone: appointment.user?.phone || "88200314",
-        };
+        return artist && artist._id.toString() === artistId;
       });
 
-    console.log(filteredAppointments);
-
+    // 🔽 Үр дүнг буцаана
     customResponse.success(res, filteredAppointments);
   } catch (error) {
-    console.error("Error fetching artist appointments:", error);
-    customResponse.error(res, error);
+    console.error("❌ Error fetching artist appointments:", error);
+    customResponse.error(res, error.message || "Алдаа гарлаа");
   }
 });
 

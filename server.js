@@ -82,6 +82,7 @@ const upload = multer({
 
 // Server configuration for socket
 const app = express();
+app.enable("trust proxy");
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
@@ -160,7 +161,7 @@ app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
-// File upload 
+// File upload
 app.post("/api/v1/upload-pdf", upload.single("pdfFile"), (req, res) => {
   try {
     res.status(200).json({

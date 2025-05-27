@@ -15,6 +15,7 @@ const {
   update,
   registerPerson,
   checkPersonEmail,
+  personUpdateTheirOwnInformation,
   checkPersonPhone,
 } = require("../controller/person");
 const router = express.Router();
@@ -36,7 +37,9 @@ router.route("/checkPersonPhone").post(checkPersonPhone);
 router.route("/register/phone").post(registerWithPhone);
 
 router.route("/").post(upload.single("file"), create).get(getAll);
-
+router
+  .route("/updateOwn/:id")
+  .put(upload.single("file"), personUpdateTheirOwnInformation);
 router
   .route("/:id")
   .put(upload.single("file"), update)

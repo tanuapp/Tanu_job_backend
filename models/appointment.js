@@ -5,9 +5,9 @@ const appointmentSchema = new Schema({
   date: {
     type: String,
   },
-  isOption:{
-    type:Boolean,
-    default: false
+  isOption: {
+    type: Boolean,
+    default: false,
   },
   option: {
     type: Schema.Types.ObjectId,
@@ -15,7 +15,7 @@ const appointmentSchema = new Schema({
   },
   duration: {
     type: String,
-    enum: ["one", "six", "year" ,"free"],
+    enum: ["one", "six", "year", "free"],
     default: "one",
   },
 
@@ -47,7 +47,7 @@ const appointmentSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "paid", "expired", "declined"],
+    enum: ["pending", "paid", "expired", "declined", "completed"], // ← нэмсэн
     default: "pending",
   },
 

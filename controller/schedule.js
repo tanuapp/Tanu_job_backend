@@ -6,6 +6,7 @@ const customResponse = require("../utils/customResponse");
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
     const categories = await Model.find().populate("artistId");
+
     const total = await Model.countDocuments();
     res.status(200).json({
       success: true,
@@ -55,7 +56,15 @@ exports.update = asyncHandler(async (req, res, next) => {
 
 exports.get = asyncHandler(async (req, res, next) => {
   try {
-    const allText = await Model.findById(req.params.id);
+    const allText = await Model.findById(req.params.id)
+      .populate("artistId")
+      .populate({
+        path: "serviceId",
+        populate: {
+          path: "companyId",
+          select: "advancePayment",
+        },
+      });
     allText.views++;
     await allText.save();
     return res.status(200).json({

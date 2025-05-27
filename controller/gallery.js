@@ -4,7 +4,7 @@ const customResponse = require("../utils/customResponse");
 
 exports.getAllModel = asyncHandler(async (req, res, next) => {
   try {
-    const allUser = await Model.findOne( {
+    const allUser = await Model.find({
       company: req.params.id,
     });
 
@@ -15,10 +15,16 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
 });
 
 exports.createModel = asyncHandler(async (req, res, next) => {
+  console.log(req.body, "data");
   try {
+    console.log("Body:", req.body);
+    console.log("Files:", req.files);
     const result = await Model.create({
       ...req.body,
-      gallery: req.files && req.files.gallery ? req.files.gallery.map((file) => file.filename) : [],
+      gallery:
+        req.files && req.files.gallery
+          ? req.files.gallery.map((file) => file.filename)
+          : [],
     });
 
     customResponse.success(res, result);
@@ -29,8 +35,8 @@ exports.createModel = asyncHandler(async (req, res, next) => {
 
 exports.updateModel = asyncHandler(async (req, res, next) => {
   try {
-      const old = await Model.findById(req.params.id);
-      const gallery =
+    const old = await Model.findById(req.params.id);
+    const gallery =
       req.files && req.files.gallery
         ? req.files.gallery.map((file) => file.filename)
         : old.gallery;

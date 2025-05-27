@@ -5,12 +5,25 @@ const { Schema } = mongoose;
 const companySchema = new mongoose.Schema({
   name: { type: String },
   description: { type: String },
-
+  banks: {
+    type: String,
+    enum: [
+      "Хаан банк",
+      "Голомт Банк",
+      "ХасБанк",
+      "Төрийн банк",
+      "Капитрон банк",
+      "Ариг банк",
+    ],
+  },
+  bankNumber: { type: String },
+  commissionRate: { type: Number, default: 10 },
+  bankOwner: { type: String },
   open: { type: String },
   close: { type: String },
   email: { type: String },
   companyCode: { type: String },
-
+  bankCode: { type: String },
   address: { type: String },
   category: { type: [Schema.Types.ObjectId], ref: "Category", required: true },
 
@@ -29,21 +42,8 @@ const companySchema = new mongoose.Schema({
   agent: String,
 
   phone: { type: String },
-  banks: {
-    type: String,
-    enum: [
-      "ХААН Банк",
-      "Голомт Банк",
-      "ХасБанк",
-      "Төрийн Банк",
-      "Капитрон Банк",
-      "Ариг Банк",
-    ],
-  },
-  bankNumber: { type: String },
-  bankOwner: { type: String },
-  advancePayment: { type: String },
-  orderCancelHour: { type: String },
+  orderCancelHour: { type: Number, default: 2 },
+  advancePayment: { type: Number, default: 10 },
 
   timetable: [],
   numberOfArtist: {

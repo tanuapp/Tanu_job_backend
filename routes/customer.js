@@ -20,11 +20,11 @@ const {
   getMe,
   updateUserFCM,
   getCustomerAppointments,
-  forgotPassword
+  forgotPassword,
 } = require("../controller/customer");
 const router = express.Router();
 
-router.route("/otp-again").post( getOtpAgain);
+router.route("/otp-again").post(getOtpAgain);
 router.route("/order").get(protect, getCustomerAppointments);
 router
   .route("/updateOwn/:id")
