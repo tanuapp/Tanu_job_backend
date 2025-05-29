@@ -16,6 +16,10 @@ const scheduleSchema = new mongoose.Schema({
     type: Schema.Types.ObjectId,
     ref: "Service",
   },
+  isRescheduled: {
+    type: Boolean,
+    default: false,
+  },
   companyId: {
     type: Schema.Types.ObjectId,
     ref: "Company",

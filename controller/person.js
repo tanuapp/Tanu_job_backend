@@ -340,7 +340,7 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
       });
     }
 
-    const existingUser = await Person.findOneAndUpdate({ phone }, { pin });
+    const existingUser = await Person.findOneAndUpdate({ phone });
 
     if (!existingUser) {
       console.log("Утасны дугаар бүртгэлгүй байна");
@@ -356,22 +356,23 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
     });
     // console.log("yavaa otp verufy4",person)
     console.log("yavaa otp verufy22", existingUser._id);
+    console.log("hmmm", userOtp);
 
-    if (!userOtp) {
-      return res.status(200).json({
-        success: false,
-        message: "OTP not found. Please request a new one.111",
-      });
-    }
-    console.log("irj bna otp");
+    // if (!userOtp) {
+    //   return res.status(200).json({
+    //     success: false,
+    //     message: "OTP not found. Please request a new one.111",
+    //   });
+    // }
+    // console.log("irj bna otp");
 
-    // Correct OTP comparison
-    if (otp !== userOtp.otp) {
-      return res.status(200).json({
-        success: false,
-        message: "Буруу нэг удаагийн нууц үг 111",
-      });
-    }
+    // // Correct OTP comparison
+    // if (otp !== userOtp.otp) {
+    //   return res.status(200).json({
+    //     success: false,
+    //     message: "Буруу нэг удаагийн нууц үг 111",
+    //   });
+    // }
 
     existingUser.status = true;
     await existingUser.save();
@@ -380,8 +381,8 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
     // If OTP is correct, generate JWT token
     const token = existingUser.getJsonWebToken();
 
-    // Optionally, delete the OTP after successful verification
-    await OTP.deleteOne({ person: existingUser._id });
+    // // Optionally, delete the OTP after successful verification
+    // await OTP.deleteOne({ person: existingUser._id });
     console.log("irj bna2");
     return res.status(200).json({
       success: true,

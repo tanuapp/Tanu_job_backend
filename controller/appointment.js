@@ -259,7 +259,7 @@ exports.endAppointment = asyncHandler(async (req, res, next) => {
 exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
   try {
     const artistId = req.userId;
-    console.log("Artist12 ID:", artistId); // ⬅️ энэ аль хэдийн байна
+    // console.log("Artist12 ID:", artistId); // ⬅️ энэ аль хэдийн байна
 
     const appointments = await Appointment.find({
       status: { $ne: "pending" },
@@ -279,12 +279,12 @@ exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
     const filteredAppointments = appointments
       .map((appointment) => {
         const artist = appointment.schedule?.artistId;
-        console.log("==>", {
-          appointmentId: appointment._id,
-          schedule: appointment.schedule?._id,
-          artistId: artist?._id,
-          match: artist && artist._id.toString() === artistId,
-        });
+        // console.log("==>", {
+        //   appointmentId: appointment._id,
+        //   schedule: appointment.schedule?._id,
+        //   artistId: artist?._id,
+        //   match: artist && artist._id.toString() === artistId,
+        // });
         return appointment;
       })
       .filter((appointment) => {

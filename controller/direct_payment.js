@@ -9,6 +9,8 @@ const fs = require("fs");
 const QRCode = require("qrcode");
 
 exports.completeAppointment = asyncHandler(async (req, res, next) => {
+  console.log("Complete appointment called, req.params.id:", req.params.id);
+  console.log("Complete body:", req.body);
   const appointmentId = req.params.id;
 
   const app = await Appointment.findById(appointmentId).populate({
@@ -22,7 +24,7 @@ exports.completeAppointment = asyncHandler(async (req, res, next) => {
     },
   });
 
-  if (!app) return customResponse.error(res, "Захиалга олдсонгүй");
+  // if (!app) return customResponse.error(res, "Захиалга олдсонгүй");
 
   const service = app.schedule.serviceId;
   const company = service.companyId;

@@ -127,7 +127,7 @@ exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await Appointment.find({
       user: req.userId,
-      status: "paid",
+      status: { $in: ["paid", "done", "completed"] },
       // status: true,
     }).populate({
       path: "schedule", // Populate the 'schedule' field

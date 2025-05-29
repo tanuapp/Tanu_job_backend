@@ -33,7 +33,11 @@ exports.create = asyncHandler(async (req, res, next) => {
 });
 
 exports.update = asyncHandler(async (req, res, next) => {
+  console.log("Updating schedule with ID:", req.params.id);
   try {
+    console.log("Updating schedule with ID:2", req.params.id);
+    console.log("Updating schedule with ID:3", req.body);
+
     const updatedData = {
       ...req.body,
     };

@@ -7,6 +7,6 @@ const {
 const router = express.Router();
 
 router.route("/").post(protect, createPayment);
-router.put("/complete/:id", protect, completeAppointment);
+router.post("/complete/:id", protect, completeAppointment);
 
 module.exports = router;

@@ -32,6 +32,8 @@ exports.getUserSavedCompany = asyncHandler(async (req, res, next) => {
 
 // Save a company to user's list
 exports.saveCompany = asyncHandler(async (req, res, next) => {
+  console.log("Saving company to favorites");
+  console.log("Saving company to favorites,", req.body);
   try {
     const { company } = req.body;
     let existingFavorite = await Model.findOne({ user: req.userId, company });
