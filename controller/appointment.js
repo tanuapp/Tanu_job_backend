@@ -338,6 +338,29 @@ exports.update = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.updateStatus = asyncHandler(async (req, res, next) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id);
+
+    if (!appointment) {
+      return customResponse.error(res, "Захиалга олдсонгүй");
+    }
+
+    if (appointment.status === "completed") {
+      return customResponse.error(res, "Энэ захиалга аль хэдийн дууссан байна");
+    }
+
+    // Захиалгын статусыг дууссан болгох
+    appointment.status = "completed";
+    await appointment.save();
+
+    customResponse.success(res, "Захиалга амжилттай дууссан");
+  } catch (error) {
+    console.error("❌ Алдаа:", error);
+    customResponse.error(res, error.message);
+  }
+});
+
 exports.get = asyncHandler(async (req, res, next) => {
   try {
     const allText = await Model.findById(req.params.id);

@@ -34,7 +34,6 @@ exports.create = asyncHandler(async (req, res, next) => {
       customResponse.error(res, "Та пин оруулж өгнө үү ");
     }
     const existingUser = await Artist.findOne({ phone: req.body.phone });
-    const exinstingEmail = await Artist.findOne({ email: req.body.email });
     const artister = await company.findById(req.body.companyId);
     artister.numberOfArtist++;
     await artister.save();
@@ -235,10 +234,8 @@ exports.update = asyncHandler(async (req, res, next) => {
       updatedData.companyId = foundCompany._id;
       console.log("ollo23", updatedData);
       // 🧮 Компанийн artist тоог нэмэгдүүлэх (хэрэв хүсвэл)
-      foundCompany.numberOfArtist += 1;
-      await foundCompany.save();
     }
-
+    console.log("4updatedData", updatedData);
     const updatedArtist = await Artist.findByIdAndUpdate(
       artistId,
       updatedData,
@@ -326,7 +323,7 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
   try {
     const { otp, phone, count, pin } = req.body;
 
-    console.log(req.body);
+    console.log(req.body, "yavaa otp verufy1222222");
 
     if (Number(count) < 3) {
       return res.status(400).json({
@@ -336,7 +333,7 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
     }
 
     const existingUser = await Artist.findOneAndUpdate({ phone }, { pin });
-
+    console.log("yavaa otp verufy1", existingUser);
     if (!existingUser) {
       console.log("Утасны дугаар бүртгэлгүй байна");
       return res.status(200).json({

@@ -12,6 +12,7 @@ const {
   getAvailableTimes,
   getArtistAppointments,
   getBookedTimesForArtist,
+  updateStatus,
 } = require("../controller/appointment");
 
 const router = express.Router();
@@ -39,5 +40,6 @@ router.route("/").post(protect, create).get(getAll);
 
 // Тухайн ID-тай захиалгыг харах, засах, устгах (хамгийн сүүлд байх ёстой)
 router.route("/:id").put(protect, update).delete(protect, deleteModel).get(get);
+router.route("/update/:id").post(protect, updateStatus); // ✅ зөв синтакс + POST method
 
 module.exports = router;
