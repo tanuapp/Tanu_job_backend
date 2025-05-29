@@ -11,6 +11,7 @@ const schedule = require("../models/schedule.js");
 const company = require("../models/company.js");
 const customResponse = require("../utils/customResponse");
 const { generateCredential } = require("../middleware/khan");
+const { sendNotification } = require("../utils/apnService.js");
 
 exports.createqpay = asyncHandler(async (req, res) => {
   try {
@@ -181,7 +182,7 @@ exports.callback = asyncHandler(async (req, res) => {
         .json({ success: false, message: "Invoice not found" });
     }
 
-    if (record.status === "paid") {
+    if (record.status === "paid" || record.status === "done") {
       return res.status(200).json({
         success: true,
         message: "Төлбөр аль хэдийн хийгдсэн байна",
@@ -215,12 +216,14 @@ exports.callback = asyncHandler(async (req, res) => {
       });
     }
 
-    // Төлөв шинэчлэх
-
     const app = await Appointment.findById(
       record.appointment._id || record.appointment
     )
-      .select("status schedule")
+      .select("status schedule user")
+      .populate({
+        path: "user",
+        select: "deviceToken", // push token
+      })
       .populate({
         path: "schedule",
         populate: {
@@ -238,17 +241,30 @@ exports.callback = asyncHandler(async (req, res) => {
         .json({ success: false, message: "Appointment not found" });
     }
 
-    // ✅ DB-с татаад ирсэн status-г шалгаж байж шинэчилнэ
     const originalStatus = app.status;
     if (originalStatus === "completed") {
       app.status = "done";
       record.status = "done";
+
+      // ✅ Push мэдэгдэл
+      if (app.user?.deviceToken) {
+        try {
+          await sendNotification(
+            [app.user.deviceToken],
+            "Таны үйлчилгээ амжилттай дууслаа!"
+          );
+        } catch (err) {
+          console.error("🚫 Push илгээхэд алдаа гарлаа:", err.message);
+        }
+      }
     } else {
       app.status = "paid";
       record.status = "paid";
     }
+
     await app.save();
     await record.save();
+
     const service = app.schedule.serviceId;
     const company = service.companyId;
 
@@ -258,9 +274,11 @@ exports.callback = asyncHandler(async (req, res) => {
     company.done++;
     await company.save();
 
-    // Khan банк руу шилжүүлэг хийх
-    const payout = Number(record.price);
-    console.log("💰 Шилжүүлэх дүн:", payout);
+    // 💰 Шимтгэл тооцоолол
+    const originalAmount = Number(record.price);
+    const commissionPercent = 1; // 1%
+    const commission = Math.floor(originalAmount * (commissionPercent / 100));
+    const payout = originalAmount - commission;
 
     if (!payout || isNaN(payout) || payout <= 0) {
       return res
@@ -278,7 +296,7 @@ exports.callback = asyncHandler(async (req, res) => {
     const transferType =
       company.bankCode === "050000" ? "domestic" : "interbank";
 
-    const transferResponse = await axios.post(
+    await axios.post(
       `${process.env.corporateEndPoint}transfer/${transferType}`,
       {
         fromAccount: process.env.corporateAccountNumber,
