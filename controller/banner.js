@@ -4,11 +4,16 @@ const customResponse = require("../utils/customResponse");
 
 exports.getAllModel = asyncHandler(async (req, res, next) => {
   try {
-    const allUser = await Model.find().sort({
-      order: 1,
-    });
+    const query = {};
 
-    customResponse.success(res, allUser);
+    // ✅ companyId query байгаа эсэхийг шалгаж шүүх
+    if (req.query.companyId) {
+      query.companyId = req.query.companyId;
+    }
+
+    const allBanners = await Model.find(query);
+
+    customResponse.success(res, allBanners);
   } catch (error) {
     customResponse.error(res, error.message);
   }
