@@ -75,13 +75,14 @@ exports.getAllPopulated = asyncHandler(async (req, res) => {
   try {
     // Fetch all users and populate related fields
     const allUser = await Model.find({
-      status: "paid",
+      status: { $in: ["paid", "completed"] },
     })
       .populate({
         path: "schedule",
         populate: [
           { path: "serviceId", model: "Service" },
           { path: "artistId", model: "Artist" },
+          { path: "companyId", model: "Company" },
         ],
       })
       .populate("user");

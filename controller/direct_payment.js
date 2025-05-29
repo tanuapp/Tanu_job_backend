@@ -57,11 +57,7 @@ exports.completeAppointment = asyncHandler(async (req, res, next) => {
       },
     }
   );
-
   // Захиалгыг "completed" болгох
-  app.status = "completed";
-  await app.save();
-
   res.status(200).json({
     success: true,
     message: "Үйлчилгээ амжилттай дууссан. Үлдэгдэл төлбөрийг үүсгэлээ.",

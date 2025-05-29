@@ -50,6 +50,10 @@ const appointmentSchema = new Schema({
     enum: ["pending", "paid", "expired", "declined", "completed", "done"], // ← нэмсэн
     default: "pending",
   },
+  isCash: {
+    type: Boolean,
+    default: false,
+  },
 
   createdAt: {
     type: Date,

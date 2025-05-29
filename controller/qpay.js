@@ -87,9 +87,14 @@ exports.createqpay = asyncHandler(async (req, res) => {
       const advancePercent = parseFloat(company.advancePayment || 0);
       companyName = (company.name || "Компани").toUpperCase();
 
-      amount = invoice.isAdvance
-        ? Math.floor((servicePrice * advancePercent) / 100) // урьдчилгаа
-        : servicePrice; // бүрэн төлбөр
+      // ✅ ШИНЭ: Хэрэв appointment status === "completed" бол үлдэгдэл дүн ашиглана
+      if (appointment.status === "completed") {
+        amount = parseFloat(invoice.amount); // Урьдчилгаа төлсөн, үлдэгдэлд төлж буй
+      } else {
+        amount = invoice.isAdvance
+          ? Math.floor((servicePrice * advancePercent) / 100)
+          : servicePrice;
+      }
     }
 
     // ✅ Sender invoice ID
@@ -135,7 +140,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
         {
           sender_invoice_id: sender_invoice_no,
           qpay_invoice_id: response.data.invoice_id,
-          price: amount,
+          price: amount, // Always save what was actually used
         },
         { new: true }
       );
@@ -211,19 +216,21 @@ exports.callback = asyncHandler(async (req, res) => {
     }
 
     // Төлөв шинэчлэх
-    record.status = "paid";
-    await record.save();
 
-    const app = await Appointment.findById(record.appointment).populate({
-      path: "schedule",
-      populate: {
-        path: "serviceId",
+    const app = await Appointment.findById(
+      record.appointment._id || record.appointment
+    )
+      .select("status schedule")
+      .populate({
+        path: "schedule",
         populate: {
-          path: "companyId",
-          select: "name bankNumber commissionRate done companyOwner bankCode",
+          path: "serviceId",
+          populate: {
+            path: "companyId",
+            select: "name bankNumber commissionRate done companyOwner bankCode",
+          },
         },
-      },
-    });
+      });
 
     if (!app) {
       return res
@@ -231,9 +238,17 @@ exports.callback = asyncHandler(async (req, res) => {
         .json({ success: false, message: "Appointment not found" });
     }
 
-    app.status = "paid";
+    // ✅ DB-с татаад ирсэн status-г шалгаж байж шинэчилнэ
+    const originalStatus = app.status;
+    if (originalStatus === "completed") {
+      app.status = "done";
+      record.status = "done";
+    } else {
+      app.status = "paid";
+      record.status = "paid";
+    }
     await app.save();
-
+    await record.save();
     const service = app.schedule.serviceId;
     const company = service.companyId;
 
@@ -244,9 +259,8 @@ exports.callback = asyncHandler(async (req, res) => {
     await company.save();
 
     // Khan банк руу шилжүүлэг хийх
-    const totalAmount = Number(record.price);
-    const commission = Number(company.commissionRate || 0);
-    const payout = Math.floor(totalAmount * ((100 - commission) / 100));
+    const payout = Number(record.price);
+    console.log("💰 Шилжүүлэх дүн:", payout);
 
     if (!payout || isNaN(payout) || payout <= 0) {
       return res
