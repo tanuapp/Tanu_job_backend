@@ -8,9 +8,9 @@ exports.getAll = asyncHandler(async (req, res, next) => {
     const now = new Date();
     const stories = await Model.find({ endsAt: { $gt: now } }).populate(
       "company",
-      "name",
-      "logo"
+      "name logo" // ✅ зассан
     );
+
     const total = await Model.countDocuments({ endsAt: { $gt: now } });
 
     res.status(200).json({

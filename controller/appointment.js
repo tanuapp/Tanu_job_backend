@@ -55,19 +55,36 @@ exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
 
 exports.declineAppointment = asyncHandler(async (req, res, next) => {
   try {
-    const decline = await Model.findById(req.params.id);
-    if (decline.status == "pending") {
-      customResponse.error(res, "Таны захиалга баталгаажаагүй байна");
+    const decline = await Appointment.findById(req.params.id);
+
+    if (!decline) {
+      return customResponse.error(res, "Захиалга олдсонгүй");
     }
+
+    if (decline.status === "pending") {
+      return customResponse.error(res, "Таны захиалга баталгаажаагүй байна");
+    }
+
+    // Захиалгын статусыг 'declined' болгоно
     decline.status = "declined";
     await decline.save();
-    const user = await User.findById(decline.user);
-    user.coupon++;
-    await user.save();
 
-    customResponse.success(res, "Амжилттай цуцлалаа");
+    // ✂️ Холбогдсон schedule-ийг устгана
+    if (decline.schedule) {
+      await Schedule.findByIdAndDelete(decline.schedule);
+    }
+
+    // Купоныг нэмэгдүүлнэ
+    const user = await User.findById(decline.user);
+    if (user) {
+      user.coupon++;
+      await user.save();
+    }
+
+    customResponse.success(res, "Амжилттай цуцалж, хуваарийг устгалаа");
   } catch (error) {
-    customResponse.error(res, error.message);
+    console.error("❌ Цуцлах үед алдаа гарлаа:", error);
+    customResponse.error(res, error.message || "Алдаа гарлаа");
   }
 });
 
