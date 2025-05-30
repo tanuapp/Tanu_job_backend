@@ -293,10 +293,11 @@ exports.callback = asyncHandler(async (req, res) => {
     await company.save();
 
     // 💰 Шимтгэл тооцоолол
-    const originalAmount = Number(record.price);
+    const originalAmount = Number(record.price); // жишээ нь: 10
     const commissionPercent = 1;
-    const commission = Math.floor(originalAmount * (commissionPercent / 100));
-    const payout = originalAmount - commission;
+
+    const commission = +(originalAmount * (commissionPercent / 100)).toFixed(2); // 0.10
+    const payout = +(originalAmount - commission).toFixed(2); // 9.90
 
     console.log("💸 Total:", originalAmount);
     console.log("💰 Commission:", commission);
