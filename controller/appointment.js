@@ -55,8 +55,10 @@ exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
 
 exports.declineAppointment = asyncHandler(async (req, res, next) => {
   try {
-    const decline = await Appointment.findById(req.params.id);
-
+    const decline = await Appointment.findById(req.params.id).populate(
+      "schedule"
+    );
+    console.log("decline", decline);
     if (!decline) {
       return customResponse.error(res, "Захиалга олдсонгүй");
     }
@@ -65,25 +67,23 @@ exports.declineAppointment = asyncHandler(async (req, res, next) => {
       return customResponse.error(res, "Таны захиалга баталгаажаагүй байна");
     }
 
-    // Захиалгын статусыг 'declined' болгоно
+    // Захиалгын статусыг declined болгоно
     decline.status = "declined";
     await decline.save();
 
-    // ✂️ Холбогдсон schedule-ийг устгана
-    if (decline.schedule) {
-      await Schedule.findByIdAndDelete(decline.schedule);
-    }
+    // ✨ isRescheduled = false байвал true болгож шинэчилнэ
+    if (decline.schedule && decline.schedule.isRescheduled === false) {
+      // 1. isRescheduled = true болгож шинэчлэх (эсвэл устгах)
+      // await Schedule.findByIdAndUpdate(decline.schedule._id, {
+      //   isRescheduled: true,
+      // });
 
-    // Купоныг нэмэгдүүлнэ
-    const user = await User.findById(decline.user);
-    if (user) {
-      user.coupon++;
-      await user.save();
+      // 2. ✨ Шууд устгах бол дараах мөр ашиглана:
+      await Schedule.findByIdAndDelete(decline.schedule._id);
     }
-
-    customResponse.success(res, "Амжилттай цуцалж, хуваарийг устгалаа");
+    return customResponse.success(res, "Амжилттай цуцаллаа");
   } catch (error) {
-    console.error("❌ Цуцлах үед алдаа гарлаа:", error);
+    console.error("❌ Цуцлах үед алдаа:", error);
     customResponse.error(res, error.message || "Алдаа гарлаа");
   }
 });
