@@ -161,12 +161,16 @@ exports.createqpay = asyncHandler(async (req, res) => {
 exports.callback = asyncHandler(async (req, res) => {
   console.log("📥 [CALLBACK] QPay webhook ирлээ");
   const senderInvoiceId = req.params.id;
+  console.log("👉 senderInvoiceId:", senderInvoiceId);
 
   try {
     const io = req.app.get("io");
 
+    console.log("🔐 QPay токен авч байна...");
     const qpay_token = await qpay.makeRequest();
     const qpayAccessToken = qpay_token?.access_token;
+    console.log("✅ QPay токен:", qpayAccessToken);
+
     if (!qpayAccessToken) {
       return res
         .status(500)
@@ -176,6 +180,8 @@ exports.callback = asyncHandler(async (req, res) => {
     const record = await invoiceModel.findOne({
       sender_invoice_id: senderInvoiceId,
     });
+    console.log("📄 Invoice record:", record);
+
     if (!record) {
       return res
         .status(404)
@@ -190,7 +196,7 @@ exports.callback = asyncHandler(async (req, res) => {
       });
     }
 
-    // QPay төлбөр шалгах
+    console.log("💳 QPay төлбөр шалгаж байна...");
     const checkResponse = await axios.post(
       `${process.env.qpayUrl}payment/check`,
       {
@@ -204,12 +210,14 @@ exports.callback = asyncHandler(async (req, res) => {
         },
       }
     );
+    console.log("✅ QPay checkResponse:", checkResponse.data);
 
     const isPaid =
       checkResponse.data.count >= 1 &&
       checkResponse.data.rows[0]?.payment_status === "PAID";
 
     if (!isPaid) {
+      console.log("❌ Төлбөр хийгдээгүй байна.");
       return res.status(402).json({
         success: false,
         message: "Төлбөр амжилттай хийгдээгүй байна",
@@ -222,7 +230,7 @@ exports.callback = asyncHandler(async (req, res) => {
       .select("status schedule user")
       .populate({
         path: "user",
-        select: "deviceToken", // push token
+        select: "deviceToken",
       })
       .populate({
         path: "schedule",
@@ -235,6 +243,8 @@ exports.callback = asyncHandler(async (req, res) => {
         },
       });
 
+    console.log("📅 Appointment object:", app);
+
     if (!app) {
       return res
         .status(404)
@@ -242,24 +252,29 @@ exports.callback = asyncHandler(async (req, res) => {
     }
 
     const originalStatus = app.status;
+    console.log("🔁 Current Status:", originalStatus);
+
     if (originalStatus === "completed") {
       app.status = "done";
       record.status = "done";
+      console.log("✅ Төлөв updated to done");
 
-      // ✅ Push мэдэгдэл
       if (app.user?.deviceToken) {
+        console.log("📲 Push мэдэгдэл илгээж байна...");
         try {
           await sendNotification(
             [app.user.deviceToken],
             "Таны үйлчилгээ амжилттай дууслаа!"
           );
+          console.log("✅ Push илгээгдлээ.");
         } catch (err) {
-          console.error("🚫 Push илгээхэд алдаа гарлаа:", err.message);
+          console.error("🚫 Push илгээхэд алдаа:", err.message);
         }
       }
     } else {
       app.status = "paid";
       record.status = "paid";
+      console.log("✅ Төлөв updated to paid");
     }
 
     await app.save();
@@ -267,6 +282,9 @@ exports.callback = asyncHandler(async (req, res) => {
 
     const service = app.schedule.serviceId;
     const company = service.companyId;
+
+    console.log("🏢 Company:", company);
+    console.log("🏢 Company:", company.bankOwner);
 
     service.done++;
     await service.save();
@@ -276,17 +294,25 @@ exports.callback = asyncHandler(async (req, res) => {
 
     // 💰 Шимтгэл тооцоолол
     const originalAmount = Number(record.price);
-    const commissionPercent = 1; // 1%
+    const commissionPercent = 1;
     const commission = Math.floor(originalAmount * (commissionPercent / 100));
     const payout = originalAmount - commission;
 
+    console.log("💸 Total:", originalAmount);
+    console.log("💰 Commission:", commission);
+    console.log("📤 Payout:", payout);
+
     if (!payout || isNaN(payout) || payout <= 0) {
+      console.error("❌ Платеж алдаатай:", payout);
       return res
         .status(500)
         .json({ success: false, message: "Шилжүүлэх дүн алдаатай байна" });
     }
 
+    console.log("🔑 Khan токен авч байна...");
     const khanToken = await generateCredential();
+    console.log("✅ Khan токен:", khanToken);
+
     if (!khanToken) {
       return res
         .status(500)
@@ -295,24 +321,28 @@ exports.callback = asyncHandler(async (req, res) => {
 
     const transferType =
       company.bankCode === "050000" ? "domestic" : "interbank";
+    console.log("🏦 Transfer type:", transferType);
 
-    await axios.post(
+    const transferPayload = {
+      fromAccount: process.env.corporateAccountNumber,
+      toAccount: company.bankNumber,
+      toAccountName: company.bankOwner,
+      toBank: company.bankCode || "050000",
+      amount: payout,
+      description: `Шилжүүлэг: ${company.name} ${new Date().toLocaleDateString(
+        "mn-MN"
+      )}`,
+      toCurrency: "MNT",
+      currency: "MNT",
+      loginName: process.env.corporateEmail,
+      tranPassword: process.env.corporateTranPass,
+      transferid: "001",
+    };
+    console.log("📤 Transfer Payload:", transferPayload);
+
+    const transferResponse = await axios.post(
       `${process.env.corporateEndPoint}transfer/${transferType}`,
-      {
-        fromAccount: process.env.corporateAccountNumber,
-        toAccount: company.bankNumber,
-        toAccountName: company.bankOwner,
-        toBank: company.bankCode || "050000",
-        amount: payout,
-        description: `Шилжүүлэг: ${
-          company.name
-        } ${new Date().toLocaleDateString("mn-MN")}`,
-        toCurrency: "MNT",
-        currency: "MNT",
-        loginName: process.env.corporateEmail,
-        tranPassword: process.env.corporateTranPass,
-        transferid: "001",
-      },
+      transferPayload,
       {
         headers: {
           Authorization: `Bearer ${khanToken}`,
@@ -320,6 +350,8 @@ exports.callback = asyncHandler(async (req, res) => {
         },
       }
     );
+
+    console.log("✅ Transfer Response:", transferResponse.data);
 
     io.emit("paymentDone");
 
