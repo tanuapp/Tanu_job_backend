@@ -277,7 +277,6 @@ exports.endAppointment = asyncHandler(async (req, res, next) => {
 exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
   try {
     const artistId = req.userId;
-    // console.log("Artist12 ID:", artistId); // ⬅️ энэ аль хэдийн байна
 
     const appointments = await Appointment.find({
       status: { $ne: "pending" },
@@ -293,28 +292,69 @@ exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
       .populate("user")
       .populate("company");
 
-    // 🔽 ЭНЭ ХЭСГИЙН ОРЛОНД DEBUG-КОДОО ХИЙ
-    const filteredAppointments = appointments
-      .map((appointment) => {
-        const artist = appointment.schedule?.artistId;
-        // console.log("==>", {
-        //   appointmentId: appointment._id,
-        //   schedule: appointment.schedule?._id,
-        //   artistId: artist?._id,
-        //   match: artist && artist._id.toString() === artistId,
-        // });
-        return appointment;
-      })
-      .filter((appointment) => {
-        const artist = appointment.schedule?.artistId;
-        return artist && artist._id.toString() === artistId;
-      });
+    const filteredAppointments = appointments.filter((appointment) => {
+      const artist = appointment.schedule?.artistId;
+      const isCurrentArtist =
+        artist && artist._id.toString() === artistId.toString();
 
-    // 🔽 Үр дүнг буцаана
+      const isNotDone = appointment.status !== "done";
+
+      return isCurrentArtist && isNotDone;
+    });
+
     customResponse.success(res, filteredAppointments);
   } catch (error) {
     console.error("❌ Error fetching artist appointments:", error);
     customResponse.error(res, error.message || "Алдаа гарлаа");
+  }
+});
+
+exports.checkAppointment = asyncHandler(async (req, res) => {
+  try {
+    const appointmentId = req.params.id;
+
+    const appointment = await Appointment.findById(appointmentId);
+
+    if (!appointment) {
+      return customResponse.error(res, "Захиалга олдсонгүй");
+    }
+
+    // Хэрвээ done болсон бол success true буцаана
+    if (appointment.status === "done") {
+      return customResponse.success(res, {
+        message: "Төлбөр амжилттай хийгдсэн",
+        status: "done",
+        appointment,
+      });
+    }
+
+    // done биш бол — төлбөр хараахан хийгдээгүй
+    return customResponse.error(res, "Төлбөр хараахан баталгаажаагүй байна");
+  } catch (error) {
+    console.error("❌ checkAppointment алдаа:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+// PUT /api/v1/appointment/cash/:id
+exports.markCashPaid = asyncHandler(async (req, res) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id);
+
+    if (!appointment) {
+      return customResponse.error(res, "Захиалга олдсонгүй");
+    }
+
+    appointment.status = "done";
+    appointment.isCash = true; // Optionally mark as paid by cash
+    await appointment.save();
+
+    return customResponse.success(res, {
+      message: "Бэлэн төлбөр амжилттай баталгаажлаа",
+      appointment,
+    });
+  } catch (error) {
+    console.error("❌ markCashPaid алдаа:", error);
+    customResponse.error(res, error.message || "Серверийн алдаа");
   }
 });
 
