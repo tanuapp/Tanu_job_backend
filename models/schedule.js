@@ -2,6 +2,12 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const scheduleSchema = new mongoose.Schema({
+  vacationStart: {
+    type: String,
+  },
+  vacationEnd: {
+    type: String,
+  },
   start: {
     type: String,
   },
