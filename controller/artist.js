@@ -44,13 +44,14 @@ exports.create = asyncHandler(async (req, res, next) => {
         message: "Утасны дугаар бүртгэлтэй байна",
       });
     }
-    if (exinstingEmail) {
+    const existingEmail = await Artist.findOne({ email: req.body.email });
+    if (existingEmail) {
       return res.status(200).json({
         success: false,
         message: "И-мэйл бүртгэлтэй байна",
       });
     }
-
+   
     const inputData = {
       ...req.body,
       companyId: artister._id.toString(),

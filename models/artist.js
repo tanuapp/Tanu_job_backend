@@ -10,7 +10,7 @@ const artistSchema = new Schema({
     unique: true,
     required: [true, "Утасны дугаар заавал бичнэ үү!"],
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
-  },
+  },  
   firebase_token: String,
   isAndroid: {
     type: Boolean,
