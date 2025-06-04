@@ -8,6 +8,7 @@ const {
   get,
   getAll,
   update,
+  getcompany,
 } = require("../controller/service");
 const router = express.Router();
 
@@ -15,6 +16,7 @@ router
   .route("/")
   .post(protect, authorize("user admin"), upload.single("file"), create)
   .get(getAll);
+router.route("/company/:id").get(getcompany);
 
 router
   .route("/:id")

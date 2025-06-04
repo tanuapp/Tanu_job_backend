@@ -16,6 +16,26 @@ exports.getAll = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+exports.getcompany = asyncHandler(async (req, res, next) => {
+  try {
+    const companyId = req.params.id;
+
+    const services = await Model.find({ companyId }).populate({
+      path: "artistId",
+      select: "first_name last_name photo", // хүсвэл artist-ийн зөвхөн эдгээр талбарыг авна
+    });
+
+    const total = await Model.countDocuments({ companyId });
+
+    res.status(200).json({
+      success: true,
+      count: total,
+      data: services,
+    });
+  } catch (error) {
+    customResponse.error(res, error.message);
+  }
+});
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {

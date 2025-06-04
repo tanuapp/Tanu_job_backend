@@ -5,7 +5,7 @@ const customResponse = require("../utils/customResponse");
 
 exports.getAllModel = asyncHandler(async (req, res, next) => {
   try {
-    const allUser = await Model.find().populate("userId");
+    const allUser = await Model.find().populate("user");
     const total = await Model.countDocuments();
     res.status(200).json({
       success: true,
@@ -65,7 +65,7 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
       data: result,
     });
   } catch (error) {
-
-    customResponse.error(res, error.message);s
+    customResponse.error(res, error.message);
+    s;
   }
 });
