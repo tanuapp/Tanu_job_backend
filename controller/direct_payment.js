@@ -70,7 +70,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
   try {
     const { schedule, date } = req.body;
 
-    // schedule -> serviceId -> companyId (+advancepayment)
+    // schedule -> serviceId -> companyId (+advancePayment)
     const scheduleDoc = await Schedule.findById(schedule).populate({
       path: "serviceId",
       populate: {
@@ -83,18 +83,49 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
     const service = scheduleDoc.serviceId;
     const company = service.companyId;
 
-    const price = parseFloat(service.price); // нийт үнэ
-    const advancePercent = parseFloat(company.advancePayment || 0); // хувь
-    const advanceAmount = Math.floor((price * advancePercent) / 100); // урьдчилгаа
+    if (!service || !company) {
+      return customResponse.error(res, "Үйлчилгээ болон компани олдсонгүй");
+    }
 
-    // Appointment үүсгэнэ
+    const price = parseFloat(service.price);
+    const advancePercent = parseFloat(company.advancePayment || 0);
+    const advanceAmount = Math.floor((price * advancePercent) / 100);
+
+    // ⚠️ Хэрэв урьдчилгаа 0 бол баталгаажуулалт руу шилжүүлнэ
+    if (advanceAmount === 0) {
+      const app = await Appointment.create({
+        schedule,
+        user: req.userId || null,
+        date,
+        status: "pending", // Түр баталгаажуулаагүй төлөв
+      });
+
+      // 1 минутын дараа автоматаар устгах (баталгаажаагүй бол)
+      setTimeout(async () => {
+        const checkApp = await Appointment.findById(app._id);
+        if (checkApp && checkApp.status === "pending") {
+          await Appointment.findByIdAndDelete(app._id);
+          console.log(
+            `⏱️ Appointment ${app._id} artist баталгаажаагүй тул устлаа.`
+          );
+        }
+      }, 60000); // 60 секунд
+
+      return res.status(200).json({
+        success: true,
+        message: "Artist баталгаажуулалт хүлээгдэж байна",
+        appointmentId: app._id,
+      });
+    }
+
+    // ⚡ Урьдчилгаа байгаа бол appointment үүсгээд үргэлжлүүлнэ
     const app = await Appointment.create({
       schedule,
       user: req.userId || null,
       date,
     });
 
-    // QR код үүсгэнэ
+    // QR код үүсгэх
     const qrData = `Appointment ID: ${app._id}\nDate: ${app.date}\nUser ID: ${app.user}`;
     const qrFilePath = path.join(
       __dirname,
@@ -102,23 +133,19 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       `${app._id}-qr.png`
     );
     await QRCode.toFile(qrFilePath, qrData);
-
     app.qr = `${app._id}-qr.png`;
     await app.save();
-    console.log("advanceAmount", advanceAmount);
 
-    console.log("QR код амжилттай үүссэн:", qrFilePath);
-    // Invoice үүсгэнэ – урьдчилгаа төлбөрөөр
+    // Invoice үүсгэх
     const inv = await Invoice.create({
       amount: advanceAmount,
       appointment: app._id,
+      isAdvance: true,
     });
-    console.log(" invoice:", inv);
-    console.log(" invoice:", inv);
 
     // QPay рүү илгээх
     const duk = await axios.post(
-      "http://localhost:9090/api/v1/qpay/" + inv._id,
+      `http://localhost:9090/api/v1/qpay/${inv._id}`,
       {},
       {
         headers: {
@@ -127,13 +154,13 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       }
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: duk.data.data,
       invoice: duk.data.invoice.sender_invoice_id,
     });
   } catch (error) {
-    console.error(error);
-    customResponse.error(res, error.message);
+    console.error("❌ createPayment error:", error.message);
+    return customResponse.error(res, error.message);
   }
 });

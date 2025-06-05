@@ -8,10 +8,33 @@ const Artist = require("../models/artist");
 const Dayoff = require("../models/dayoff");
 const path = require("path");
 const fs = require("fs");
+const apnService = require("../utils/apnService");
 const QRCode = require("qrcode");
 const asyncHandler = require("../middleware/asyncHandler");
 const { generateCredential, send } = require("../utils/khan");
 const Company = require("../models/company");
+
+exports.markCompleted = asyncHandler(async (req, res) => {
+  const appointment = await Appointment.findById(req.params.id).populate(
+    "userId"
+  );
+
+  if (appointment.status === "completed") {
+    return customResponse.error(res, "Үйлчилгээ дууслаа ");
+  }
+
+  appointment.status = "completed";
+  await appointment.save();
+
+  // 🔔 Push мэдэгдэл явуулах (iOS хэрэглэгчид)
+  const user = appointment.userId;
+  if (user && user.isAndroid === false && user.firebase_token) {
+    const message = `${user.name} таны ${appointment.serviceName} үйлчилгээ амжилттай дууслаа!`;
+    await apnService.sendNotification([user.firebase_token], message); // APN push
+  }
+
+  return customResponse.success(res, "Үйлчилгээ амжилттай дууслаа");
+});
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -176,6 +199,7 @@ exports.create = asyncHandler(async (req, res, next) => {
   }
 });
 exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
+  console.log("bn", req.body);
   const { date, service, artist } = req.body;
 
   if (!date || !service || !artist) {
@@ -222,6 +246,7 @@ exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
     );
     return !isArtistDayOff && !isScheduleDayOff && !isBooked;
   });
+  console.log(availableSchedules), "schedule";
 
   customResponse.success(res, availableSchedules);
 });
@@ -350,6 +375,7 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
       .populate("user")
       .populate("company");
 
+    console.log(`✅ Step 4 - Appointments fetched: ${appointments} `);
     console.log(
       `✅ Step 5 - Appointments fetched: ${appointments.length} ширхэг`
     );
@@ -404,6 +430,13 @@ exports.markCashPaid = asyncHandler(async (req, res) => {
     appointment.status = "done";
     appointment.isCash = true; // Optionally mark as paid by cash
     await appointment.save();
+    // 🔔 Push мэдэгдэл (iOS)
+    const user = appointment.userId;
+    if (user && user.isAndroid === false && user.firebase_token) {
+      const message = `Бэлэн төлбөр амжилттай баталгаажлаа`;
+      await apnService.sendNotification([user.firebase_token], message);
+    }
+    io.to(userSocketId).emit("paymentDone");
 
     return customResponse.success(res, {
       message: "Бэлэн төлбөр амжилттай баталгаажлаа",
@@ -450,11 +483,13 @@ exports.updateStatus = asyncHandler(async (req, res, next) => {
     // Захиалгын статусыг дууссан болгох
     appointment.status = "completed";
     await appointment.save();
+    io.to(userSocketId).emit("paymentDone");
 
-    customResponse.success(res, "Захиалга амжилттай дууссан");
+    // markCompleted дуудаж үргэлжлүүлнэ
+    return await exports.markCompleted(req, res);
   } catch (error) {
     console.error("❌ Алдаа:", error);
-    customResponse.error(res, error.message);
+    return customResponse.error(res, error.message);
   }
 });
 
@@ -479,5 +514,28 @@ exports.deleteModel = async function deleteUser(req, res, next) {
     customResponse.error(res, error.message);
   }
 };
+
+exports.confirmAppointment = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const appointment = await Appointment.findById(id);
+  if (!appointment) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Appointment not found" });
+  }
+
+  if (appointment.status !== "pending") {
+    return res
+      .status(400)
+      .json({ success: false, message: "Already confirmed or invalid status" });
+  }
+
+  appointment.status = "completed";
+  await appointment.save();
+
+  return res
+    .status(200)
+    .json({ success: true, message: "Appointment confirmed by artist" });
+});
 
 // Энд дуусаж байгаа шүүү
