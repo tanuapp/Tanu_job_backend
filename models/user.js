@@ -6,13 +6,16 @@ const { Schema } = mongoose;
 const userSchema = new Schema({
   phone: {
     type: String,
-    // required: [true, "Утасны дугаар заавал бичнэ үү!"],
     unique: [true, "Утасны дугаар бүртгэлтэй байна"],
     sparse: true,
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
   password: {
     type: String,
+  },
+  pin: {
+    type: String,
+    select: false,
   },
   name: String,
   status: {
@@ -30,7 +33,6 @@ const userSchema = new Schema({
     enum: ["admin", "user"],
     default: "user",
   },
-
   userRole: {
     type: mongoose.Types.ObjectId,
     ref: "UserRole",
@@ -53,15 +55,47 @@ const userSchema = new Schema({
   },
 });
 
-userSchema.pre("save", async function () {
+// ✅ Save үед password болон pin-г шифрлэх
+userSchema.pre("save", async function (next) {
   const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+
+  if (this.isModified("password") && this.password) {
+    this.password = await bcrypt.hash(this.password, salt);
+  }
+
+  if (this.isModified("pin") && this.pin) {
+    this.pin = await bcrypt.hash(this.pin, salt);
+  }
+
+  next();
 });
 
+// ✅ Update үед мөн шифрлэх
+userSchema.pre("findOneAndUpdate", async function (next) {
+  const salt = await bcrypt.genSalt(10);
+
+  if (this._update.password) {
+    this._update.password = await bcrypt.hash(this._update.password, salt);
+  }
+
+  if (this._update.pin) {
+    this._update.pin = await bcrypt.hash(this._update.pin, salt);
+  }
+
+  next();
+});
+
+// ✅ Password шалгах
 userSchema.methods.checkPassword = async function (pass) {
   return await bcrypt.compare(pass, this.password);
 };
 
+// ✅ Pin шалгах
+userSchema.methods.checkPin = async function (inputPin) {
+  return await bcrypt.compare(inputPin, this.pin);
+};
+
+// ✅ JWT токен үүсгэх
 userSchema.methods.getJsonWebToken = function () {
   let token = jwt.sign(
     { Id: this._id, phone: this.phone, role: this.role },
@@ -72,13 +106,5 @@ userSchema.methods.getJsonWebToken = function () {
   );
   return token;
 };
-userSchema.pre("findOneAndUpdate", async function (next) {
-  if (!this._update.password) {
-    return next();
-  }
-  const salt = await bcrypt.genSalt(10);
-  this._update.password = await bcrypt.hash(this._update.password, salt);
-  next();
-});
 
 module.exports = mongoose.model("User", userSchema);

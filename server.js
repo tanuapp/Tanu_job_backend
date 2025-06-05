@@ -9,6 +9,7 @@ const admin = require("firebase-admin");
 const cron = require("node-cron");
 const path = require("path");
 var serviceAccount = require("./tanu-app-928a8-firebase-adminsdk-mrr1i-28babc6869.json");
+const asyncHandler = require("./middleware/asyncHandler");
 
 // Socket
 const { createServer } = require("http");
@@ -122,6 +123,24 @@ async function initializeFirebase() {
 }
 
 initializeFirebase();
+app.post(
+  "/api/v1/upload",
+  upload.single("upload"),
+  asyncHandler((req, res, next) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const fileUrl = `https://booking.tanuweb.cloud/uploads/${req.file.filename}`;
+    res.setHeader("Content-Type", "application/json");
+    return res.status(200).send(
+      JSON.stringify({
+        link: fileUrl,
+      })
+    );
+  })
+);
+
 app.use("/api/v1/option", optionRouter);
 app.use("/api/v1/contract", onlineContractRouter);
 app.use("/api/v1/category", categoryRoutes);

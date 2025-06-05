@@ -13,7 +13,7 @@ exports.protect = asyncHandler(async (req, res, next) => {
     const token = req.headers.authorization.split(" ")[1];
 
     console.log(token);
-    console.log("lol")
+    console.log("lol");
 
     if (!token) {
       return res.status(200).json({
@@ -26,7 +26,7 @@ exports.protect = asyncHandler(async (req, res, next) => {
     req.token = token;
     req.userId = tokenObj.Id;
     req.userRole = tokenObj.role;
-    req.companyId = '680199d95a39e0609e4addc5';
+    req.companyId = "680199d95a39e0609e4addc5";
     console.log("Company ID from token:", req.companyId);
     next();
   } catch (error) {

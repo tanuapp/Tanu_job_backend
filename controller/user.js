@@ -271,6 +271,26 @@ exports.getAll = asyncHandler(async (req, res, next) => {
     customResponse.server(res, error.message);
   }
 });
+exports.getAdmin = asyncHandler(async (req, res) => {
+  try {
+    // 2. Бүх хэрэглэгчдийг userRole-тай нь хамт авчраад filter хийнэ
+    const allUsers = await User.find().populate("userRole");
+
+    const filteredUsers = allUsers.filter(
+      (u) =>
+        u.userRole?.user?.toString() === req.userId &&
+        u._id.toString() !== req.userId // өөрийгөө хасна
+    );
+
+    return res.status(200).json({
+      success: true,
+      count: filteredUsers.length,
+      data: filteredUsers,
+    });
+  } catch (error) {
+    customResponse.server(res, error.message);
+  }
+});
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
@@ -378,6 +398,73 @@ exports.get = asyncHandler(async (req, res, next) => {
     });
   } catch (error) {
     customResponse.server(res, error.message);
+  }
+});
+exports.checkPersonPhone = asyncHandler(async (req, res, next) => {
+  try {
+    const body = req.body;
+    const existingUser = await User.findOne({ phone: body.phone });
+    if (!existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Утас бүртгэлгүй байна",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Амжилттай",
+    });
+  } catch (error) {
+    customResponse.error(res, error.message);
+  }
+});
+exports.AdminLogin = asyncHandler(async (req, res, next) => {
+  console.log("checkPersonPhone is here", req.body);
+
+  try {
+    const { phone, pin } = req.body;
+
+    // 1. Check if phone and pin exist
+    if (!phone || !pin) {
+      return customResponse.error(
+        res,
+        "Утасны дугаар болон PIN кодыг оруулна уу!"
+      );
+    }
+
+    // 2. Find user by phone and explicitly include the 'pin' field
+    const user = await User.findOne({ phone }).select("+pin");
+
+    if (!user) {
+      return customResponse.error(
+        res,
+        "Утасны дугаар эсвэл нууц код буруу байна!"
+      );
+    }
+
+    // 3. Compare input PIN with hashed pin
+    const isPinValid = await user.checkPin(pin);
+    console.log("isPinValid:", isPinValid);
+
+    if (!isPinValid) {
+      return customResponse.error(
+        res,
+        "Утасны дугаар эсвэл нууц код буруу байна!"
+      );
+    }
+
+    // 4. Generate JWT token
+    const token = user.getJsonWebToken();
+
+    // 5. Send successful response
+    return res.status(200).json({
+      success: true,
+      token,
+      data: user,
+    });
+  } catch (error) {
+    console.error("AdminLogin error:", error);
+    return customResponse.error(res, error.message);
   }
 });
 

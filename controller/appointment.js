@@ -3,6 +3,8 @@ const Appointment = require("../models/appointment");
 const customResponse = require("../utils/customResponse");
 const Schedule = require("../models/schedule");
 const User = require("../models/customer");
+const AdminAppointment = require("../models/user");
+const Artist = require("../models/artist");
 const Dayoff = require("../models/dayoff");
 const path = require("path");
 const fs = require("fs");
@@ -306,6 +308,61 @@ exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
   } catch (error) {
     console.error("❌ Error fetching artist appointments:", error);
     customResponse.error(res, error.message || "Алдаа гарлаа");
+  }
+});
+exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
+  try {
+    const artistId = req.userId;
+
+    // 1. Artist хэрэглэгчийн мэдээлэл (admin login байж болно)
+    const artistUser = await AdminAppointment.findById(artistId).populate(
+      "userRole"
+    );
+
+    if (!artistUser || !artistUser.userRole || !artistUser.userRole.user) {
+      return customResponse.error(
+        res,
+        "Хэрэглэгчийн эрхийн мэдээлэл дутуу байна"
+      );
+    }
+
+    const realUserId = artistUser.userRole.user;
+    // 2. Компанийн мэдээлэл олно
+    const company = await Company.findOne({ companyOwner: realUserId });
+    const artist = await Artist.find({ companyId: company._id }); // ✅ ОЛОН artist
+
+    if (!company) {
+      return customResponse.error(res, "Компанийн мэдээлэл олдсонгүй");
+    }
+
+    // 3. Компанийн захиалгуудыг авах
+    const appointments = await Appointment.find({
+      company: company._id,
+    })
+      .populate({
+        path: "schedule",
+        populate: [
+          { path: "serviceId", model: "Service" },
+          { path: "artistId", model: "Artist" },
+          { path: "companyId", model: "Company" },
+        ],
+      })
+      .populate("user")
+      .populate("company");
+
+    console.log(
+      `✅ Step 5 - Appointments fetched: ${appointments.length} ширхэг`
+    );
+    // 4. ✅ Компанийн мэдээллийг appointment-уудтай хамт илгээх
+    return res.status(200).json({
+      success: true,
+      data: appointments,
+      company,
+      artist, // 👈 нэмэлт компанийн мэдээлэл]
+    });
+  } catch (error) {
+    console.error("❌ Step 6 - Error occurred:", error);
+    return customResponse.error(res, error.message || "Алдаа гарлаа");
   }
 });
 

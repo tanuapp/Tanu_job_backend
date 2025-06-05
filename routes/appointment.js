@@ -15,12 +15,14 @@ const {
   updateStatus,
   checkAppointment,
   markCashPaid,
+  getCompanyAppointments,
 } = require("../controller/appointment");
 
 const router = express.Router();
 
 // Хэрэглэгчийн захиалгуудыг татах
 router.route("/artist").get(protect, getArtistAppointments);
+router.route("/company").get(protect, getCompanyAppointments);
 
 // Захиалгыг дуусгах
 router.route("/end/:id").post(endAppointment);
