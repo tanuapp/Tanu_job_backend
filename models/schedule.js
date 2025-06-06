@@ -18,6 +18,10 @@ const scheduleSchema = new mongoose.Schema({
     type: Schema.Types.ObjectId,
     ref: "Artist",
   },
+  date: {
+    type: Date,
+    required: true,
+  },
   serviceId: {
     type: Schema.Types.ObjectId,
     ref: "Service",
