@@ -34,6 +34,10 @@ const scheduleSchema = new mongoose.Schema({
     type: String,
     enum: ["Даваа", "Мягмар", "Лхагва", "Пүрэв", "Баасан", "Бямба", "Ням"],
   },
+  date: {
+    type: Date,
+    required: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
