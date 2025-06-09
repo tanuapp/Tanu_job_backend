@@ -99,6 +99,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         date,
         status: "pending", // Түр баталгаажуулаагүй төлөв
       });
+
       const io = req.app.get("io");
       if (!io) {
         console.log("❌ io object is undefined!");
