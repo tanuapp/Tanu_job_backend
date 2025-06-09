@@ -19,28 +19,15 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 });
 
 exports.create = asyncHandler(async (req, res, next) => {
-  console.log("📥 Schedule create API called");
-
   try {
-    console.log("📦 Request body:", req.body);
-
-    // DB рүү create хийх
     const user = await Model.create({ ...req.body });
-
-    console.log("✅ Schedule successfully created:", user);
 
     res.status(200).json({
       success: true,
       data: user,
     });
   } catch (error) {
-    console.error("❌ Schedule create error:", {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-      full: error,
-    });
-
+    console.error("❌ Schedule create error:", error.message);
     customResponse.error(res, error.message);
   }
 });

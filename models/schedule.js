@@ -20,7 +20,6 @@ const scheduleSchema = new mongoose.Schema({
   },
   date: {
     type: Date,
-    required: true,
   },
   serviceId: {
     type: Schema.Types.ObjectId,
