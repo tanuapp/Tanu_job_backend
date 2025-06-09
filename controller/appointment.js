@@ -348,13 +348,11 @@ exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
 exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
   try {
     const artistId = req.userId;
-    console.log(`✅ Step 1 - Artist ID: ${artistId}`);
 
     // 1. Artist хэрэглэгчийн мэдээлэл (admin login байж болно)
     const artistUser = await AdminAppointment.findById(artistId).populate(
       "userRole"
     );
-    console.log(`✅ Step 2 - Artist User: ${JSON.stringify(artistUser)}`);
 
     if (!artistUser || !artistUser.userRole || !artistUser.userRole.user) {
       console.error("❌ Step 3 - Missing user role or user information");
@@ -392,8 +390,12 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
     const appointments = allAppointments.filter(
       (a) => a.schedule?.companyId?._id?.toString() === company._id.toString()
     );
+    const pendingAppointments = appointments.filter(
+      (a) => a.status === "pending"
+    );
+
     console.log(
-      `✅ Step 8 - Appointments fetched: ${JSON.stringify(appointments)}`
+      `🟡 Pending Appointments: ${JSON.stringify(pendingAppointments, null, 2)}`
     );
 
     // 4. ✅ Компанийн мэдээллийг appointment-уудтай хамт илгээх

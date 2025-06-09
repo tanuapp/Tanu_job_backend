@@ -16,6 +16,7 @@ const {
   checkAppointment,
   markCashPaid,
   getCompanyAppointments,
+  confirmAppointment,
 } = require("../controller/appointment");
 
 const router = express.Router();
@@ -26,6 +27,7 @@ router.route("/company").get(protect, getCompanyAppointments);
 
 // Захиалгыг дуусгах
 router.route("/end/:id").post(endAppointment);
+router.route("/").post(confirmAppointment);
 
 // Захиалгыг цуцлах
 router.route("/decline/:id").post(declineAppointment);
