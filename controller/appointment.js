@@ -142,8 +142,9 @@ exports.getAllPopulated = asyncHandler(async (req, res) => {
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
+    console.log("irlee2 bnshde");
     // const io = req.app.get("io");
-
+    const io = req.app.get("io");
     const { schedule, isOption } = req.body;
 
     if (!schedule && !isOption) {
@@ -192,7 +193,16 @@ exports.create = asyncHandler(async (req, res, next) => {
     // Update appointment with the QR code file path
     appointment.qr = `${appointment._id}-qr.png`;
     await appointment.save();
-
+    if (appointment.status === "pending" && sch?.companyId) {
+      io.to(sch.companyId.toString()).emit(
+        "newPendingAppointment",
+        appointment
+      );
+      console.log(
+        "📢 Sent newPendingAppointment to:",
+        sch.companyId.toString()
+      );
+    }
     customResponse.success(res, appointment);
   } catch (error) {
     customResponse.error(res, error.message);

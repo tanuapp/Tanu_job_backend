@@ -99,7 +99,23 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         date,
         status: "pending", // Түр баталгаажуулаагүй төлөв
       });
-
+      const io = req.app.get("io");
+      if (!io) {
+        console.log("❌ io object is undefined!");
+      } else {
+        console.log("✅ io object is ready!");
+      }
+      if (app && app._id && service?.companyId?._id) {
+        io.to(service.companyId._id.toString()).emit("newPendingAppointment", {
+          _id: app._id,
+          serviceName: service.name,
+          date,
+        });
+        console.log(
+          "📢 Socket emit: newPendingAppointment to",
+          service.companyId._id.toString()
+        );
+      }
       // 1 минутын дараа автоматаар устгах (баталгаажаагүй бол)
       setTimeout(async () => {
         const checkApp = await Appointment.findById(app._id);

@@ -200,7 +200,10 @@ io.on("connection", (socket) => {
   socket.on("connect", () => {
     console.log("User connected");
   });
-
+  socket.on("join", (roomId) => {
+    socket.join(roomId);
+    console.log(`📡 Socket ${socket.id} joined room ${roomId}`);
+  });
   socket.on("disconnect", () => {
     console.log("User disconnected");
   });
