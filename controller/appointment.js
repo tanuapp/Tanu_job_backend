@@ -549,7 +549,7 @@ exports.confirmAppointment = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Already confirmed or invalid status" });
   }
 
-  appointment.status = "completed";
+  appointment.status = "paid";
   await appointment.save();
 
   return res
