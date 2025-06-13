@@ -13,6 +13,42 @@ const QRCode = require("qrcode");
 const asyncHandler = require("../middleware/asyncHandler");
 const { generateCredential, send } = require("../utils/khan");
 const Company = require("../models/company");
+const cron = require("node-cron");
+const moment = require("moment");
+
+// ✅ Автоматаар expired appointment-уудыг decline болгох
+cron.schedule("*/1 * * * *", async () => {
+  console.log("⏰ Checking expired appointments...");
+
+  const today = moment().format("YYYY-MM-DD");
+  const nowTime = moment();
+
+  const appointments = await Appointment.find({
+    date: today,
+    status: { $in: ["pending", "paid"] },
+  }).populate("schedule");
+
+  let declinedCount = 0;
+
+  for (const appt of appointments) {
+    const schedule = appt.schedule;
+    if (!schedule || !schedule.end) continue;
+
+    const endTime = moment(`${today} ${schedule.end}`, "YYYY-MM-DD HH:mm");
+
+    if (nowTime.isAfter(endTime)) {
+      appt.status = "declined";
+      await appt.save();
+      declinedCount++;
+    }
+  }
+
+  if (declinedCount > 0) {
+    console.log(`❗ ${declinedCount} захиалга хугацаа дууссан тул цуцлагдлаа`);
+  } else {
+    console.log("✅ Цуцлах шаардлагатай захиалга байхгүй");
+  }
+});
 
 exports.markCompleted = asyncHandler(async (req, res) => {
   const appointment = await Appointment.findById(req.params.id).populate(
@@ -549,7 +585,7 @@ exports.confirmAppointment = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Already confirmed or invalid status" });
   }
 
-  appointment.status = "completed";
+  appointment.status = "paid";
   await appointment.save();
 
   return res

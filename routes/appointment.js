@@ -27,7 +27,7 @@ router.route("/company").get(protect, getCompanyAppointments);
 
 // Захиалгыг дуусгах
 router.route("/end/:id").post(endAppointment);
-router.route("/").post(confirmAppointment);
+router.route("/confirm/:id").post(confirmAppointment);
 
 // Захиалгыг цуцлах
 router.route("/decline/:id").post(declineAppointment);
