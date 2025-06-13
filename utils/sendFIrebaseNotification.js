@@ -1,4 +1,6 @@
 const sendFirebaseNotification = async ({ title, body, data = {}, topic = null, token = null }) => {
+  console.log("topilk",topic);
+  console.log("token",token);
   if (!global.fireadmin) {
     throw new Error("Firebase Admin is not initialized.");
   }
@@ -34,6 +36,7 @@ const sendFirebaseNotification = async ({ title, body, data = {}, topic = null, 
 
   try {
     const response = await global.fireadmin.messaging().send(message);
+    console.log(response);
     return { success: true, response };
   } catch (error) {
     return { success: false, error };

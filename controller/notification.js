@@ -63,9 +63,9 @@ exports.sendFirebase = asyncHandler(async (req, res) => {
       title: req.body.data.title,
       body: req.body.data.description,
       data: req.body.data,
-      topic: user.firebase_token // or use token: "device_token"
+      token: user.firebase_token // or use token: "device_token"
     });
-
+    console.log(result);
     if (result.success) {
       res.status(200).json({
         success: true,
@@ -81,3 +81,4 @@ exports.sendFirebase = asyncHandler(async (req, res) => {
     customResponse.error(res, error.message);
   }
 });
+
