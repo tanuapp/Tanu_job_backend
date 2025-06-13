@@ -56,9 +56,7 @@ const agentRoute = require("./routes/agent.js");
 
 // Multer setup
 const multer = require("multer");
-const { default: FirebaseConfig } = require("./firebaseInit.js");
-const FirebaseConfig = require('./firebaseInit.js');
-const firebaseInstance = new FirebaseConfig();
+const initFirebase = require('./firebaseInit.js');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -97,7 +95,7 @@ const io = new Server(httpServer, {
 
 // DB connection
 connectDB();
-firebaseInstance.init();
+initFirebase();
 app.set("io", io);
 
 // CORS
@@ -113,19 +111,19 @@ app.use(logger);
 app.use(express.json());
 
 // FIREBASE
-async function initializeFirebase() {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
+// async function initializeFirebase() {
+//   try {
+//     admin.initializeApp({
+//       credential: admin.credential.cert(serviceAccount),
+//     });
 
-    console.log("Firebase initialized successfully");
-  } catch (err) {
-    console.error("Error retrieving secret or initializing Firebase:", err);
-  }
-}
+//     console.log("Firebase initialized successfully");
+//   } catch (err) {
+//     console.error("Error retrieving secret or initializing Firebase:", err);
+//   }
+// }
 
-initializeFirebase();
+// initializeFirebase();
 app.post(
   "/api/v1/upload",
   upload.single("upload"),
