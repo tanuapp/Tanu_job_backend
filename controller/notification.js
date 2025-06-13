@@ -52,13 +52,18 @@ exports.sendMass = asyncHandler(async (req, res, next) => {
 
 exports.sendFirebase = asyncHandler(async (req, res) => {
   try {
-    const users = await User.find(); // Or filter who to send
-
+    const user = await User.findOne({
+      phone:"80641595"
+    });
+    console.log(user);
+    // const sendFirebaseNotification = 
+    // async ({ title, body, data = {}, topic = null, token = null }) => {
+  
     const result = await sendFirebaseNotification({
       title: req.body.data.title,
       body: req.body.data.description,
       data: req.body.data,
-      topic: "your_topic_here" // or use token: "device_token"
+      topic: user.firebase_token // or use token: "device_token"
     });
 
     if (result.success) {
