@@ -56,6 +56,9 @@ const agentRoute = require("./routes/agent.js");
 
 // Multer setup
 const multer = require("multer");
+const { default: FirebaseConfig } = require("./firebaseInit.js");
+const FirebaseConfig = require('./firebaseInit.js');
+const firebaseInstance = new FirebaseConfig();
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -94,7 +97,7 @@ const io = new Server(httpServer, {
 
 // DB connection
 connectDB();
-
+firebaseInstance.init();
 app.set("io", io);
 
 // CORS
