@@ -237,13 +237,3 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
-exports.savetoken = asyncHandler(async (req, res, next) => {
-  try {
-    const { token } = req.body;
-    const companyId = req.userId;
-    await Company.findByIdAndUpdate(companyId, { fcmToken: token });
-    res.status(200).json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});

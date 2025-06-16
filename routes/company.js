@@ -12,14 +12,12 @@ const {
   getCompanyBanner,
   deleteModel,
   addContract,
-  savetoken,
 } = require("../controller/company");
 const router = express.Router();
 
 // const isActive = false;s
 
 router.route("/contract").post(upload.single("file"), addContract);
-router.route("/save-token").post(savetoken);
 router
   .route("/")
   .post(

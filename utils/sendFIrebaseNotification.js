@@ -1,10 +1,4 @@
-const sendFirebaseNotification = async ({
-  title,
-  body,
-  data = {},
-  topic = null,
-  token = null,
-}) => {
+const sendFirebaseNotification = async ({ title, body, data = {}, token }) => {
   if (!global.fireadmin) {
     throw new Error("Firebase Admin is not initialized.");
   }
@@ -19,23 +13,27 @@ const sendFirebaseNotification = async ({
       title,
       body,
     },
+    token,
+    android: {
+      notification: {
+        sound: "default",
+      },
+    },
+    apns: {
+      payload: {
+        aps: {
+          sound: "default",
+        },
+      },
+    },
   };
-
-  // Хаяг сонгох
-  if (topic) {
-    message.topic = topic;
-  } else if (token) {
-    message.token = token;
-  } else {
-    throw new Error("No topic or token specified");
-  }
 
   try {
     const response = await global.fireadmin.messaging().send(message);
-    console.log("✅ Firebase push илгээгдлээ:", response);
+    console.log("✅ Firebase notification sent:", response);
     return { success: true, response };
   } catch (error) {
-    console.error("❌ Firebase push алдаа:", error);
+    console.error("❌ Firebase notification error:", error.message);
     return { success: false, error };
   }
 };
