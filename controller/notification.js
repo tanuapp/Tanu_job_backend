@@ -55,13 +55,14 @@ exports.sendFirebase = asyncHandler(async (req, res) => {
     const user = await User.findOne({
       phone:"80641595"
     });
-    console.log(user);
+    // console.log(user);
+
     // const sendFirebaseNotification = 
     // async ({ title, body, data = {}, topic = null, token = null }) => {
-  
+      
     const result = await sendFirebaseNotification({
-      title: req.body.data.title,
-      body: req.body.data.description,
+      title: req.body.title,
+      body: req.body.body,
       data: req.body.data,
       token: user.firebase_token // or use token: "device_token"
     });
