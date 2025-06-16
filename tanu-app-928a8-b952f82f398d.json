@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "tanu-app-928a8",
+  "private_key_id": "b952f82f398d561a3d74ecda8d689fb6571a11cd",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCZvIxuPFWko/K8\n3lmPKj4sLJZcKQSRWPVMjiKVjH6bo1DQKx+e6wHvXfUfMTprBzcvtpgzjl2rH2tr\n1TqkbnFroklmWSrGl/sfnpB6gLa4c7FaeCDDP4IDmg84NAnRzG0Sz4D7CxPhyQaT\n2f0sxhBzexkA68VEowan1Qoyk9hKVscuPBXcEx/OCnD8nerQpgd7lmqOTsSK5Pch\nL8DJqTNH2pMPczKSi2II2P6PdBs58LRcfau3Qfxw2I7/qGNGm4vlylXn7n2/x3TG\nnRx4fqFOnQ66jfw1H7u/WpLKudJ1SFRbkWS/3LILEoVuPrHpQNQXezhMq/dZOhFW\nRjmPecBjAgMBAAECggEAAiFGoNBdL2bGGi/Kdd1T9zC29Jfs5EajP2hIumGz71wX\n5opyabU/1Z0rpD7+XDVBYnvZJ/209oX86wWNRnHxSFh7Q9vAZ/f7FrkPr2LRJUUV\nE/fOHGZo2rvrsg+mgy2d5UDSvKeuotYyLSI8C77Cw5bVBdo+ZXEMyo59Ea5StNTx\ncYE0pxUIPkcucUd6HiQS9HRwYUB78fPQugHMaiVwhkrWEC600hltAa1mdxal+YvZ\ndNsyUKsa062Lx2TW4b+8s6WRVb6GlV1MqkyQQTu44Gaofk5E2hfwhyFPS5+x7Ath\nUITSQDidEZ65ySTqClIPIzaZ5XzEb9LT8Qy6f3oEIQKBgQDXU9VyV3BGEBHwuYNl\nAMjiedoiubEaJ7CONP/W0nNE6hSHqxgLik1Xxx3lO4W8KOQyDHeMrOin5Si8p+h8\nmVDayBk4c4UpxXt1yN3YkTkLsJiX96SmzL5Ys1fgWRbKy4RS0E8BnS3FkKiXtLfE\nRRdCQT1TNcGTptFnnNJYUYp8pQKBgQC2xnt1MvZ+lqla6pkAR+peX4KHosBJ125M\nNwjjNvhHiM73XoAV44VXMmQ4xGR8VVPWsfRPkmgiI9QQGq03JTkVqOS3Be5Pf2ee\nHhsFXtH1cQnZu126zaeyQH8xnedjFamvPxkB2tPGofFtMpAuI5IKJdJyCKGrtN8k\nrx0rnaYSZwKBgDjy9i/gilQtaeFF30d2Vqr3WUb336wwNRTXVZbGYDAozLc4/AoJ\nUP1XL0PyYyNpmTjXbULqdDn7dLO4oNdbYTQL2gfBHcX3cfir4Gint/OsiB8hIw3u\ndqVVAXfXeBy4iM2yREMEBBgNc1l0NWoWb9lZEdQREppvc1C4/DTZlAv1AoGAMSu+\nhO4b8DxZ/VKFrNSsEY2CUTkQoAzr6GcZ5f6g1qXQgC4VKU5XTfkJi1gSbHyMHIMt\nZcbOavjWkSqMFPzXmaMhPLfEv/BXkOsqe8xhkbVCYCgO9DVlewfs8A059acbSkEg\nWiZjuNlSWP00WqVJIZ/BONpnnAkByx2tLFGyHtsCgYAVSlt4LcdfWLqNniYLe4vW\nYu98E5U1dfHhQY5ZWSmiwX3n7YxKx3Yo8t8ns2tM6Jj2N3lxKpyoKZgWPFyOMU1S\n8K7mze2R3kGkbwvZk0/I+jpXP5TD30Zc62VrdDEpGlaqyiMCzpTDCUyUtdQtyCoU\nUGxEx6DS+j5qFDHTeE+xkw==\n-----END PRIVATE KEY-----\n",
+  "client_email": "tanubusiness@tanu-app-928a8.iam.gserviceaccount.com",
+  "client_id": "116317729382412869718",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/tanubusiness%40tanu-app-928a8.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

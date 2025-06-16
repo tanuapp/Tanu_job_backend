@@ -1,5 +1,5 @@
 const admin = require("firebase-admin");
-const serviceAccountwp = require("./tanu-app-928a8-firebase-adminsdk-mrr1i-c1f11a463c.json");
+const serviceAccountwp = require("./tanu-app-928a8-b952f82f398d.json");
 
 const initFirebase = async () => {
   try {
