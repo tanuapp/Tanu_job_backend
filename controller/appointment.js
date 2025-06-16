@@ -13,6 +13,7 @@ const QRCode = require("qrcode");
 const asyncHandler = require("../middleware/asyncHandler");
 const { generateCredential, send } = require("../utils/khan");
 const Company = require("../models/company");
+const sendFirebaseNotification = require("../utils/sendFIrebaseNotification");
 const cron = require("node-cron");
 const moment = require("moment");
 
@@ -234,11 +235,28 @@ exports.create = asyncHandler(async (req, res, next) => {
         "newPendingAppointment",
         appointment
       );
-      console.log(
-        "📢 Sent newPendingAppointment to:",
-        sch.companyId.toString()
-      );
+      console.log("📢 Sent socket: newPendingAppointment");
+
+      // Firebase push
+      const company = await Company.findById(sch.companyId);
+      if (company?.fcmToken) {
+        await sendFirebaseNotification({
+          title: "Шинэ захиалга",
+          body: `${appointment.serviceName} үйлчилгээ ${appointment.date} өдөр захиалагдлаа`,
+          token: company.fcmToken,
+          data: {
+            type: "pending_appointment",
+            appointmentId: appointment._id.toString(),
+            userName: appointment.userName || "",
+            userPhone: appointment.userPhone || "",
+            date: appointment.date,
+            time: appointment.start,
+            serviceName: appointment.serviceName,
+          },
+        });
+      }
     }
+
     customResponse.success(res, appointment);
   } catch (error) {
     customResponse.error(res, error.message);

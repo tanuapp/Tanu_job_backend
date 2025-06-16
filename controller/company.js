@@ -120,14 +120,17 @@ exports.createModel = asyncHandler(async (req, res, next) => {
     console.log(req.body);
     const logo =
       req.files && req.files.logo ? req.files.logo[0].filename : "no-logo.png";
-      
+
     const uploadedFiles = [];
-    if (req.files && req.files.sliderImages && Array.isArray(req.files.sliderImages)) {
+    if (
+      req.files &&
+      req.files.sliderImages &&
+      Array.isArray(req.files.sliderImages)
+    ) {
       for (let file of req.files.sliderImages) {
         uploadedFiles.push(file.filename);
       }
     }
-
 
     const company = await Model.create({
       ...req.body,
@@ -135,7 +138,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
         ? JSON.parse(req.body.timetable || "[]")
         : [],
       logo,
-      sliderImages :uploadedFiles,
+      sliderImages: uploadedFiles,
       category: JSON.parse(req.body.category || "[]") || [],
     });
 
@@ -234,4 +237,13 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
-
+exports.savetoken = asyncHandler(async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    const companyId = req.userId;
+    await Company.findByIdAndUpdate(companyId, { fcmToken: token });
+    res.status(200).json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
