@@ -256,6 +256,7 @@ exports.create = asyncHandler(async (req, res, next) => {
         });
       }
     }
+    console.log("📢company.fcmToken", company.fcmToken);
 
     customResponse.success(res, appointment);
   } catch (error) {
