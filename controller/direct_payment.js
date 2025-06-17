@@ -102,6 +102,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         date,
         status: "pending", // Түр баталгаажуулаагүй төлөв
       });
+      console.log("📲req.userId", req.userId);
 
       const user = await User.findById(req.userId);
       console.log("📦 Зөв user олдсон уу:", !!user);
