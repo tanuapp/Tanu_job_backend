@@ -6,6 +6,9 @@ const { default: axios } = require("axios");
 const customResponse = require("../utils/customResponse");
 const path = require("path");
 const fs = require("fs");
+const sendFirebaseNotification = require("../utils/sendFIrebaseNotification");
+
+const User = require("../models/user");
 const QRCode = require("qrcode");
 
 exports.completeAppointment = asyncHandler(async (req, res, next) => {
@@ -99,6 +102,19 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         date,
         status: "pending", // Түр баталгаажуулаагүй төлөв
       });
+
+      const user = await User.findById(req.userId); // ❗ userId биш req.userId
+      if (user?.firebase_token) {
+        await sendFirebaseNotification({
+          title: "Шинэ захиалга",
+          body: "Таны захиалгыг хүлээн авлаа!",
+          token: user.firebase_token,
+          data: {
+            type: "appointment",
+            id: app._id.toString(),
+          },
+        });
+      }
 
       const io = req.app.get("io");
       if (!io) {

@@ -239,6 +239,7 @@ exports.create = asyncHandler(async (req, res, next) => {
 
       // Firebase push
       const company = await Company.findById(sch.companyId);
+
       if (company?.fcmToken) {
         await sendFirebaseNotification({
           title: "Шинэ захиалга",
