@@ -104,7 +104,14 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       });
       console.log("📲req.userId", req.userId);
 
-      const user = await User.findById(req.userId);
+      // Гар аргаар утасны дугаар тохируулах
+      const phone = "80641595";
+      let user = await User.findOne({ phone });
+
+      if (!user) {
+        user = await Artist.findOne({ phone });
+      }
+
       console.log("📦 Зөв user олдсон уу:", !!user);
       console.log("📲 Firebase token:", user?.firebase_token);
 
@@ -125,7 +132,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
           console.log("❌ Notification алдаа:", notifResult.error);
         }
       } else {
-        console.log("⚠️ Хэрэглэгчийн firebase_token байхгүй байна!");
+        console.log("⚠️ Firebase token олдсонгүй!");
       }
 
       const io = req.app.get("io");
