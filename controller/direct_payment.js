@@ -103,9 +103,12 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         status: "pending", // Түр баталгаажуулаагүй төлөв
       });
 
-      const user = await User.findById(req.userId); // ❗ userId биш req.userId
+      const user = await User.findById(req.userId);
+      console.log("📦 Зөв user олдсон уу:", !!user);
+      console.log("📲 Firebase token:", user?.firebase_token);
+
       if (user?.firebase_token) {
-        await sendFirebaseNotification({
+        const notifResult = await sendFirebaseNotification({
           title: "Шинэ захиалга",
           body: "Таны захиалгыг хүлээн авлаа!",
           token: user.firebase_token,
@@ -114,6 +117,14 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
             id: app._id.toString(),
           },
         });
+
+        if (notifResult.success) {
+          console.log("✅ Notification илгээгдлээ:", notifResult.response);
+        } else {
+          console.log("❌ Notification алдаа:", notifResult.error);
+        }
+      } else {
+        console.log("⚠️ Хэрэглэгчийн firebase_token байхгүй байна!");
       }
 
       const io = req.app.get("io");
