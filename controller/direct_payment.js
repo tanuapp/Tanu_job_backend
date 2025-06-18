@@ -108,11 +108,12 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       console.log("company3", company);
 
       // schedule → artistId → companyId
-      const artistCompanyId = scheduleDoc.companyId?.companyId;
-      console.log("company4", artistCompanyId);
+      const artistCompanyId = company._id;
+      console.log("✅ artistCompanyId:22", artistCompanyId);
 
       if (artistCompanyId) {
-        const companyUser = await Company.findOne({ company: company });
+        console.log("✅ artistCompanyId:33", artistCompanyId);
+        const companyUser = await Company.findOne({ _id: artistCompanyId });
 
         console.log("📦 Компанийн хэрэглэгч олдсон уу:", !!companyUser);
         console.log("📲 Firebase token:", companyUser?.firebase_token);
