@@ -44,7 +44,10 @@ const companySchema = new mongoose.Schema({
   phone: { type: String },
   orderCancelHour: { type: Number, default: 2 },
   advancePayment: { type: Number, default: 10 },
-
+  firebase_token: {
+    type: String,
+    default: "",
+  },
   timetable: [],
   numberOfArtist: {
     type: Number,

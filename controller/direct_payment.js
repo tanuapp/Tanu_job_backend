@@ -1,6 +1,7 @@
 const Appointment = require("../models/appointment");
 const Schedule = require("../models/schedule");
 const Invoice = require("../models/invoice");
+const Company = require("../models/company");
 const asyncHandler = require("../middleware/asyncHandler");
 const { default: axios } = require("axios");
 const customResponse = require("../utils/customResponse");
@@ -104,35 +105,37 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       });
       console.log("📲req.userId", req.userId);
 
-      // Гар аргаар утасны дугаар тохируулах
-      const phone = "80641595";
-      let user = await User.findOne({ phone });
+      // schedule → artistId → companyId
+      const artistCompanyId = scheduleDoc.companyId?.companyId;
+      console.log("company", company);
 
-      if (!user) {
-        user = await Artist.findOne({ phone });
-      }
+      if (artistCompanyId) {
+        const companyUser = await Company.findOne({ company: company });
 
-      console.log("📦 Зөв user олдсон уу:", !!user);
-      console.log("📲 Firebase token:", user?.firebase_token);
+        console.log("📦 Компанийн хэрэглэгч олдсон уу:", !!companyUser);
+        console.log("📲 Firebase token:", companyUser?.firebase_token);
 
-      if (user?.firebase_token) {
-        const notifResult = await sendFirebaseNotification({
-          title: "Шинэ захиалга",
-          body: "Таны захиалгыг хүлээн авлаа!",
-          token: user.firebase_token,
-          data: {
-            type: "appointment",
-            id: app._id.toString(),
-          },
-        });
+        if (companyUser?.firebase_token) {
+          const notifResult = await sendFirebaseNotification({
+            title: "Шинэ захиалга",
+            body: "Таны компанид шинэ захиалга ирлээ!",
+            token: companyUser.firebase_token,
+            data: {
+              type: "appointment",
+              id: app._id.toString(),
+            },
+          });
 
-        if (notifResult.success) {
-          console.log("✅ Notification илгээгдлээ:", notifResult.response);
+          if (notifResult.success) {
+            console.log("✅ Notification илгээгдлээ:", notifResult.response);
+          } else {
+            console.log("❌ Notification алдаа:", notifResult.error);
+          }
         } else {
-          console.log("❌ Notification алдаа:", notifResult.error);
+          console.log(
+            "⚠️ Компанийн хэрэглэгчийн firebase_token байхгүй байна!"
+          );
         }
-      } else {
-        console.log("⚠️ Firebase token олдсонгүй!");
       }
 
       const io = req.app.get("io");
