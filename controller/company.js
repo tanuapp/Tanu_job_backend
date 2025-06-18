@@ -57,6 +57,33 @@ exports.getAllPopulated = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.updateUserFCM = asyncHandler(async (req, res, next) => {
+  try {
+    const { token, isAndroid } = req.body;
+
+    const userFind = await Model.findOne({ companyOwner: req.userId });
+
+    if (!userFind) {
+      return res.status(400).json({
+        success: false,
+        message: "Бүртгэлгүй",
+      });
+    }
+
+    if (userFind) {
+      userFind.firebase_token = token;
+      userFind.isAndroid = isAndroid;
+      await userFind.save();
+    }
+
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+    customResponse.error(res, error.message);
+  }
+});
 exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
   try {
     const artistList = await Artist.find({

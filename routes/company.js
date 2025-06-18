@@ -12,6 +12,7 @@ const {
   getCompanyBanner,
   deleteModel,
   addContract,
+  updateUserFCM,
 } = require("../controller/company");
 const router = express.Router();
 
@@ -29,6 +30,7 @@ router
     createModel
   )
   .get(getAll);
+router.route("/fcm").post(protect, updateUserFCM);
 
 router
   .route("/:id")
