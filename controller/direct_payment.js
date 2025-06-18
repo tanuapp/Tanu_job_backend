@@ -94,6 +94,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
     const price = parseFloat(service.price);
     const advancePercent = parseFloat(company.advancePayment || 0);
     const advanceAmount = Math.floor((price * advancePercent) / 100);
+    console.log("company1", company);
 
     // ⚠️ Хэрэв урьдчилгаа 0 бол баталгаажуулалт руу шилжүүлнэ
     if (advanceAmount === 0) {
@@ -103,11 +104,12 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         date,
         status: "pending", // Түр баталгаажуулаагүй төлөв
       });
-      console.log("📲req.userId", req.userId);
+      console.log("company2", company);
+      console.log("company3", company);
 
       // schedule → artistId → companyId
       const artistCompanyId = scheduleDoc.companyId?.companyId;
-      console.log("company", company);
+      console.log("company4", artistCompanyId);
 
       if (artistCompanyId) {
         const companyUser = await Company.findOne({ company: company });
