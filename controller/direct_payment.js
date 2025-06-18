@@ -104,19 +104,12 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         date,
         status: "pending", // Түр баталгаажуулаагүй төлөв
       });
-      console.log("company2", company);
-      console.log("company3", company);
 
       // schedule → artistId → companyId
       const artistCompanyId = company._id;
-      console.log("✅ artistCompanyId:22", artistCompanyId);
 
       if (artistCompanyId) {
-        console.log("✅ artistCompanyId:33", artistCompanyId);
         const companyUser = await Company.findOne({ _id: artistCompanyId });
-
-        console.log("📦 Компанийн хэрэглэгч олдсон уу:", !!companyUser);
-        console.log("📲 Firebase token:", companyUser?.firebase_token);
 
         if (companyUser?.firebase_token) {
           const notifResult = await sendFirebaseNotification({

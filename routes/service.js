@@ -9,6 +9,7 @@ const {
   getAll,
   update,
   getcompany,
+  getServicesByArtist,
 } = require("../controller/service");
 const router = express.Router();
 
@@ -17,9 +18,10 @@ router
   .post(protect, authorize("user admin"), upload.single("file"), create)
   .get(getAll);
 router.route("/company/:id").get(getcompany);
-
+router.post("/getcompany", protect, getServicesByArtist);
 router
   .route("/:id")
+
   .put(protect, upload.single("file"), update)
   .delete(protect, authorize("user admin"), deleteModel)
   .get(get);

@@ -84,6 +84,42 @@ exports.updateUserFCM = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+
+exports.clearFCM = asyncHandler(async (req, res, next) => {
+  try {
+    const { token, isAndroid } = req.body;
+
+    const userFind = await Model.findOne({ companyOwner: req.userId });
+
+    if (!userFind) {
+      return res.status(404).json({
+        success: false,
+        message: "Компанийн хэрэглэгч олдсонгүй",
+      });
+    }
+
+    // Хэрвээ FCM токен тохирохгүй байвал шууд OK буцаана
+    if (userFind.firebase_token !== token) {
+      return res.status(200).json({
+        success: true,
+        message: "FCM token давхцахгүй, устгах шаардлагагүй",
+      });
+    }
+
+    userFind.firebase_token = null;
+    userFind.isAndroid = null;
+    await userFind.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "FCM token амжилттай устгагдлаа",
+    });
+  } catch (error) {
+    console.error("FCM clear error:", error);
+    customResponse.error(res, error.message);
+  }
+});
+
 exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
   try {
     const artistList = await Artist.find({

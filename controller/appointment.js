@@ -179,66 +179,78 @@ exports.getAllPopulated = asyncHandler(async (req, res) => {
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
-    console.log("irlee2 bnshde");
-    // const io = req.app.get("io");
     const io = req.app.get("io");
+    console.log("📥 [CREATE] Appointment POST ирсэн");
+    console.log("🧾 Request Body:", req.body);
+    console.log("🔑 User ID from token:", req.userId);
+
     const { schedule, isOption } = req.body;
 
-    if (!schedule && !isOption) {
-      customResponse.error(res, "Захиалга хийх хуваарь оруулна уу");
-    }
-
+    // Schedule шалгах
     const sch = await Schedule.findById(schedule);
+    console.log("🗓️ Fetched Schedule:", sch);
 
+    // Захиалга үүсгэх өгөгдөл
     const appointmentData = {
       ...req.body,
       user: req.userId,
-      company: sch?.companyId ? sch?.companyId : null,
+      company: sch?.companyId ? sch.companyId : null,
     };
+    console.log("🛠️ Appointment Data to Create:", appointmentData);
 
-    const p = await Model.find({
+    // Хувийн захиалгууд байгаа эсэхийг шалгах
+    const existingAppointments = await Model.find({
       date: req.body.date,
       schedule: req.body.schedule,
       status: "paid",
     });
+    console.log("🔍 Existing Paid Appointments:", existingAppointments);
 
-    console.log(p);
-
-    const mgl = p.filter(
+    const mgl = existingAppointments.filter(
       (item) => item.option != null && item.option != undefined
     );
 
-    if (p.length > 0 && p.length != mgl.length) {
-      customResponse.error(res, "Өөр захиалга үүссэн байна ");
+    if (
+      existingAppointments.length > 0 &&
+      existingAppointments.length != mgl.length
+    ) {
+      console.log("❌ Захиалгын зөрчилтэй бүртгэл байна");
+      return customResponse.error(res, "Өөр захиалга үүссэн байна ");
     }
 
+    // Захиалга үүсгэх
     const appointment = await Model.create(appointmentData);
+    console.log("✅ Created Appointment:", appointment);
 
-    // Generate QR code data
+    // QR Code үүсгэх
     const qrData = `Appointment ID: ${appointment._id}\nDate: ${appointment.date}\nUser ID: ${appointment.user}`;
-
-    // Define the file path for saving the QR code
     const qrFilePath = path.join(
       __dirname,
       "../public/uploads/",
       `${appointment._id}-qr.png`
     );
 
-    // Generate and save the QR code image
     await QRCode.toFile(qrFilePath, qrData);
+    console.log("🖨️ QR code saved:", qrFilePath);
 
-    // Update appointment with the QR code file path
     appointment.qr = `${appointment._id}-qr.png`;
     await appointment.save();
+    console.log("📌 Appointment updated with QR");
+
+    // Socket ба Firebase Push
     if (appointment.status === "pending" && sch?.companyId) {
       io.to(sch.companyId.toString()).emit(
         "newPendingAppointment",
         appointment
       );
-      console.log("📢 Sent socket: newPendingAppointment");
+      console.log(
+        "📢 Socket sent: newPendingAppointment ->",
+        sch.companyId.toString()
+      );
 
-      // Firebase push
       const company = await Company.findById(sch.companyId);
+      console.log("🏢 Company found:", company?.name);
+      console.log("📲 FCM Token:", company?.fcmToken);
 
       if (company?.fcmToken) {
         await sendFirebaseNotification({
@@ -255,15 +267,17 @@ exports.create = asyncHandler(async (req, res, next) => {
             serviceName: appointment.serviceName,
           },
         });
+        console.log("📨 Firebase push илгээгдсэн");
       }
     }
-    console.log("📢company.fcmToken", company.fcmToken);
 
-    customResponse.success(res, appointment);
+    return customResponse.success(res, appointment);
   } catch (error) {
-    customResponse.error(res, error.message);
+    console.error("🔥 Error in create appointment:", error);
+    return customResponse.error(res, error.message);
   }
 });
+
 exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
   console.log("bn", req.body);
   const { date, service, artist } = req.body;

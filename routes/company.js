@@ -13,11 +13,11 @@ const {
   deleteModel,
   addContract,
   updateUserFCM,
+  clearFCM,
 } = require("../controller/company");
 const router = express.Router();
 
 // const isActive = false;s
-
 router.route("/contract").post(upload.single("file"), addContract);
 router
   .route("/")
@@ -30,6 +30,8 @@ router
     createModel
   )
   .get(getAll);
+router.post("/fcm/clear", protect, clearFCM);
+
 router.route("/fcm").post(protect, updateUserFCM);
 
 router
