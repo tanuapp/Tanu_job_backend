@@ -10,6 +10,7 @@ const fs = require("fs");
 const sendFirebaseNotification = require("../utils/sendFIrebaseNotification");
 
 const User = require("../models/user");
+const Customer = require("../models/customer");
 const QRCode = require("qrcode");
 
 exports.completeAppointment = asyncHandler(async (req, res, next) => {
@@ -77,6 +78,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
     // schedule -> serviceId -> companyId (+advancePayment)
     const scheduleDoc = await Schedule.findById(schedule).populate({
       path: "serviceId",
+      select: "service_name price companyId",
       populate: {
         path: "companyId",
         model: "Company",
@@ -104,7 +106,11 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         date,
         status: "pending", // Түр баталгаажуулаагүй төлөв
       });
+      // 🔻 User мэдээлэл олж авах
+      const fullUser = await Customer.findById(app.user); // app.user == req.userId
+      const userName = `${fullUser?.last_name || ""}`.trim() || "Үл мэдэгдэх";
 
+      const userPhone = fullUser?.phone || "N/A";
       // schedule → artistId → companyId
       const artistCompanyId = company._id;
 
@@ -119,6 +125,11 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
             data: {
               type: "appointment",
               id: app._id.toString(),
+              name: userName,
+              phone: userPhone,
+              date,
+              time: scheduleDoc.start || "00:00", // optional: get from schedule
+              service: service.service_name,
             },
           });
 
@@ -175,6 +186,41 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       user: req.userId || null,
       date,
     });
+
+    const fullUser = await Customer.findById(app.user); // app.user == req.userId
+    const userName = `${fullUser?.last_name || ""}`.trim() || "Үл мэдэгдэх";
+
+    const userPhone = fullUser?.phone || "N/A";
+    // schedule → artistId → companyId
+    const artistCompanyId = company._id;
+    if (artistCompanyId) {
+      const companyUser = await Company.findOne({ _id: artistCompanyId });
+
+      if (companyUser?.firebase_token) {
+        const notifResult = await sendFirebaseNotification({
+          title: "Шинэ захиалга",
+          body: "Таны компанид шинэ захиалга ирлээ!",
+          token: companyUser.firebase_token,
+          data: {
+            type: "advancedPayment",
+            id: app._id.toString(),
+            name: userName,
+            phone: userPhone,
+            date,
+            time: scheduleDoc.start || "00:00", // optional: get from schedule
+            service: service.service_name,
+          },
+        });
+
+        if (notifResult.success) {
+          console.log("✅ Notification илгээгдлээ:", notifResult.response);
+        } else {
+          console.log("❌ Notification алдаа:", notifResult.error);
+        }
+      } else {
+        console.log("⚠️ Компанийн хэрэглэгчийн firebase_token байхгүй байна!");
+      }
+    }
 
     // QR код үүсгэх
     const qrData = `Appointment ID: ${app._id}\nDate: ${app.date}\nUser ID: ${app.user}`;
