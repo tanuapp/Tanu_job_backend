@@ -4,18 +4,19 @@ const sendFirebaseNotification = async ({ title, body, data = {}, token }) => {
   }
 
   const message = {
-    notification:{
+    notification: {
       title: String(title),
-      body: String(body)
+      body: String(body),
     },
-    data:  Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
+    data: Object.fromEntries(
+      Object.entries(data).map(([k, v]) => [k, String(v)])
+    ),
     token,
     android: {
       notification: {
         sound: "default",
       },
     },
-    data:{},
     apns: {
       headers: {
         "apns-priority": "10",
@@ -26,7 +27,7 @@ const sendFirebaseNotification = async ({ title, body, data = {}, token }) => {
           sound: "default",
         },
       },
-    }
+    },
   };
 
   try {
@@ -39,31 +40,31 @@ const sendFirebaseNotification = async ({ title, body, data = {}, token }) => {
   }
 };
 
-  // console.log("📤 Firebase Message:", message);
-  // const message = {
-  //   notification: {
-  //     title,
-  //     body,
-  //   },
-  //   data: {
-  //     ...data,
-  //     title,
-  //     body,
-  //   },
-  //   token,
-  //   android: {
-  //     notification: {
-  //       sound: "default",
-  //     },
-  //   },
-  //   apns: {
-  //     payload: {
-  //       aps: {
-  //         sound: "default",
-  //       },
-  //     },
-  //   },
-  // };
+// console.log("📤 Firebase Message:", message);
+// const message = {
+//   notification: {
+//     title,
+//     body,
+//   },
+//   data: {
+//     ...data,
+//     title,
+//     body,
+//   },
+//   token,
+//   android: {
+//     notification: {
+//       sound: "default",
+//     },
+//   },
+//   apns: {
+//     payload: {
+//       aps: {
+//         sound: "default",
+//       },
+//     },
+//   },
+// };
 //   console.log(message);
 //   try {
 //     const response = await global.fireadmin.messaging().send(message);
