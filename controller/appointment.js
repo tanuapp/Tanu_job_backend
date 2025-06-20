@@ -110,9 +110,12 @@ exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
   // 🔍 зөвхөн schedule байгаа захиалгууд
   const validAppointments = appointments.filter((a) => a.schedule != null);
 
-  const startTimes = validAppointments.map((a) => a.schedule.start);
-  console.log("startTimes", startTimes);
-  return customResponse.success(res, startTimes);
+  const times = validAppointments.map((a) => ({
+    start: a.schedule.start,
+    end: a.schedule.end,
+  }));
+  console.log("bookedTimes", times);
+  return customResponse.success(res, times);
 });
 
 exports.declineAppointment = asyncHandler(async (req, res, next) => {
@@ -329,6 +332,86 @@ exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
   console.log(availableSchedules), "schedule";
 
   customResponse.success(res, availableSchedules);
+});
+exports.getAvailableTimesAdmin = asyncHandler(async (req, res, next) => {
+  const { date, artist } = req.body;
+  console.log("getAvailableTimesAdmin:", { date, artist });
+
+  if (!date || !artist) {
+    return res.status(400).json({
+      success: false,
+      message: "Date and artist are required",
+    });
+  }
+
+  const schedules = await Schedule.find({ artistId: artist }).populate(
+    "serviceId"
+  );
+  const appointments = await Appointment.find({
+    date,
+    status: "paid",
+    "schedule.artistId": artist,
+  }).populate("schedule");
+
+  if (!schedules || schedules.length === 0) {
+    return res.status(404).json({
+      success: false,
+      message: "No schedules found for this artist",
+    });
+  }
+
+  // Захиалсан цагуудын жагсаалт гаргах
+  const bookedTimes = appointments.map((appt) => {
+    return {
+      start: appt.schedule.start,
+      end: appt.schedule.end,
+    };
+  });
+
+  // Utility function to get minutes
+  const toMinutes = (timeStr) => {
+    const [h, m] = timeStr.split(":").map(Number);
+    return h * 60 + m;
+  };
+
+  const toTimeString = (mins) => {
+    const h = String(Math.floor(mins / 60)).padStart(2, "0");
+    const m = String(mins % 60).padStart(2, "0");
+    return `${h}:${m}`;
+  };
+
+  // Хоосон цагаар интервал үүсгэх
+  let availableSlots = [];
+
+  for (const schedule of schedules) {
+    const serviceDuration = schedule.serviceId.duration || 20;
+
+    let startMins = toMinutes(schedule.start);
+    const endMins = toMinutes(schedule.end);
+
+    while (startMins + serviceDuration <= endMins) {
+      const slotStart = toTimeString(startMins);
+      const slotEnd = toTimeString(startMins + serviceDuration);
+
+      const overlaps = bookedTimes.some((bt) => {
+        const btStart = toMinutes(bt.start);
+        const btEnd = toMinutes(bt.end);
+        return (
+          (startMins >= btStart && startMins < btEnd) ||
+          (startMins + serviceDuration > btStart &&
+            startMins + serviceDuration <= btEnd)
+        );
+      });
+
+      if (!overlaps) {
+        availableSlots.push({ start: slotStart, end: slotEnd });
+      }
+
+      startMins += 5; // 5 мин интервал
+    }
+  }
+
+  customResponse.success(res, availableSlots);
 });
 
 exports.getAvailableTimesByArtist = asyncHandler(async (req, res, next) => {

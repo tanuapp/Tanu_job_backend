@@ -17,6 +17,7 @@ const {
   markCashPaid,
   getCompanyAppointments,
   confirmAppointment,
+  getAvailableTimesAdmin,
 } = require("../controller/appointment");
 
 const router = express.Router();
@@ -37,6 +38,7 @@ router.route("/booked").get(getBookedTimesForArtist);
 
 // Боломжит (available) цагуудыг авах
 router.route("/available").post(getAvailableTimes);
+router.route("/available/admin").post(getAvailableTimesAdmin);
 
 // Захиалгуудыг populate хийн харуулах
 router.route("/populated").get(getAllPopulated);
