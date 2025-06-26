@@ -25,6 +25,9 @@ const companySchema = new mongoose.Schema({
   companyCode: { type: String },
   bankCode: { type: String },
   address: { type: String },
+  interval: { type: String },
+  fb: { type: String },
+  instagram: { type: String },
   category: { type: [Schema.Types.ObjectId], ref: "Category", required: true },
 
   onlineContract: {
@@ -44,7 +47,10 @@ const companySchema = new mongoose.Schema({
   phone: { type: String },
   orderCancelHour: { type: Number, default: 2 },
   advancePayment: { type: Number, default: 10 },
-
+  firebase_token: {
+    type: String,
+    default: "",
+  },
   timetable: [],
   numberOfArtist: {
     type: Number,

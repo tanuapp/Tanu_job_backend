@@ -18,6 +18,7 @@ const {
   getAdmin,
   checkPersonPhone,
   AdminLogin,
+  updateUserFCM,
 } = require("../controller/user");
 const router = express.Router();
 
@@ -31,6 +32,7 @@ router.post("/reset-password", resetPasswordWithOtp);
 router.route("/register-verify").post(registerVerify);
 router.route("/").get(getAll).post(create);
 router.route("/admin").get(protect, getAdmin);
+router.route("/fcm").post(protect, updateUserFCM);
 router.route("/checkPersonPhone").post(checkPersonPhone);
 router.route("/:id").put(protect, update).delete(deleteModel).get(get);
 // .delete(protect, authorize("admin"), deleteModel)

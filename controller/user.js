@@ -356,7 +356,35 @@ exports.Login = asyncHandler(async (req, res, next) => {
     customResponse.server(res, error.message);
   }
 });
+exports.updateUserFCM = asyncHandler(async (req, res, next) => {
+  try {
+    const { token, isAndroid } = req.body;
 
+    console.log(req.userId);
+
+    const userFind = await User.findById(req.userId);
+
+    if (!userFind) {
+      return res.status(400).json({
+        success: false,
+        message: "Бүртгэлгүй",
+      });
+    }
+
+    if (userFind) {
+      userFind.firebase_token = token;
+      userFind.isAndroid = isAndroid;
+      await userFind.save();
+    }
+
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+    customResponse.error(res, error.message);
+  }
+});
 exports.update = asyncHandler(async (req, res, next) => {
   try {
     const updatedData = {

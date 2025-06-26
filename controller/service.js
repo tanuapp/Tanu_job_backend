@@ -36,6 +36,73 @@ exports.getcompany = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+exports.getServicesByArtist = asyncHandler(async (req, res) => {
+  try {
+    console.log("🚀 [SERVICE] getServicesByArtist дуудлаа");
+
+    const { artistId } = req.body;
+
+    if (!artistId) {
+      return res.status(400).json({
+        success: false,
+        msg: "artistId байхгүй байна",
+      });
+    }
+
+    console.log("🎨 artistId:", artistId);
+
+    // Зөвхөн artistId-аар шүүх
+    const services = await Model.find({ artistId }).populate({
+      path: "artistId",
+      select: "first_name last_name photo",
+    });
+
+    const total = await Model.countDocuments({ artistId });
+
+    res.status(200).json({
+      success: true,
+      count: total,
+      data: services,
+    });
+
+    console.log("✅ Services found for artist:", services.length);
+  } catch (error) {
+    console.log("❌ Error:", error.message);
+    customResponse.error(res, error.message);
+  }
+});
+
+exports.getServicesByIds = asyncHandler(async (req, res) => {
+  try {
+    const { serviceIds } = req.body;
+
+    if (!Array.isArray(serviceIds) || serviceIds.length === 0) {
+      console.warn("⚠️ [getServicesByIds] serviceIds is missing or invalid");
+      return res.status(400).json({
+        success: false,
+        msg: "serviceIds массив хоосон эсвэл буруу байна",
+      });
+    }
+
+    const services = await Model.find({
+      _id: { $in: serviceIds },
+    }).populate({
+      path: "artistId",
+      select: "first_name last_name photo",
+    });
+
+    services.forEach((s) => {});
+
+    return res.status(200).json({
+      success: true,
+      count: services.length,
+      data: services,
+    });
+  } catch (error) {
+    console.error("❌ [getServicesByIds] Error:", error.message);
+    customResponse.error(res, error.message);
+  }
+});
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {

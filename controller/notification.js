@@ -5,6 +5,8 @@ const apnService = require("../utils/apnService");
 const User = require("../models/customer");
 const customResponse = require("../utils/customResponse");
 
+const sendFirebaseNotification = require("./../utils/sendFIrebaseNotification");
+
 exports.send = asyncHandler(async (req, res, next) => {
   try {
     const { deviceTokens, alertMessage } = req.body;
@@ -46,3 +48,38 @@ exports.sendMass = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+
+
+exports.sendFirebase = asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findOne({
+      phone:"80641595"
+    });
+    // console.log(user);
+
+    // const sendFirebaseNotification = 
+    // async ({ title, body, data = {}, topic = null, token = null }) => {
+      
+    const result = await sendFirebaseNotification({
+      title: req.body.title,
+      body: req.body.body,
+      data: req.body.data,
+      token: user.firebase_token // or use token: "device_token"
+    });
+    console.log(result);
+    if (result.success) {
+      res.status(200).json({
+        success: true,
+        response: result.response,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: result.error.message,
+      });
+    }
+  } catch (error) {
+    customResponse.error(res, error.message);
+  }
+});
+

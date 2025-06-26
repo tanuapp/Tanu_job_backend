@@ -57,6 +57,69 @@ exports.getAllPopulated = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.updateUserFCM = asyncHandler(async (req, res, next) => {
+  try {
+    const { token, isAndroid } = req.body;
+
+    const userFind = await Model.findOne({ companyOwner: req.userId });
+
+    if (!userFind) {
+      return res.status(400).json({
+        success: false,
+        message: "Бүртгэлгүй",
+      });
+    }
+
+    if (userFind) {
+      userFind.firebase_token = token;
+      userFind.isAndroid = isAndroid;
+      await userFind.save();
+    }
+
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+    customResponse.error(res, error.message);
+  }
+});
+
+exports.clearFCM = asyncHandler(async (req, res, next) => {
+  try {
+    const { token, isAndroid } = req.body;
+
+    const userFind = await Model.findOne({ companyOwner: req.userId });
+
+    if (!userFind) {
+      return res.status(404).json({
+        success: false,
+        message: "Компанийн хэрэглэгч олдсонгүй",
+      });
+    }
+
+    // Хэрвээ FCM токен тохирохгүй байвал шууд OK буцаана
+    if (userFind.firebase_token !== token) {
+      return res.status(200).json({
+        success: true,
+        message: "FCM token давхцахгүй, устгах шаардлагагүй",
+      });
+    }
+
+    userFind.firebase_token = null;
+    userFind.isAndroid = null;
+    await userFind.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "FCM token амжилттай устгагдлаа",
+    });
+  } catch (error) {
+    console.error("FCM clear error:", error);
+    customResponse.error(res, error.message);
+  }
+});
+
 exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
   try {
     const artistList = await Artist.find({
@@ -69,18 +132,14 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
     const BannerList = await Banner.find({
       companyId: req.params.id,
     });
-    const DayoffList = await Dayoff.find({
-      companyId: req.params.id,
-    });
+
     const ContractList = await Contract.find({
       companyId: req.params.id,
     });
     const ServiceList = await Service.find({
       companyId: req.params.id,
     });
-    const ScheduleList = await Schedule.find({
-      companyId: req.params.id,
-    }).populate("artistId serviceId");
+
     const allUser = await Fav.findOne({
       user: req.userId,
       company: req.params.id,
@@ -105,8 +164,6 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
       company: comp,
       categories: company.category, // Populated category data
       banner: BannerList,
-      schedule: ScheduleList,
-      dayoff: DayoffList,
       Contract: ContractList,
       service: ServiceList,
     });
@@ -120,14 +177,17 @@ exports.createModel = asyncHandler(async (req, res, next) => {
     console.log(req.body);
     const logo =
       req.files && req.files.logo ? req.files.logo[0].filename : "no-logo.png";
-      
+
     const uploadedFiles = [];
-    if (req.files && req.files.sliderImages && Array.isArray(req.files.sliderImages)) {
+    if (
+      req.files &&
+      req.files.sliderImages &&
+      Array.isArray(req.files.sliderImages)
+    ) {
       for (let file of req.files.sliderImages) {
         uploadedFiles.push(file.filename);
       }
     }
-
 
     const company = await Model.create({
       ...req.body,
@@ -135,7 +195,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
         ? JSON.parse(req.body.timetable || "[]")
         : [],
       logo,
-      sliderImages :uploadedFiles,
+      sliderImages: uploadedFiles,
       category: JSON.parse(req.body.category || "[]") || [],
     });
 
@@ -234,4 +294,3 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
-

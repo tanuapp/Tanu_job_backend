@@ -37,6 +37,10 @@ const userSchema = new Schema({
     type: mongoose.Types.ObjectId,
     ref: "UserRole",
   },
+  firebase_token: {
+    type: String,
+    default: "",
+  },
   last_name: String,
   email: {
     type: String,

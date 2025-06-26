@@ -13,6 +13,7 @@ const QRCode = require("qrcode");
 const asyncHandler = require("../middleware/asyncHandler");
 const { generateCredential, send } = require("../utils/khan");
 const Company = require("../models/company");
+const sendFirebaseNotification = require("../utils/sendFIrebaseNotification");
 
 exports.markCompleted = asyncHandler(async (req, res) => {
   const appointment = await Appointment.findById(req.params.id).populate(
@@ -51,6 +52,29 @@ exports.getAll = asyncHandler(async (req, res, next) => {
     // res.status(500).json({ success: false, message: error.message });
   }
 });
+
+function mergeIntervals(intervals) {
+  if (!intervals.length) return [];
+
+  // start цагийн дагуу эрэмбэлэх
+  intervals.sort((a, b) => a.start.localeCompare(b.start));
+  const merged = [intervals[0]];
+
+  for (let i = 1; i < intervals.length; i++) {
+    const last = merged[merged.length - 1];
+    const current = intervals[i];
+
+    if (current.start <= last.end) {
+      // Давхцаж байвал merge
+      last.end = current.end > last.end ? current.end : last.end;
+    } else {
+      merged.push(current);
+    }
+  }
+
+  return merged;
+}
+
 exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
   const { date, artist } = req.query;
 
@@ -61,21 +85,25 @@ exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
     });
   }
 
-  // paid захиалгуудыг олно
+  // зөвхөн тухайн artist-ийн schedule бүхий paid appointments
   const appointments = await Appointment.find({
     date: date,
     status: "paid",
   }).populate({
     path: "schedule",
-    match: { artistId: artist }, // зөвхөн тухайн artist-ынх
+    match: { artistId: artist },
   });
 
-  // 🔍 зөвхөн schedule байгаа захиалгууд
   const validAppointments = appointments.filter((a) => a.schedule != null);
 
-  const startTimes = validAppointments.map((a) => a.schedule.start);
-  console.log("startTimes", startTimes);
-  return customResponse.success(res, startTimes);
+  const rawIntervals = validAppointments.map((a) => ({
+    start: a.schedule.start,
+    end: a.schedule.end,
+  }));
+
+  const merged = mergeIntervals(rawIntervals);
+
+  return customResponse.success(res, merged);
 });
 
 exports.declineAppointment = asyncHandler(async (req, res, next) => {
@@ -142,62 +170,105 @@ exports.getAllPopulated = asyncHandler(async (req, res) => {
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
-    // const io = req.app.get("io");
+    const io = req.app.get("io");
+    console.log("📥 [CREATE] Appointment POST ирсэн");
+    console.log("🧾 Request Body:", req.body);
+    console.log("🔑 User ID from token:", req.userId);
 
     const { schedule, isOption } = req.body;
 
-    if (!schedule && !isOption) {
-      customResponse.error(res, "Захиалга хийх хуваарь оруулна уу");
-    }
-
+    // Schedule шалгах
     const sch = await Schedule.findById(schedule);
+    console.log("🗓️ Fetched Schedule:", sch);
 
+    // Захиалга үүсгэх өгөгдөл
     const appointmentData = {
       ...req.body,
       user: req.userId,
-      company: sch?.companyId ? sch?.companyId : null,
+      company: sch?.companyId ? sch.companyId : null,
     };
+    console.log("🛠️ Appointment Data to Create:", appointmentData);
 
-    const p = await Model.find({
+    // Хувийн захиалгууд байгаа эсэхийг шалгах
+    const existingAppointments = await Model.find({
       date: req.body.date,
       schedule: req.body.schedule,
       status: "paid",
     });
+    console.log("🔍 Existing Paid Appointments:", existingAppointments);
 
-    console.log(p);
-
-    const mgl = p.filter(
+    const mgl = existingAppointments.filter(
       (item) => item.option != null && item.option != undefined
     );
 
-    if (p.length > 0 && p.length != mgl.length) {
-      customResponse.error(res, "Өөр захиалга үүссэн байна ");
+    if (
+      existingAppointments.length > 0 &&
+      existingAppointments.length != mgl.length
+    ) {
+      console.log("❌ Захиалгын зөрчилтэй бүртгэл байна");
+      return customResponse.error(res, "Өөр захиалга үүссэн байна ");
     }
 
+    // Захиалга үүсгэх
     const appointment = await Model.create(appointmentData);
+    console.log("✅ Created Appointment:", appointment);
 
-    // Generate QR code data
+    // QR Code үүсгэх
     const qrData = `Appointment ID: ${appointment._id}\nDate: ${appointment.date}\nUser ID: ${appointment.user}`;
-
-    // Define the file path for saving the QR code
     const qrFilePath = path.join(
       __dirname,
       "../public/uploads/",
       `${appointment._id}-qr.png`
     );
 
-    // Generate and save the QR code image
     await QRCode.toFile(qrFilePath, qrData);
+    console.log("🖨️ QR code saved:", qrFilePath);
 
-    // Update appointment with the QR code file path
     appointment.qr = `${appointment._id}-qr.png`;
     await appointment.save();
+    console.log("📌 Appointment updated with QR");
 
-    customResponse.success(res, appointment);
+    // Socket ба Firebase Push
+    if (appointment.status === "pending" && sch?.companyId) {
+      io.to(sch.companyId.toString()).emit(
+        "newPendingAppointment",
+        appointment
+      );
+      console.log(
+        "📢 Socket sent: newPendingAppointment ->",
+        sch.companyId.toString()
+      );
+
+      const company = await Company.findById(sch.companyId);
+      console.log("🏢 Company found:", company?.name);
+      console.log("📲 FCM Token:", company?.fcmToken);
+
+      if (company?.fcmToken) {
+        await sendFirebaseNotification({
+          title: "Шинэ захиалга",
+          body: `${appointment.serviceName} үйлчилгээ ${appointment.date} өдөр захиалагдлаа`,
+          token: company.fcmToken,
+          data: {
+            type: "pending_appointment",
+            appointmentId: appointment._id.toString(),
+            userName: appointment.userName || "",
+            userPhone: appointment.userPhone || "",
+            date: appointment.date,
+            time: appointment.start,
+            serviceName: appointment.serviceName,
+          },
+        });
+        console.log("📨 Firebase push илгээгдсэн");
+      }
+    }
+
+    return customResponse.success(res, appointment);
   } catch (error) {
-    customResponse.error(res, error.message);
+    console.error("🔥 Error in create appointment:", error);
+    return customResponse.error(res, error.message);
   }
 });
+
 exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
   console.log("bn", req.body);
   const { date, service, artist } = req.body;
@@ -249,6 +320,86 @@ exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
   console.log(availableSchedules), "schedule";
 
   customResponse.success(res, availableSchedules);
+});
+exports.getAvailableTimesAdmin = asyncHandler(async (req, res, next) => {
+  const { date, artist } = req.body;
+  console.log("getAvailableTimesAdmin:", { date, artist });
+
+  if (!date || !artist) {
+    return res.status(400).json({
+      success: false,
+      message: "Date and artist are required",
+    });
+  }
+
+  const schedules = await Schedule.find({ artistId: artist }).populate(
+    "serviceId"
+  );
+  const appointments = await Appointment.find({
+    date,
+    status: "paid",
+    "schedule.artistId": artist,
+  }).populate("schedule");
+
+  if (!schedules || schedules.length === 0) {
+    return res.status(404).json({
+      success: false,
+      message: "No schedules found for this artist",
+    });
+  }
+
+  // Захиалсан цагуудын жагсаалт гаргах
+  const bookedTimes = appointments.map((appt) => {
+    return {
+      start: appt.schedule.start,
+      end: appt.schedule.end,
+    };
+  });
+
+  // Utility function to get minutes
+  const toMinutes = (timeStr) => {
+    const [h, m] = timeStr.split(":").map(Number);
+    return h * 60 + m;
+  };
+
+  const toTimeString = (mins) => {
+    const h = String(Math.floor(mins / 60)).padStart(2, "0");
+    const m = String(mins % 60).padStart(2, "0");
+    return `${h}:${m}`;
+  };
+
+  // Хоосон цагаар интервал үүсгэх
+  let availableSlots = [];
+
+  for (const schedule of schedules) {
+    const serviceDuration = schedule.serviceId.duration || 20;
+
+    let startMins = toMinutes(schedule.start);
+    const endMins = toMinutes(schedule.end);
+
+    while (startMins + serviceDuration <= endMins) {
+      const slotStart = toTimeString(startMins);
+      const slotEnd = toTimeString(startMins + serviceDuration);
+
+      const overlaps = bookedTimes.some((bt) => {
+        const btStart = toMinutes(bt.start);
+        const btEnd = toMinutes(bt.end);
+        return (
+          (startMins >= btStart && startMins < btEnd) ||
+          (startMins + serviceDuration > btStart &&
+            startMins + serviceDuration <= btEnd)
+        );
+      });
+
+      if (!overlaps) {
+        availableSlots.push({ start: slotStart, end: slotEnd });
+      }
+
+      startMins += 5; // 5 мин интервал
+    }
+  }
+
+  customResponse.success(res, availableSlots);
 });
 
 exports.getAvailableTimesByArtist = asyncHandler(async (req, res, next) => {
@@ -345,6 +496,7 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
     );
 
     if (!artistUser || !artistUser.userRole || !artistUser.userRole.user) {
+      console.error("❌ Step 3 - Missing user role or user information");
       return customResponse.error(
         res,
         "Хэрэглэгчийн эрхийн мэдээлэл дутуу байна"
@@ -352,18 +504,19 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
     }
 
     const realUserId = artistUser.userRole.user;
+
     // 2. Компанийн мэдээлэл олно
     const company = await Company.findOne({ companyOwner: realUserId });
-    const artist = await Artist.find({ companyId: company._id }); // ✅ ОЛОН artist
 
     if (!company) {
+      console.error("❌ Step 6 - Company not found");
       return customResponse.error(res, "Компанийн мэдээлэл олдсонгүй");
     }
 
+    const artist = await Artist.find({ companyId: company._id });
+
     // 3. Компанийн захиалгуудыг авах
-    const appointments = await Appointment.find({
-      company: company._id,
-    })
+    const allAppointments = await Appointment.find()
       .populate({
         path: "schedule",
         populate: [
@@ -375,19 +528,26 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
       .populate("user")
       .populate("company");
 
-    console.log(`✅ Step 4 - Appointments fetched: ${appointments} `);
-    console.log(
-      `✅ Step 5 - Appointments fetched: ${appointments.length} ширхэг`
+    const appointments = allAppointments.filter(
+      (a) => a.schedule?.companyId?._id?.toString() === company._id.toString()
     );
+    const pendingAppointments = appointments.filter(
+      (a) => a.status === "pending"
+    );
+
+    console.log(
+      `🟡 Pending Appointments: ${JSON.stringify(pendingAppointments, null, 2)}`
+    );
+
     // 4. ✅ Компанийн мэдээллийг appointment-уудтай хамт илгээх
     return res.status(200).json({
       success: true,
       data: appointments,
       company,
-      artist, // 👈 нэмэлт компанийн мэдээлэл]
+      artist, // 👈 нэмэлт компанийн мэдээлэл
     });
   } catch (error) {
-    console.error("❌ Step 6 - Error occurred:", error);
+    console.error("❌ Step 10 - Error occurred:", error);
     return customResponse.error(res, error.message || "Алдаа гарлаа");
   }
 });
@@ -530,7 +690,7 @@ exports.confirmAppointment = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Already confirmed or invalid status" });
   }
 
-  appointment.status = "completed";
+  appointment.status = "paid";
   await appointment.save();
 
   return res

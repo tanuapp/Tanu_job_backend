@@ -51,7 +51,7 @@ exports.create = asyncHandler(async (req, res, next) => {
         message: "И-мэйл бүртгэлтэй байна",
       });
     }
-   
+
     const inputData = {
       ...req.body,
       companyId: artister._id.toString(),

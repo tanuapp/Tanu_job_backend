@@ -20,11 +20,24 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
-    const user = await Model.create({ ...req.body });
+    const { start, end, artistId, companyId, date, serviceId = [] } = req.body;
 
+    if (!Array.isArray(serviceId) || serviceId.length === 0) {
+      return customResponse.error(res, "serviceId нь массив байх ёстой.");
+    }
+
+    const schedule = await Model.create({
+      start,
+      end,
+      artistId,
+      companyId,
+      date: date || new Date(), // default: today
+      serviceId: serviceId, // массив хэлбэрээр оруулна
+    });
+    await schedule.save();
     res.status(200).json({
       success: true,
-      data: user,
+      data: schedule,
     });
   } catch (error) {
     console.error("❌ Schedule create error:", error.message);
