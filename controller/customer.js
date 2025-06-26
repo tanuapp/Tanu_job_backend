@@ -121,49 +121,55 @@ exports.getAll = asyncHandler(async (req, res, next) => {
   }
 });
 
-exports.getCustomerAppointments = asyncHandler(async (req, res, next) => {
-  console.log("bnshde");
+exports.getCustomerAppointments = asyncHandler(async (req, res) => {
+  console.log("📥 [getCustomerAppointments] Called by user:", req.userId);
 
   try {
-    const allUser = await Appointment.find({
+    // 1. Find appointments with related schedule, service, artist
+    const allAppointments = await Appointment.find({
       user: req.userId,
       status: { $in: ["paid", "done", "completed"] },
-      // status: true,
     }).populate({
-      path: "schedule", // Populate the 'schedule' field
+      path: "schedule",
       populate: [
         {
-          path: "serviceId", // Populate 'serviceId'
+          path: "serviceId",
           model: "Service",
         },
         {
           path: "artistId",
-          model: "Artist", // Populate 'artistId'
+          model: "Artist",
         },
       ],
     });
-    console.log("userId", req.userId);
-    const lol = await Promise.all(
-      allUser.map(async (list, index) => {
-        const company = await Company.findById(
-          list.schedule.serviceId.companyId
-        );
+
+    // 2. Map & attach company info
+    const result = await Promise.all(
+      allAppointments.map(async (appointment) => {
+        const services = appointment?.schedule?.serviceId;
+        const firstService = Array.isArray(services) ? services[0] : services;
+        const companyId = firstService?.companyId;
+
+        let company = null;
+        if (companyId) {
+          company = await Company.findById(companyId);
+        }
+
         return {
-          company: company,
-          ...list.toObject(),
+          company,
+          ...appointment.toObject(),
         };
       })
     );
-    console.log("hello2");
-    console.log("hello1");
-    console.log("hello");
-    console.log(lol);
 
+    // 3. Return final result
+    console.log("📋 [getCustomerAppointments] Result:", result);
     res.status(200).json({
       success: true,
-      data: lol,
+      data: result,
     });
   } catch (error) {
+    console.error("❌ getCustomerAppointments error:", error.message);
     customResponse.error(res, error.message);
   }
 });

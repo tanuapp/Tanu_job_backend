@@ -16,13 +16,13 @@ const { sendNotification } = require("../utils/apnService.js");
 exports.createqpay = asyncHandler(async (req, res) => {
   try {
     const qpay_token = await qpay.makeRequest();
-    console.log("🔐 access_token:", qpay_token.access_token);
 
     const invoice = await invoiceModel.findById(req.params.id).populate({
       path: "appointment",
     });
 
     if (!invoice) {
+      console.log("❌ Invoice not found");
       return res
         .status(404)
         .json({ success: false, message: "Invoice not found" });
@@ -38,20 +38,23 @@ exports.createqpay = asyncHandler(async (req, res) => {
       year: 12,
     };
 
-    // 🎯 Option-based invoice (package)
+    // ✅ Option-based invoice
     if (invoice.isOption) {
       const opt = await Option.findById(invoice.package);
+
       if (!opt) {
+        console.log("❌ Package not found");
         return res
           .status(400)
           .json({ success: false, message: "Package not found" });
       }
+
       const durationInMonths = durationMap[invoice.appointment.duration];
       amount = Number(opt.price * durationInMonths * (1 - invoice.discount));
       packageName = (opt.name || "Багц").toUpperCase();
     }
 
-    // 🎯 Appointment-based invoice (service)
+    // ✅ Service-based invoice
     else {
       const appointment = await Appointment.findById(
         invoice.appointment._id
@@ -74,27 +77,47 @@ exports.createqpay = asyncHandler(async (req, res) => {
       }
 
       const schedule = appointment.schedule;
-      const service = schedule?.serviceId;
-      const company = service?.companyId;
+      const services = Array.isArray(schedule?.serviceId)
+        ? schedule.serviceId
+        : [schedule.serviceId];
 
-      if (!service || !company) {
+      if (!services || services.length === 0) {
+        console.log("❌ No services found");
         return res.status(400).json({
           success: false,
-          message: "Schedule, Service, or Company missing",
+          message: "Schedule has no services",
         });
       }
 
-      const servicePrice = parseFloat(service.price);
-      const advancePercent = parseFloat(company.advancePayment || 0);
+      const company = services[0]?.companyId;
+      if (!company) {
+        console.log("❌ Company missing in service[0]");
+        return res.status(400).json({
+          success: false,
+          message: "Service company not found",
+        });
+      }
+
       companyName = (company.name || "Компани").toUpperCase();
 
-      // ✅ ШИНЭ: Хэрэв appointment status === "completed" бол үлдэгдэл дүн ашиглана
+      const totalPrice = services.reduce(
+        (sum, s) => sum + parseFloat(s.price || 0),
+        0
+      );
+      const advancePercent = parseFloat(company.advancePayment || 0);
+
       if (appointment.status === "completed") {
-        amount = parseFloat(invoice.amount); // Урьдчилгаа төлсөн, үлдэгдэлд төлж буй
+        amount = parseFloat(invoice.amount);
+        console.log(
+          "✅ Appointment already completed. Using remaining amount:",
+          amount
+        );
       } else {
         amount = invoice.isAdvance
-          ? Math.floor((servicePrice * advancePercent) / 100)
-          : servicePrice;
+          ? Math.floor((totalPrice * advancePercent) / 100)
+          : totalPrice;
+        console.log("💰 Total price:", totalPrice);
+        console.log("💸 Calculated amount:", amount);
       }
     }
 
@@ -141,7 +164,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
         {
           sender_invoice_id: sender_invoice_no,
           qpay_invoice_id: response.data.invoice_id,
-          price: amount, // Always save what was actually used
+          price: amount,
         },
         { new: true }
       );
@@ -151,6 +174,11 @@ exports.createqpay = asyncHandler(async (req, res) => {
         invoice: invoiceUpdate,
         data: response.data,
       });
+    } else {
+      console.log("❌ QPay responded with unexpected status:", response.status);
+      return res
+        .status(500)
+        .json({ success: false, message: "QPay error", data: response.data });
     }
   } catch (error) {
     console.error("❌ createqpay error:", error.message);
