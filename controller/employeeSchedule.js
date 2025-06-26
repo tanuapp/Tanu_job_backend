@@ -1,0 +1,106 @@
+const Model = require("../models/employeeSchedule");
+const asyncHandler = require("../middleware/asyncHandler");
+const mongoose = require("mongoose");
+const customResponse = require("../utils/customResponse");
+
+exports.getAll = asyncHandler(async (req, res) => {
+  const schedules = await Model.find()
+    .populate("serviceId") // ✅ populate array of services
+    .populate("artistId") // ✅ optional: populate artist
+    .populate("companyId"); // optional
+
+  res.status(200).json({
+    success: true,
+    data: schedules,
+  });
+});
+
+exports.create = asyncHandler(async (req, res, next) => {
+  try {
+    const { start, end, artistId, companyId, date, serviceId = [] } = req.body;
+
+    if (!Array.isArray(serviceId) || serviceId.length === 0) {
+      return customResponse.error(res, "serviceId нь массив байх ёстой.");
+    }
+
+    const schedule = await Model.create({
+      start,
+      end,
+      artistId,
+      companyId,
+      date: date || new Date(), // default: today
+      serviceId,
+    });
+    await schedule.save();
+    res.status(200).json({
+      success: true,
+      data: schedule,
+    });
+  } catch (error) {
+    console.error("❌ Schedule create error:", error.message);
+    customResponse.error(res, error.message);
+  }
+});
+
+exports.update = asyncHandler(async (req, res, next) => {
+  console.log("Updating schedule with ID:", req.params.id);
+  try {
+    console.log("Updating schedule with ID:2", req.params.id);
+    console.log("Updating schedule with ID:3", req.body);
+
+    const updatedData = {
+      ...req.body,
+    };
+
+    const upDateUserData = await Model.findByIdAndUpdate(
+      req.params.id,
+      updatedData,
+      {
+        new: true,
+      }
+    );
+    return res.status(200).json({
+      success: true,
+      data: upDateUserData,
+    });
+  } catch (error) {
+    customResponse.error(res, error.message);
+  }
+});
+
+exports.get = asyncHandler(async (req, res, next) => {
+  try {
+    const allText = await Model.findById(req.params.id)
+      .populate("artistId")
+      .populate({
+        path: "serviceId",
+        populate: {
+          path: "companyId",
+          select: "advancePayment",
+        },
+      });
+    allText.views++;
+    await allText.save();
+    return res.status(200).json({
+      success: true,
+      data: allText,
+    });
+  } catch (error) {
+    customResponse.error(res, error.message);
+  }
+});
+
+exports.deleteModel = async function deleteUser(req, res, next) {
+  try {
+    const deletePost = await Model.findByIdAndDelete(req.params.id, {
+      new: true,
+    });
+    return res.status(200).json({
+      success: true,
+      msg: "Ажилттай усгагдлаа",
+      data: deletePost,
+    });
+  } catch (error) {
+    customResponse.error(res, error.message);
+  }
+};

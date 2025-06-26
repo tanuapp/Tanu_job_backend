@@ -31,6 +31,7 @@ const bannerRoutes = require("./routes/banner.js");
 const tanuBannerRoutes = require("./routes/tanuBanner");
 const appointmentRoutes = require("./routes/appointment.js");
 const scheduleRoutes = require("./routes/schedule.js");
+const employeeScheduleRoutes = require("./routes/employeeSchedule.js");
 const artistRoutes = require("./routes/artist.js");
 const personRoutes = require("./routes/person.js");
 const customerRoutes = require("./routes/customer.js");
@@ -56,7 +57,7 @@ const agentRoute = require("./routes/agent.js");
 
 // Multer setup
 const multer = require("multer");
-const initFirebase = require('./firebaseInit.js');
+const initFirebase = require("./firebaseInit.js");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -155,6 +156,7 @@ app.use("/api/v1/banner", bannerRoutes);
 app.use("/api/v1/tanubanner", tanuBannerRoutes);
 app.use("/api/v1/appointment", appointmentRoutes);
 app.use("/api/v1/schedule", scheduleRoutes);
+app.use("/api/v1/employee-schedule", employeeScheduleRoutes);
 app.use("/api/v1/customer", customerRoutes);
 app.use("/api/v1/qpay", qpayRoutes);
 app.use("/api/v1/artist", artistRoutes);
