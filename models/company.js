@@ -25,6 +25,9 @@ const companySchema = new mongoose.Schema({
   companyCode: { type: String },
   bankCode: { type: String },
   address: { type: String },
+  interval: { type: String },
+  fb: { type: String },
+  instagram: { type: String },
   category: { type: [Schema.Types.ObjectId], ref: "Category", required: true },
 
   onlineContract: {

@@ -14,42 +14,6 @@ const asyncHandler = require("../middleware/asyncHandler");
 const { generateCredential, send } = require("../utils/khan");
 const Company = require("../models/company");
 const sendFirebaseNotification = require("../utils/sendFIrebaseNotification");
-const cron = require("node-cron");
-const moment = require("moment");
-
-// ✅ Автоматаар expired appointment-уудыг decline болгох
-cron.schedule("*/1 * * * *", async () => {
-  console.log("⏰ Checking expired appointments...");
-
-  const today = moment().format("YYYY-MM-DD");
-  const nowTime = moment();
-
-  const appointments = await Appointment.find({
-    date: today,
-    status: { $in: ["pending", "paid"] },
-  }).populate("schedule");
-
-  let declinedCount = 0;
-
-  for (const appt of appointments) {
-    const schedule = appt.schedule;
-    if (!schedule || !schedule.end) continue;
-
-    const endTime = moment(`${today} ${schedule.end}`, "YYYY-MM-DD HH:mm");
-
-    if (nowTime.isAfter(endTime)) {
-      appt.status = "declined";
-      await appt.save();
-      declinedCount++;
-    }
-  }
-
-  if (declinedCount > 0) {
-    console.log(`❗ ${declinedCount} захиалга хугацаа дууссан тул цуцлагдлаа`);
-  } else {
-    console.log("✅ Цуцлах шаардлагатай захиалга байхгүй");
-  }
-});
 
 exports.markCompleted = asyncHandler(async (req, res) => {
   const appointment = await Appointment.findById(req.params.id).populate(
@@ -88,6 +52,29 @@ exports.getAll = asyncHandler(async (req, res, next) => {
     // res.status(500).json({ success: false, message: error.message });
   }
 });
+
+function mergeIntervals(intervals) {
+  if (!intervals.length) return [];
+
+  // start цагийн дагуу эрэмбэлэх
+  intervals.sort((a, b) => a.start.localeCompare(b.start));
+  const merged = [intervals[0]];
+
+  for (let i = 1; i < intervals.length; i++) {
+    const last = merged[merged.length - 1];
+    const current = intervals[i];
+
+    if (current.start <= last.end) {
+      // Давхцаж байвал merge
+      last.end = current.end > last.end ? current.end : last.end;
+    } else {
+      merged.push(current);
+    }
+  }
+
+  return merged;
+}
+
 exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
   const { date, artist } = req.query;
 
@@ -98,24 +85,25 @@ exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
     });
   }
 
-  // paid захиалгуудыг олно
+  // зөвхөн тухайн artist-ийн schedule бүхий paid appointments
   const appointments = await Appointment.find({
     date: date,
     status: "paid",
   }).populate({
     path: "schedule",
-    match: { artistId: artist }, // зөвхөн тухайн artist-ынх
+    match: { artistId: artist },
   });
 
-  // 🔍 зөвхөн schedule байгаа захиалгууд
   const validAppointments = appointments.filter((a) => a.schedule != null);
 
-  const times = validAppointments.map((a) => ({
+  const rawIntervals = validAppointments.map((a) => ({
     start: a.schedule.start,
     end: a.schedule.end,
   }));
-  console.log("bookedTimes", times);
-  return customResponse.success(res, times);
+
+  const merged = mergeIntervals(rawIntervals);
+
+  return customResponse.success(res, merged);
 });
 
 exports.declineAppointment = asyncHandler(async (req, res, next) => {

@@ -132,18 +132,14 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
     const BannerList = await Banner.find({
       companyId: req.params.id,
     });
-    const DayoffList = await Dayoff.find({
-      companyId: req.params.id,
-    });
+
     const ContractList = await Contract.find({
       companyId: req.params.id,
     });
     const ServiceList = await Service.find({
       companyId: req.params.id,
     });
-    const ScheduleList = await Schedule.find({
-      companyId: req.params.id,
-    }).populate("artistId serviceId");
+
     const allUser = await Fav.findOne({
       user: req.userId,
       company: req.params.id,
@@ -168,8 +164,6 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
       company: comp,
       categories: company.category, // Populated category data
       banner: BannerList,
-      schedule: ScheduleList,
-      dayoff: DayoffList,
       Contract: ContractList,
       service: ServiceList,
     });
