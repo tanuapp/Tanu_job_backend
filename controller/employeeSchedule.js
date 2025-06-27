@@ -5,9 +5,9 @@ const customResponse = require("../utils/customResponse");
 
 exports.getAll = asyncHandler(async (req, res) => {
   const schedules = await Model.find()
-    .populate("serviceId") // ✅ populate array of services
-    .populate("artistId") // ✅ optional: populate artist
-    .populate("companyId", ""); // optional
+    .populate("serviceId")
+    .populate("artistId")
+    .populate("companyId");
 
   res.status(200).json({
     success: true,
@@ -81,15 +81,19 @@ exports.update = asyncHandler(async (req, res, next) => {
 
 exports.getByCompanyId = asyncHandler(async (req, res) => {
   try {
-    const schedules = await Model.find({ companyId: req.params.id })
-      .populate("artistId")
-      .populate({
-        path: "serviceId",
-        populate: {
-          path: "companyId",
-          select: "advancePayment",
-        },
-      });
+    const { companyId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(companyId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid company ID" });
+    }
+
+    const schedules = await Model.find({
+      companyId: new mongoose.Types.ObjectId(companyId),
+    })
+      .populate("artistId") // fully populated
+      .populate("serviceId"); // just serviceId (without populating serviceId.companyId)
 
     return res.status(200).json({
       success: true,
