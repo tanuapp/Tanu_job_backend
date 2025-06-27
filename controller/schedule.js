@@ -20,7 +20,7 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
-    const { start, end, artistId, companyId, date, serviceId = [] } = req.body;
+    const { start, end, artistId, companyId, date, serviceId  = [] } = req.body;
 
     if (!Array.isArray(serviceId) || serviceId.length === 0) {
       return customResponse.error(res, "serviceId нь массив байх ёстой.");
