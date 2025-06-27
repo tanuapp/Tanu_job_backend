@@ -308,7 +308,11 @@ exports.callback = asyncHandler(async (req, res) => {
     await app.save();
     await record.save();
 
-    const service = app.schedule.serviceId;
+    const serviceList = Array.isArray(app.schedule.serviceId)
+      ? app.schedule.serviceId
+      : [app.schedule.serviceId];
+
+    const service = serviceList[0]; // эхний service
     const company = service.companyId;
 
     console.log("🏢 Company:", company);
