@@ -489,10 +489,15 @@ exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
 exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
   try {
     const artistId = req.userId;
+    console.log("📌 Step 1 - Logged-in User ID (artistId):", artistId);
 
     // 1. Artist хэрэглэгчийн мэдээлэл (admin login байж болно)
     const artistUser = await AdminAppointment.findById(artistId).populate(
       "userRole"
+    );
+    console.log(
+      "📌 Step 2 - ArtistUser object:",
+      JSON.stringify(artistUser, null, 2)
     );
 
     if (!artistUser || !artistUser.userRole || !artistUser.userRole.user) {
@@ -504,18 +509,25 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
     }
 
     const realUserId = artistUser.userRole.user;
+    console.log("✅ Step 4 - Real user ID from userRole:", realUserId);
 
     // 2. Компанийн мэдээлэл олно
     const company = await Company.findOne({ companyOwner: realUserId });
+    console.log("📌 Step 5 - Company info:", JSON.stringify(company, null, 2));
 
     if (!company) {
       console.error("❌ Step 6 - Company not found");
       return customResponse.error(res, "Компанийн мэдээлэл олдсонгүй");
     }
 
+    // 3. Компанийн artists жагсаалт
     const artist = await Artist.find({ companyId: company._id });
+    console.log(
+      "📌 Step 7 - Company artists:",
+      JSON.stringify(artist, null, 2)
+    );
 
-    // 3. Компанийн захиалгуудыг авах
+    // 4. Захиалгуудыг авах
     const allAppointments = await Appointment.find()
       .populate({
         path: "schedule",
@@ -528,26 +540,40 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
       .populate("user")
       .populate("company");
 
+    console.log("📌 Step 8 - All appointments count:", allAppointments.length);
+
+    // 5. Зөвхөн тухайн компанийн захиалгуудыг шүүж авах
     const appointments = allAppointments.filter(
       (a) => a.schedule?.companyId?._id?.toString() === company._id.toString()
     );
+    console.log(
+      "📌 Step 9 - Filtered company appointments count:",
+      appointments.length
+    );
+
+    // 6. Pending төлөвтэй захиалгууд
     const pendingAppointments = appointments.filter(
       (a) => a.status === "pending"
     );
-
     console.log(
-      `🟡 Pending Appointments: ${JSON.stringify(pendingAppointments, null, 2)}`
+      "🟡 Step 10 - Pending appointments count:",
+      pendingAppointments.length
+    );
+    console.log(
+      "🟡 Step 11 - Pending Appointments (IDs):",
+      pendingAppointments.map((p) => p._id.toString())
     );
 
-    // 4. ✅ Компанийн мэдээллийг appointment-уудтай хамт илгээх
+    // 7. Хариу буцаах
+    console.log("✅ Step 12 - Returning final response");
     return res.status(200).json({
       success: true,
       data: appointments,
       company,
-      artist, // 👈 нэмэлт компанийн мэдээлэл
+      artist,
     });
   } catch (error) {
-    console.error("❌ Step 10 - Error occurred:", error);
+    console.error("❌ Step 13 - Error occurred:", error);
     return customResponse.error(res, error.message || "Алдаа гарлаа");
   }
 });

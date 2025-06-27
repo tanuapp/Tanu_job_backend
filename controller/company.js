@@ -9,6 +9,7 @@ const Appointment = require("../models/appointment");
 const Schedule = require("../models/schedule");
 const Fav = require("../models/favourite");
 const customResponse = require("../utils/customResponse");
+const User = require("../models/user"); // ← энэ мөрийг нэм
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -61,27 +62,39 @@ exports.updateUserFCM = asyncHandler(async (req, res, next) => {
   try {
     const { token, isAndroid } = req.body;
 
-    const userFind = await Model.findOne({ companyOwner: req.userId });
+    const user = await User.findById(req.userId).populate("userRole");
 
-    if (!userFind) {
+    if (!user || !user.userRole || !user.userRole.user) {
       return res.status(400).json({
         success: false,
-        message: "Бүртгэлгүй",
+        message: "UserRole мэдээлэл дутуу байна",
       });
     }
 
-    if (userFind) {
-      userFind.firebase_token = token;
-      userFind.isAndroid = isAndroid;
-      await userFind.save();
+    const userFind = await Model.findOne({ companyOwner: user.userRole.user });
+
+    if (!userFind) {
+      console.warn(
+        "⚠️ [updateUserFCM] Company not found for user:",
+        req.userId
+      );
+      return res.status(400).json({
+        success: false,
+        message: "Компани олдсонгүй",
+      });
     }
 
-    res.status(200).json({
+    userFind.firebase_token = token;
+    userFind.isAndroid = isAndroid;
+    await userFind.save();
+
+    return res.status(200).json({
       success: true,
+      message: "FCM token updated",
     });
   } catch (error) {
-    console.log(error);
-    customResponse.error(res, error.message);
+    console.error("❌ [updateUserFCM] Error occurred:", error);
+    customResponse.error(res, error.message || "Internal Server Error");
   }
 });
 
