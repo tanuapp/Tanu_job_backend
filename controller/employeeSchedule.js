@@ -7,7 +7,7 @@ exports.getAll = asyncHandler(async (req, res) => {
   const schedules = await Model.find()
     .populate("serviceId") // ✅ populate array of services
     .populate("artistId") // ✅ optional: populate artist
-    .populate("companyId"); // optional
+    .populate("companyId", ""); // optional
 
   res.status(200).json({
     success: true,
@@ -17,7 +17,16 @@ exports.getAll = asyncHandler(async (req, res) => {
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
-    const { start, end, artistId, companyId, date, serviceId = [] } = req.body;
+    const {
+      start,
+      end,
+      artistId,
+      companyId,
+      vacationStart,
+      vacationEnd,
+      date,
+      serviceId = [],
+    } = req.body;
 
     if (!Array.isArray(serviceId) || serviceId.length === 0) {
       return customResponse.error(res, "serviceId нь массив байх ёстой.");
@@ -28,6 +37,8 @@ exports.create = asyncHandler(async (req, res, next) => {
       end,
       artistId,
       companyId,
+      vacationStart,
+      vacationEnd,
       date: date || new Date(), // default: today
       serviceId,
     });
@@ -68,9 +79,9 @@ exports.update = asyncHandler(async (req, res, next) => {
   }
 });
 
-exports.get = asyncHandler(async (req, res, next) => {
+exports.getByCompanyId = asyncHandler(async (req, res) => {
   try {
-    const allText = await Model.findById(req.params.id)
+    const schedules = await Model.find({ companyId: req.params.id })
       .populate("artistId")
       .populate({
         path: "serviceId",
@@ -79,11 +90,10 @@ exports.get = asyncHandler(async (req, res, next) => {
           select: "advancePayment",
         },
       });
-    allText.views++;
-    await allText.save();
+
     return res.status(200).json({
       success: true,
-      data: allText,
+      data: schedules,
     });
   } catch (error) {
     customResponse.error(res, error.message);
