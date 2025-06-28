@@ -58,13 +58,13 @@ const companySchema = new mongoose.Schema({
   },
   rating: {
     type: Number,
-    default: 5,
+    default: 0,
   },
   contract: { type: String },
   companyOwner: { type: Schema.Types.ObjectId, ref: "User" },
   logo: { type: String },
   sliderImages: [String],
-  companyNumber: { type: Number, unique: true, default: 1000 },
+  companyNumber: { type: String, unique: true },
   isHome: {
     type: Boolean,
     default: false,
@@ -98,10 +98,34 @@ companySchema.pre("save", async function (next) {
 });
 
 // Automatically update the updatedAt field on updates
-companySchema.pre("findByIdAndUpdate", function (next) {
-  this._update.$set = this._update.$set || {};
-  this._update.$set.updatedAt = new Date();
-  next();
+companySchema.pre("save", async function (next) {
+  if (this.isNew) {
+    try {
+      // 1) Increment the counter
+      const counter = await CompanyCounter.findOneAndUpdate(
+        { name: "companyNumber" },
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+      );
+
+      // 2) Generate 2 random uppercase letters A-Z
+      const letters = Array.from({ length: 2 }, () =>
+        String.fromCharCode(65 + Math.floor(Math.random() * 26))
+      ).join("");
+
+      // 3) Generate 4-digit padded number (e.g., 0001)
+      const numberPart = counter.seq.toString().padStart(4, "0");
+
+      // 4) Combine them
+      this.companyNumber = `${letters}${numberPart}`;
+
+      next();
+    } catch (error) {
+      next(error);
+    }
+  } else {
+    next();
+  }
 });
 
 module.exports = mongoose.model("Company", companySchema);
