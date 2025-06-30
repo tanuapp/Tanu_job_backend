@@ -31,26 +31,12 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     if (!req.body.pin) {
-      customResponse.error(res, "Та пин оруулж өгнө үү ");
+      return customResponse.error(res, "Та пин оруулж өгнө үү");
     }
-    const existingUser = await Artist.findOne({ phone: req.body.phone });
+
     const artister = await company.findById(req.body.companyId);
     artister.numberOfArtist++;
     await artister.save();
-
-    if (existingUser) {
-      return res.status(200).json({
-        success: false,
-        message: "Утасны дугаар бүртгэлтэй байна",
-      });
-    }
-    const existingEmail = await Artist.findOne({ email: req.body.email });
-    if (existingEmail) {
-      return res.status(200).json({
-        success: false,
-        message: "И-мэйл бүртгэлтэй байна",
-      });
-    }
 
     const inputData = {
       ...req.body,
