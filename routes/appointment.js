@@ -18,6 +18,7 @@ const {
   getCompanyAppointments,
   confirmAppointment,
   getAvailableTimesAdmin,
+  updateAppointmentTime,
 } = require("../controller/appointment");
 
 const router = express.Router();
@@ -47,6 +48,8 @@ router.route("/populated").get(getAllPopulated);
 router.route("/").post(protect, create).get(getAll);
 
 // Тухайн ID-тай захиалгыг харах, засах, устгах (хамгийн сүүлд байх ёстой)
+router.route("/edit/time/:id").put(protect, updateAppointmentTime);
+
 router.route("/:id").put(protect, update).delete(protect, deleteModel).get(get);
 router.route("/update/:id").post(protect, updateStatus); // ✅ зөв синтакс + POST method
 router.route("/check/:id").get(checkAppointment); // 🆕 нэмэгдсэн route

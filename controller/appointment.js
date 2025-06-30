@@ -321,6 +321,85 @@ exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
 
   customResponse.success(res, availableSchedules);
 });
+exports.updateAppointmentTime = asyncHandler(async (req, res) => {
+  console.log("🔧 [updateAppointmentTime] Request received");
+  const { id } = req.params;
+  const { schedule } = req.body;
+
+  console.log("🔔 [updateAppointmentTime] Called with ID:", id);
+  console.log("📝 Request schedule data:", schedule);
+
+  if (!schedule || !schedule.start || !schedule.end || !schedule.artistId) {
+    console.error("❌ Missing required schedule fields:", schedule);
+    return customResponse.error(
+      res,
+      "schedule.start, schedule.end, schedule.artistId шаардлагатай"
+    );
+  }
+
+  // Захиалга шалгах
+  const appointment = await Appointment.findById(id).populate("schedule");
+  if (!appointment) {
+    console.error("❌ Appointment not found for ID:", id);
+    return customResponse.error(res, "Захиалга олдсонгүй");
+  }
+
+  console.log("✅ Found appointment:", appointment._id);
+
+  // duration-г шинэ start ба end дээр үндэслэн тооцно
+  const [startH, startM] = schedule.start.split(":").map(Number);
+  const [endH, endM] = schedule.end.split(":").map(Number);
+
+  const startTotalMinutes = startH * 60 + startM;
+  const endTotalMinutes = endH * 60 + endM;
+  const duration = endTotalMinutes - startTotalMinutes;
+
+  if (duration <= 0) {
+    console.error("❌ Invalid duration calculated:", duration);
+    return customResponse.error(
+      res,
+      "Эхлэх цаг нь дуусах цагаас өмнө байх ёстой"
+    );
+  }
+
+  console.log(`⏱ Calculated duration: ${duration} minutes`);
+
+  // Schedule шинэчлэх эсвэл үүсгэх
+  let scheduleDoc;
+  if (appointment.schedule) {
+    console.log("✏️ Updating existing schedule:", appointment.schedule._id);
+    scheduleDoc = await Schedule.findByIdAndUpdate(
+      appointment.schedule._id,
+      {
+        start: schedule.start,
+        end: schedule.end,
+        artistId: schedule.artistId,
+        duration, // ✨ duration-г хадгална
+      },
+      { new: true }
+    );
+  } else {
+    console.log("➕ Creating new schedule...");
+    scheduleDoc = await Schedule.create({
+      start: schedule.start,
+      end: schedule.end,
+      artistId: schedule.artistId,
+      duration, // ✨ хадгална
+      companyId: appointment.company,
+    });
+    appointment.schedule = scheduleDoc._id;
+  }
+
+  await appointment.save();
+  console.log("✅ Appointment saved with updated schedule");
+
+  return customResponse.success(res, {
+    message: "Захиалгын цаг амжилттай шинэчлэгдлээ",
+    appointment,
+    schedule: scheduleDoc,
+  });
+});
+
 exports.getAvailableTimesAdmin = asyncHandler(async (req, res, next) => {
   const { date, artist } = req.body;
   console.log("getAvailableTimesAdmin:", { date, artist });
