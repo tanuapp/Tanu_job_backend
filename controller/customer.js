@@ -236,16 +236,16 @@ exports.customerUpdateTheirOwnInformation = asyncHandler(
   }
 );
 
-exports.registerWithPhone = asyncHandler(async (req, res, next) => {
+exports.registerWithPhone = asyncHandler(async (req, res) => {
+  const session = await User.startSession();
+  session.startTransaction();
   try {
     const { pin, phone } = req.body;
 
-    console.log(req.body);
-
-    let existingUser = await User.findOne({ phone });
-
+    const existingUser = await User.findOne({ phone }).session(session);
     if (existingUser) {
-      res.status(400).json({
+      await session.abortTransaction();
+      return res.status(400).json({
         success: false,
         message: "Утасны дугаар бүртгэлтэй байна",
       });
@@ -256,34 +256,44 @@ exports.registerWithPhone = asyncHandler(async (req, res, next) => {
       photo: req.file ? req.file.filename : "no-img.png",
     };
 
-    const user = await User.create(inputData);
-
+    const user = await User.create([inputData], { session });
     const otp = generateOTP();
-    if (existingUser) {
-      await OTP.findByIdAndUpdate(
-        {
-          customer: user._id,
-        },
+
+    await OTP.create(
+      [
         {
           otp,
-          customer: user._id,
-        }
-      );
-    } else {
-      await OTP.create({
-        otp,
-        customer: user._id,
+          customer: user[0]._id,
+        },
+      ],
+      { session }
+    );
+
+    // 🟢 Энд SMS илгээнэ:
+    try {
+      await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
+    } catch (smsError) {
+      // SMS амжилтгүй бол хэрэглэгч, OTP-г устгаж transaction-г болиулна
+      await session.abortTransaction();
+      session.endSession();
+      console.error("OTP илгээхэд алдаа гарлаа:", smsError.message);
+      return res.status(500).json({
+        success: false,
+        message: "OTP илгээх явцад алдаа гарлаа. Бүртгэл хийгдсэнгүй.",
       });
     }
 
-    await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
+    await session.commitTransaction();
+    session.endSession();
 
     return res.status(200).json({
       success: true,
-      message: "Бүртгэл амжилттай. Нэг удаагийн нууц үг илгээгдлээ",
+      message: "Бүртгэл амжилттай. Нэг удаагийн нууц үг илгээгдлээ.",
     });
   } catch (error) {
-    console.log(error);
+    await session.abortTransaction();
+    session.endSession();
+    console.error(error);
     customResponse.error(res, error.message);
   }
 });
