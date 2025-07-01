@@ -2,6 +2,7 @@ const Model = require("../models/appointment");
 const Appointment = require("../models/appointment");
 const customResponse = require("../utils/customResponse");
 const Schedule = require("../models/schedule");
+const employeeSchedule = require("../models/employeeSchedule");
 const User = require("../models/customer");
 const AdminAppointment = require("../models/user");
 const Artist = require("../models/artist");
@@ -268,10 +269,10 @@ exports.create = asyncHandler(async (req, res, next) => {
     return customResponse.error(res, error.message);
   }
 });
-
 exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
-  console.log("bn", req.body);
   const { date, service, artist } = req.body;
+
+  console.log("▶️ Incoming request body:", { date, service, artist });
 
   if (!date || !service || !artist) {
     return res.status(400).json({
@@ -280,33 +281,53 @@ exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
     });
   }
 
-  const selectedDayOfWeek = new Date(date).toLocaleDateString("mn-MN", {
+  const selectedDayOfWeek = new Date(date).toLocaleDateString("en-US", {
     weekday: "long",
   });
+  console.log("🗓️ Selected Day of Week:", selectedDayOfWeek);
 
+  // 🔥 Day offs авч байгаа хэсэг
   const dayOffs = await Dayoff.find({ date });
+  console.log("📆 Dayoffs found:", dayOffs.length);
 
   const dayOffArtistIds = dayOffs.map((dayOff) => String(dayOff.artistId));
   const dayOffSchedules = dayOffs.flatMap((dayOff) =>
     dayOff.schedule.map((scheduleId) => String(scheduleId))
   );
-  const schedules = await Schedule.find({
+
+  console.log("🚫 Artists on day off:", dayOffArtistIds);
+  console.log("🚫 Schedule IDs on day off:", dayOffSchedules);
+
+  console.log("📢 Querying employeeSchedule with:", {
     day_of_the_week: selectedDayOfWeek,
-    serviceId: service,
+    serviceId: Array.isArray(service) ? service : [service],
     artistId: artist,
-  })
+  });
+
+  const schedules = await employeeSchedule
+    .find({
+      day_of_the_week: selectedDayOfWeek,
+      serviceId: { $in: Array.isArray(service) ? service : [service] },
+      artistId: artist,
+    })
     .populate("artistId")
     .populate("serviceId");
+
+  console.log("✅ Found schedules:", schedules.length);
+
   const appointments = await Appointment.find({
     date: date,
     status: "paid",
   });
+  console.log("📅 Appointments on date:", appointments.length);
+
   if (!schedules || schedules.length === 0) {
     return res.status(404).json({
       success: false,
       message: "No schedules found for this day",
     });
   }
+
   const availableSchedules = schedules.filter((schedule) => {
     const isArtistDayOff = dayOffArtistIds.includes(
       String(schedule.artistId._id)
@@ -317,10 +338,15 @@ exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
     );
     return !isArtistDayOff && !isScheduleDayOff && !isBooked;
   });
-  console.log(availableSchedules), "schedule";
+
+  console.log(
+    "✅ Available schedules after filtering:",
+    availableSchedules.length
+  );
 
   customResponse.success(res, availableSchedules);
 });
+
 exports.updateAppointmentTime = asyncHandler(async (req, res) => {
   console.log("🔧 [updateAppointmentTime] Request received");
   const { id } = req.params;

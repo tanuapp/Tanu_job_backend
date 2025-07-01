@@ -6,8 +6,7 @@ const customResponse = require("../utils/customResponse");
 exports.getAll = asyncHandler(async (req, res) => {
   const schedules = await Model.find()
     .populate("serviceId")
-    .populate("artistId")
-    .populate("companyId");
+    .populate("artistId");
 
   res.status(200).json({
     success: true,
@@ -26,6 +25,7 @@ exports.create = asyncHandler(async (req, res, next) => {
       vacationEnd,
       date,
       serviceId = [],
+      day_of_the_week, // <-- added field
     } = req.body;
 
     if (!Array.isArray(serviceId) || serviceId.length === 0) {
@@ -41,6 +41,7 @@ exports.create = asyncHandler(async (req, res, next) => {
       vacationEnd,
       date: date || new Date(), // default: today
       serviceId,
+      day_of_the_week, // <-- added field
     });
     await schedule.save();
     res.status(200).json({
