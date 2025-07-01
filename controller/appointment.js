@@ -431,83 +431,62 @@ exports.updateAppointmentTime = asyncHandler(async (req, res) => {
 
 exports.getAvailableTimesAdmin = asyncHandler(async (req, res, next) => {
   const { date, artist } = req.body;
-  console.log("getAvailableTimesAdmin:", { date, artist });
+
+  console.log("[DEBUG] getAvailableTimesAdmin started");
+  console.log("[DEBUG] Request params:", { date, artist });
 
   if (!date || !artist) {
+    console.error("[ERROR] Missing date or artist parameter");
     return res.status(400).json({
       success: false,
-      message: "Date and artist are required",
+      message: "date болон artist шаардлагатай",
     });
   }
 
-  const schedules = await Schedule.find({ artistId: artist }).populate(
-    "serviceId"
-  );
-  const appointments = await Appointment.find({
-    date,
-    status: "paid",
-    "schedule.artistId": artist,
-  }).populate("schedule");
+  try {
+    // Тухайн өдрийн төлбөртэй appointment-уудыг авч байна
+    const appointments = await Appointment.find({
+      date: date,
+      status: "paid",
+    }).populate({
+      path: "schedule",
+      match: { artistId: artist },
+    });
 
-  if (!schedules || schedules.length === 0) {
-    return res.status(404).json({
+    console.log(
+      `[DEBUG] Found ${appointments.length} appointments with status 'paid' on date ${date}`
+    );
+
+    // schedule нь байгаа appointment-уудыг шүүх
+    const validAppointments = appointments.filter((a) => a.schedule != null);
+
+    console.log(
+      `[DEBUG] Valid appointments with schedule: ${validAppointments.length}`
+    );
+
+    // Start, end цагуудыг гаргаж байна
+    const rawIntervals = validAppointments.map((a) => ({
+      start: a.schedule.start,
+      end: a.schedule.end,
+    }));
+
+    console.log("[DEBUG] Raw intervals:", rawIntervals);
+
+    // Давхардсан цагийн интервалуудыг нэгтгэх
+    const merged = mergeIntervals(rawIntervals);
+
+    console.log("[DEBUG] Merged intervals:", merged);
+
+    // Амжилттай хариу өгөх
+    return customResponse.success(res, merged);
+  } catch (error) {
+    console.error("[ERROR] Exception in getAvailableTimesAdmin:", error);
+    return res.status(500).json({
       success: false,
-      message: "No schedules found for this artist",
+      message: "Server error",
+      error: error.message,
     });
   }
-
-  // Захиалсан цагуудын жагсаалт гаргах
-  const bookedTimes = appointments.map((appt) => {
-    return {
-      start: appt.schedule.start,
-      end: appt.schedule.end,
-    };
-  });
-
-  // Utility function to get minutes
-  const toMinutes = (timeStr) => {
-    const [h, m] = timeStr.split(":").map(Number);
-    return h * 60 + m;
-  };
-
-  const toTimeString = (mins) => {
-    const h = String(Math.floor(mins / 60)).padStart(2, "0");
-    const m = String(mins % 60).padStart(2, "0");
-    return `${h}:${m}`;
-  };
-
-  // Хоосон цагаар интервал үүсгэх
-  let availableSlots = [];
-
-  for (const schedule of schedules) {
-    const serviceDuration = schedule.serviceId.duration || 20;
-
-    let startMins = toMinutes(schedule.start);
-    const endMins = toMinutes(schedule.end);
-
-    while (startMins + serviceDuration <= endMins) {
-      const slotStart = toTimeString(startMins);
-      const slotEnd = toTimeString(startMins + serviceDuration);
-
-      const overlaps = bookedTimes.some((bt) => {
-        const btStart = toMinutes(bt.start);
-        const btEnd = toMinutes(bt.end);
-        return (
-          (startMins >= btStart && startMins < btEnd) ||
-          (startMins + serviceDuration > btStart &&
-            startMins + serviceDuration <= btEnd)
-        );
-      });
-
-      if (!overlaps) {
-        availableSlots.push({ start: slotStart, end: slotEnd });
-      }
-
-      startMins += 5; // 5 мин интервал
-    }
-  }
-
-  customResponse.success(res, availableSlots);
 });
 
 exports.getAvailableTimesByArtist = asyncHandler(async (req, res, next) => {
@@ -597,15 +576,10 @@ exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
 exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
   try {
     const artistId = req.userId;
-    console.log("📌 Step 1 - Logged-in User ID (artistId):", artistId);
 
     // 1. Artist хэрэглэгчийн мэдээлэл (admin login байж болно)
     const artistUser = await AdminAppointment.findById(artistId).populate(
       "userRole"
-    );
-    console.log(
-      "📌 Step 2 - ArtistUser object:",
-      JSON.stringify(artistUser, null, 2)
     );
 
     if (!artistUser || !artistUser.userRole || !artistUser.userRole.user) {
@@ -617,11 +591,9 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
     }
 
     const realUserId = artistUser.userRole.user;
-    console.log("✅ Step 4 - Real user ID from userRole:", realUserId);
 
     // 2. Компанийн мэдээлэл олно
     const company = await Company.findOne({ companyOwner: realUserId });
-    console.log("📌 Step 5 - Company info:", JSON.stringify(company, null, 2));
 
     if (!company) {
       console.error("❌ Step 6 - Company not found");
@@ -630,10 +602,6 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
 
     // 3. Компанийн artists жагсаалт
     const artist = await Artist.find({ companyId: company._id });
-    console.log(
-      "📌 Step 7 - Company artists:",
-      JSON.stringify(artist, null, 2)
-    );
 
     // 4. Захиалгуудыг авах
     const allAppointments = await Appointment.find()
@@ -663,17 +631,8 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
     const pendingAppointments = appointments.filter(
       (a) => a.status === "pending"
     );
-    console.log(
-      "🟡 Step 10 - Pending appointments count:",
-      pendingAppointments.length
-    );
-    console.log(
-      "🟡 Step 11 - Pending Appointments (IDs):",
-      pendingAppointments.map((p) => p._id.toString())
-    );
 
     // 7. Хариу буцаах
-    console.log("✅ Step 12 - Returning final response");
     return res.status(200).json({
       success: true,
       data: appointments,
