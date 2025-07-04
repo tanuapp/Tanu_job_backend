@@ -55,7 +55,6 @@ exports.createqpay = asyncHandler(async (req, res) => {
     }
 
     // ✅ Service-based invoice
-    // ✅ Service-based invoice
     else {
       const appointment = await Appointment.findById(
         invoice.appointment._id

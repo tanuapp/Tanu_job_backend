@@ -5,6 +5,9 @@ const appointmentSchema = new Schema({
   date: {
     type: String,
   },
+  finalPrice: {
+    type: String,
+  },
   isOption: {
     type: Boolean,
     default: false,

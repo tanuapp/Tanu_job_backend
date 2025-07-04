@@ -25,9 +25,7 @@ const companySchema = new mongoose.Schema({
   companyCode: { type: String },
   bankCode: { type: String },
   address: { type: String },
-  discount: { type: String },
-  discountEnd: { type: Date },
-  discountStart: { type: Date },
+
   interval: { type: String },
   fb: { type: String },
   instagram: { type: String },

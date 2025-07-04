@@ -790,5 +790,21 @@ exports.confirmAppointment = asyncHandler(async (req, res) => {
     .status(200)
     .json({ success: true, message: "Appointment confirmed by artist" });
 });
+exports.finishAppointment = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const appointment = await Appointment.findById(id);
+  if (!appointment) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Appointment not found" });
+  }
+
+  appointment.status = "done";
+  await appointment.save();
+
+  return res
+    .status(200)
+    .json({ success: true, message: "Appointment confirmed by artist" });
+});
 
 // Энд дуусаж байгаа шүүү

@@ -163,7 +163,6 @@ exports.getCustomerAppointments = asyncHandler(async (req, res) => {
     );
 
     // 3. Return final result
-    console.log("📋 [getCustomerAppointments] Result:", result);
     res.status(200).json({
       success: true,
       data: result,
@@ -551,10 +550,7 @@ exports.loginWithPhone = asyncHandler(async (req, res, next) => {
 
     const isMatch = await user.checkPassword(pin);
     if (!isMatch) {
-      return customResponse.error(
-        res,
-        "Нэвтрэх нэр эсвэл нууц үг буруу байна!"
-      );
+      return customResponse.error(res, "Нууц үг буруу байна!");
     }
 
     const token = user.getJsonWebToken();

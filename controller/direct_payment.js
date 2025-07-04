@@ -99,11 +99,12 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       .populate("artistId")
       .populate({
         path: "serviceId",
-        select: "service_name price companyId",
+        select:
+          "service_name price companyId discount discountStart discountEnd",
         populate: {
           path: "companyId",
           model: "Company",
-          select: "advancePayment firebase_token name",
+          select: "advancePayment firebase_token name ",
         },
       });
 
@@ -128,30 +129,42 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
     console.log("💵 Original total price:", totalPrice);
 
     // ✅ Хямдрал идэвхтэй эсэхийг шалгах
-    const discountActive =
-      company.discountStart &&
-      company.discountEnd &&
-      new Date() >= new Date(company.discountStart) &&
-      new Date() <= new Date(company.discountEnd);
+    let discountedTotalPrice = 0;
 
-    let discountedTotalPrice = totalPrice;
+    services.forEach((service) => {
+      const price = parseFloat(service.price || 0);
 
-    if (discountActive && company.discount) {
-      const discountPercent = parseFloat(
-        company.discount.replace(/[^0-9]/g, "")
-      );
-      if (!isNaN(discountPercent) && discountPercent > 0) {
-        discountedTotalPrice = totalPrice * (1 - discountPercent / 100);
-        console.log(
-          `🏷️ Discount active: ${discountPercent}%, discounted price: ${discountedTotalPrice}`
+      let serviceFinalPrice = price;
+
+      const discountActive =
+        service.discountStart &&
+        service.discountEnd &&
+        new Date() >= new Date(service.discountStart) &&
+        new Date() <= new Date(service.discountEnd);
+
+      if (discountActive && service.discount) {
+        const discountPercent = parseFloat(
+          service.discount.replace(/[^0-9]/g, "")
         );
+        if (!isNaN(discountPercent) && discountPercent > 0) {
+          serviceFinalPrice = price * (1 - discountPercent / 100);
+          console.log(
+            `🏷️ Service ${service.service_name}: Discount ${discountPercent}%, discounted price: ${serviceFinalPrice}`
+          );
+        }
       }
-    }
+
+      discountedTotalPrice += serviceFinalPrice;
+    });
 
     const advancePercent = parseFloat(company.advancePayment || 0);
     const advanceAmount = Math.floor(
       (discountedTotalPrice * advancePercent) / 100
     );
+    console.log("📅 Now:", new Date());
+    console.log("📅 Discount start:", company.discountStart);
+    console.log("📅 Discount end:", company.discountEnd);
+    console.log("📅 discountedTotalPrice", discountedTotalPrice);
 
     console.log("💰 Advance percent:", advancePercent);
     console.log("💸 Advance amount:", advanceAmount);
@@ -164,6 +177,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         schedule,
         user: req.userId || null,
         date,
+        finalPrice: discountedTotalPrice,
         status: "paid",
       });
 
@@ -213,6 +227,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       schedule,
       user: req.userId || null,
       date,
+      finalPrice: discountedTotalPrice,
     });
 
     const fullUser = await Customer.findById(app.user);

@@ -21,6 +21,9 @@ const serviceSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Category",
   },
+  discount: { type: String },
+  discountEnd: { type: Date },
+  discountStart: { type: Date },
   views: {
     type: Number,
     default: 0,

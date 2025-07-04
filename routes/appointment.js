@@ -19,6 +19,7 @@ const {
   confirmAppointment,
   getAvailableTimesAdmin,
   updateAppointmentTime,
+  finishAppointment,
 } = require("../controller/appointment");
 
 const router = express.Router();
@@ -30,6 +31,7 @@ router.route("/company").get(protect, getCompanyAppointments);
 // Захиалгыг дуусгах
 router.route("/end/:id").post(endAppointment);
 router.route("/confirm/:id").post(confirmAppointment);
+router.route("/finish/:id").post(finishAppointment);
 
 // Захиалгыг цуцлах
 router.route("/decline/:id").post(declineAppointment);
