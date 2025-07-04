@@ -55,6 +55,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
     }
 
     // ✅ Service-based invoice
+    // ✅ Service-based invoice
     else {
       const appointment = await Appointment.findById(
         invoice.appointment._id
@@ -65,7 +66,7 @@ exports.createqpay = asyncHandler(async (req, res) => {
           populate: {
             path: "companyId",
             model: "Company",
-            select: "name advancePayment",
+            select: "name advancePayment discount discountStart discountEnd",
           },
         },
       });
@@ -104,6 +105,30 @@ exports.createqpay = asyncHandler(async (req, res) => {
         (sum, s) => sum + parseFloat(s.price || 0),
         0
       );
+
+      console.log("💵 Original total price:", totalPrice);
+
+      // ✅ Хямдрал идэвхтэй эсэхийг шалгах
+      const discountActive =
+        company.discountStart &&
+        company.discountEnd &&
+        new Date() >= new Date(company.discountStart) &&
+        new Date() <= new Date(company.discountEnd);
+
+      let discountedTotalPrice = totalPrice;
+
+      if (discountActive && company.discount) {
+        const discountPercent = parseFloat(
+          company.discount.replace(/[^0-9]/g, "")
+        );
+        if (!isNaN(discountPercent) && discountPercent > 0) {
+          discountedTotalPrice = totalPrice * (1 - discountPercent / 100);
+          console.log(
+            `🏷️ Discount active: ${discountPercent}%, discounted price: ${discountedTotalPrice}`
+          );
+        }
+      }
+
       const advancePercent = parseFloat(company.advancePayment || 0);
 
       if (appointment.status === "completed") {
@@ -114,9 +139,9 @@ exports.createqpay = asyncHandler(async (req, res) => {
         );
       } else {
         amount = invoice.isAdvance
-          ? Math.floor((totalPrice * advancePercent) / 100)
-          : totalPrice;
-        console.log("💰 Total price:", totalPrice);
+          ? Math.floor((discountedTotalPrice * advancePercent) / 100)
+          : discountedTotalPrice;
+        console.log("💰 Final discounted total:", discountedTotalPrice);
         console.log("💸 Calculated amount:", amount);
       }
     }

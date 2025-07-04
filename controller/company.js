@@ -64,19 +64,24 @@ exports.updateUserFCM = asyncHandler(async (req, res, next) => {
 
     const user = await User.findById(req.userId).populate("userRole");
 
-    if (!user || !user.userRole || !user.userRole.user) {
+    if (!user) {
       return res.status(400).json({
         success: false,
-        message: "UserRole мэдээлэл дутуу байна",
+        message: "Хэрэглэгч олдсонгүй",
       });
     }
 
-    const userFind = await Model.findOne({ companyOwner: user.userRole.user });
+    // ✅ Хэрвээ userRole байгаа бол түүнээс хэрэглэгчийн ID-г авна,
+    // үгүй бол шууд өөрийн ID-г авна
+    const ownerId =
+      user.userRole && user.userRole.user ? user.userRole.user : user._id;
 
-    if (!userFind) {
+    const userCompany = await Model.findOne({ companyOwner: ownerId });
+
+    if (!userCompany) {
       console.warn(
-        "⚠️ [updateUserFCM] Company not found for user:",
-        req.userId
+        "⚠️ [updateUserFCM] Компани олдсонгүй companyOwner:",
+        ownerId
       );
       return res.status(400).json({
         success: false,
@@ -84,17 +89,17 @@ exports.updateUserFCM = asyncHandler(async (req, res, next) => {
       });
     }
 
-    userFind.firebase_token = token;
-    userFind.isAndroid = isAndroid;
-    await userFind.save();
+    userCompany.firebase_token = token;
+    userCompany.isAndroid = isAndroid;
+    await userCompany.save();
 
     return res.status(200).json({
       success: true,
-      message: "FCM token updated",
+      message: "FCM токен амжилттай шинэчлэгдлээ",
     });
   } catch (error) {
-    console.error("❌ [updateUserFCM] Error occurred:", error);
-    customResponse.error(res, error.message || "Internal Server Error");
+    console.error("❌ [updateUserFCM] Алдаа гарлаа:", error);
+    customResponse.error(res, error.message || "Серверийн дотоод алдаа");
   }
 });
 

@@ -575,36 +575,38 @@ exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
 });
 exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
   try {
-    const artistId = req.userId;
+    const User = req.userId;
+    console.log("📌 Step 1 - Authenticated user ID:", User);
 
-    // 1. Artist хэрэглэгчийн мэдээлэл (admin login байж болно)
-    const artistUser = await AdminAppointment.findById(artistId).populate(
-      "userRole"
-    );
+    // 1. Fetch user document (Admin/Artist)
+    const user = await AdminAppointment.findById(User).populate("userRole");
+    console.log("📌 Step 2 - User document fetched:", user);
 
-    if (!artistUser || !artistUser.userRole || !artistUser.userRole.user) {
-      console.error("❌ Step 3 - Missing user role or user information");
-      return customResponse.error(
-        res,
-        "Хэрэглэгчийн эрхийн мэдээлэл дутуу байна"
-      );
+    if (!user) {
+      console.error("❌ Step 2 - User not found for ID:", User);
+      return customResponse.error(res, "Хэрэглэгчийн мэдээлэл олдсонгүй");
     }
 
-    const realUserId = artistUser.userRole.user;
+    // 2. Determine ownerId: if user has a userRole.user, use it; otherwise, use the user's own ID
+    const ownerId =
+      user.userRole && user.userRole.user ? user.userRole.user : user._id;
+    console.log("📌 Step 3 - Determined ownerId:", ownerId);
 
-    // 2. Компанийн мэдээлэл олно
-    const company = await Company.findOne({ companyOwner: realUserId });
+    // 3. Fetch the company by ownerId
+    const company = await Company.findOne({ companyOwner: ownerId });
+    console.log("📌 Step 4 - Company found:", company);
 
     if (!company) {
-      console.error("❌ Step 6 - Company not found");
+      console.error("❌ Step 5 - Company not found for ownerId:", ownerId);
       return customResponse.error(res, "Компанийн мэдээлэл олдсонгүй");
     }
 
-    // 3. Компанийн artists жагсаалт
+    // 4. Fetch artists belonging to the company
     const artist = await Artist.find({ companyId: company._id });
+    console.log("📌 Step 6 - Artists count:", artist.length);
 
-    // 4. Захиалгуудыг авах
-    const allAppointments = await Appointment.find()
+    // 5. Fetch appointments directly linked to this company
+    const appointments = await Appointment.find({ company: company._id })
       .populate({
         path: "schedule",
         populate: [
@@ -616,23 +618,21 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
       .populate("user")
       .populate("company");
 
-    console.log("📌 Step 8 - All appointments count:", allAppointments.length);
-
-    // 5. Зөвхөн тухайн компанийн захиалгуудыг шүүж авах
-    const appointments = allAppointments.filter(
-      (a) => a.schedule?.companyId?._id?.toString() === company._id.toString()
-    );
     console.log(
-      "📌 Step 9 - Filtered company appointments count:",
+      "📌 Step 7 - Company appointments fetched, count:",
       appointments.length
     );
 
-    // 6. Pending төлөвтэй захиалгууд
+    // 6. Filter pending appointments (if needed, for separate logic)
     const pendingAppointments = appointments.filter(
       (a) => a.status === "pending"
     );
+    console.log(
+      "📌 Step 8 - Pending appointments count:",
+      pendingAppointments.length
+    );
 
-    // 7. Хариу буцаах
+    // 7. Return result
     return res.status(200).json({
       success: true,
       data: appointments,
@@ -640,7 +640,7 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
       artist,
     });
   } catch (error) {
-    console.error("❌ Step 13 - Error occurred:", error);
+    console.error("❌ Step 9 - Error occurred:", error);
     return customResponse.error(res, error.message || "Алдаа гарлаа");
   }
 });

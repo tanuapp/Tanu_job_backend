@@ -93,7 +93,11 @@ userSchema.pre("findOneAndUpdate", async function (next) {
 userSchema.methods.checkPassword = async function (pass) {
   return await bcrypt.compare(pass, this.password);
 };
-
+// ✅ Pin хаш хийх тусгай method нэмэх
+userSchema.methods.hashPin = async function (plainPin) {
+  const salt = await bcrypt.genSalt(10);
+  return await bcrypt.hash(plainPin, salt);
+};
 // ✅ Pin шалгах
 userSchema.methods.checkPin = async function (inputPin) {
   return await bcrypt.compare(inputPin, this.pin);

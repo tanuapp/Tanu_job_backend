@@ -13,63 +13,63 @@ const User = require("../models/user");
 const Customer = require("../models/customer");
 const QRCode = require("qrcode");
 
-exports.completeAppointment = asyncHandler(async (req, res, next) => {
-  console.log("Complete appointment called, req.params.id:", req.params.id);
-  console.log("Complete body:", req.body);
-  const appointmentId = req.params.id;
+// exports.completeAppointment = asyncHandler(async (req, res, next) => {
+//   console.log("Complete appointment called, req.params.id:", req.params.id);
+//   console.log("Complete body:", req.body);
+//   const appointmentId = req.params.id;
 
-  const app = await Appointment.findById(appointmentId).populate({
-    path: "schedule",
-    populate: {
-      path: "serviceId",
-      populate: {
-        path: "companyId",
-        select: "advancePayment",
-      },
-    },
-  });
+//   const app = await Appointment.findById(appointmentId).populate({
+//     path: "schedule",
+//     populate: {
+//       path: "serviceId",
+//       populate: {
+//         path: "companyId",
+//         select: "advancePayment",
+//       },
+//     },
+//   });
 
-  // if (!app) return customResponse.error(res, "Захиалга олдсонгүй");
+//   // if (!app) return customResponse.error(res, "Захиалга олдсонгүй");
 
-  const service = app.schedule.serviceId;
-  const company = service.companyId;
+//   const service = app.schedule.serviceId;
+//   const company = service.companyId;
 
-  if (!service || !company)
-    return res
-      .status(400)
-      .json({ success: false, message: "Холбогдсон мэдээлэл дутуу байна" });
+//   if (!service || !company)
+//     return res
+//       .status(400)
+//       .json({ success: false, message: "Холбогдсон мэдээлэл дутуу байна" });
 
-  const total = parseFloat(service.price);
-  const advancePercent = parseFloat(company.advancePayment || 0);
-  const advance = Math.floor((total * advancePercent) / 100);
-  const remaining = total - advance;
+//   const total = parseFloat(service.price);
+//   const advancePercent = parseFloat(company.advancePayment || 0);
+//   const advance = Math.floor((total * advancePercent) / 100);
+//   const remaining = total - advance;
 
-  // Invoice үүсгэнэ – үлдэгдэл төлбөрөөр
-  const invoice = await Invoice.create({
-    appointment: app._id,
-    companyId: company._id,
-    amount: remaining,
-    isOption: false,
-  });
+//   // Invoice үүсгэнэ – үлдэгдэл төлбөрөөр
+//   const invoice = await Invoice.create({
+//     appointment: app._id,
+//     companyId: company._id,
+//     amount: remaining,
+//     isOption: false,
+//   });
 
-  // QPay рүү илгээх
-  const response = await axios.post(
-    `http://localhost:9090/api/v1/qpay/${invoice._id}`,
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${req.token}`,
-      },
-    }
-  );
-  // Захиалгыг "completed" болгох
-  res.status(200).json({
-    success: true,
-    message: "Үйлчилгээ амжилттай дууссан. Үлдэгдэл төлбөрийг үүсгэлээ.",
-    qpay: response.data.data,
-    invoiceId: response.data.invoice.sender_invoice_id,
-  });
-});
+//   // QPay рүү илгээх
+//   const response = await axios.post(
+//     `http://localhost:9090/api/v1/qpay/${invoice._id}`,
+//     {},
+//     {
+//       headers: {
+//         Authorization: `Bearer ${req.token}`,
+//       },
+//     }
+//   );
+//   // Захиалгыг "completed" болгох
+//   res.status(200).json({
+//     success: true,
+//     message: "Үйлчилгээ амжилттай дууссан. Үлдэгдэл төлбөрийг үүсгэлээ.",
+//     qpay: response.data.data,
+//     invoiceId: response.data.invoice.sender_invoice_id,
+//   });
+// });
 
 exports.createPayment = asyncHandler(async (req, res, next) => {
   try {
@@ -125,10 +125,34 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       (sum, s) => sum + parseFloat(s.price || 0),
       0
     );
-    const advancePercent = parseFloat(company.advancePayment || 0);
-    const advanceAmount = Math.floor((totalPrice * advancePercent) / 100);
+    console.log("💵 Original total price:", totalPrice);
 
-    console.log("💵 Total price:", totalPrice);
+    // ✅ Хямдрал идэвхтэй эсэхийг шалгах
+    const discountActive =
+      company.discountStart &&
+      company.discountEnd &&
+      new Date() >= new Date(company.discountStart) &&
+      new Date() <= new Date(company.discountEnd);
+
+    let discountedTotalPrice = totalPrice;
+
+    if (discountActive && company.discount) {
+      const discountPercent = parseFloat(
+        company.discount.replace(/[^0-9]/g, "")
+      );
+      if (!isNaN(discountPercent) && discountPercent > 0) {
+        discountedTotalPrice = totalPrice * (1 - discountPercent / 100);
+        console.log(
+          `🏷️ Discount active: ${discountPercent}%, discounted price: ${discountedTotalPrice}`
+        );
+      }
+    }
+
+    const advancePercent = parseFloat(company.advancePayment || 0);
+    const advanceAmount = Math.floor(
+      (discountedTotalPrice * advancePercent) / 100
+    );
+
     console.log("💰 Advance percent:", advancePercent);
     console.log("💸 Advance amount:", advanceAmount);
 

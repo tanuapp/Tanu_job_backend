@@ -447,44 +447,54 @@ exports.checkPersonPhone = asyncHandler(async (req, res, next) => {
   }
 });
 exports.AdminLogin = asyncHandler(async (req, res, next) => {
-  console.log("checkPersonPhone is here", req.body);
+  console.log("AdminLogin called:", req.body);
 
   try {
     const { phone, pin } = req.body;
 
-    // 1. Check if phone and pin exist
-    if (!phone || !pin) {
-      return customResponse.error(
-        res,
-        "Утасны дугаар болон PIN кодыг оруулна уу!"
-      );
+    if (!phone) {
+      return customResponse.error(res, "Утасны дугаараа оруулна уу!");
     }
 
-    // 2. Find user by phone and explicitly include the 'pin' field
     const user = await User.findOne({ phone }).select("+pin");
 
     if (!user) {
-      return customResponse.error(
-        res,
-        "Утасны дугаар эсвэл нууц код буруу байна!"
-      );
+      return customResponse.error(res, "Утасны дугаар бүртгэлгүй байна!");
     }
 
-    // 3. Compare input PIN with hashed pin
+    // ✅ Хэрвээ хэрэглэгчийн pin байхгүй бол автоматаар үүсгэж илгээх
+    if (!user.pin) {
+      const generatedPin = generateOTP(4);
+      console.log("Generated pin:", generatedPin);
+
+      const hashedPin = await user.hashPin(generatedPin);
+      console.log("Hashed pin:", hashedPin);
+
+      // pin-г давхар hash хийхгүйгээр шууд хадгалах
+      await User.updateOne({ _id: user._id }, { pin: hashedPin });
+
+      await sendMessage(
+        phone,
+        `Таны нэвтрэх нэг удаагийн нууц код: ${generatedPin}`
+      );
+
+      return res.status(200).json({
+        success: false,
+        message: "Таны нууц код үүсэж дугаарт илгээгдлээ. Дахин оролдоно уу.",
+      });
+    }
+
+    // ✅ Pin байгаа бол шалгана
     const isPinValid = await user.checkPin(pin);
+    console.log("Checking pin:", pin, "against hashed:", user.pin);
     console.log("isPinValid:", isPinValid);
 
     if (!isPinValid) {
-      return customResponse.error(
-        res,
-        "Утасны дугаар эсвэл нууц код буруу байна!"
-      );
+      return customResponse.error(res, "Таны оруулсан нууц код буруу байна!");
     }
 
-    // 4. Generate JWT token
     const token = user.getJsonWebToken();
 
-    // 5. Send successful response
     return res.status(200).json({
       success: true,
       token,
