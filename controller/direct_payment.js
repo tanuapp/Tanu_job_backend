@@ -182,8 +182,8 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       });
 
       const fullUser = await Customer.findById(app.user);
-      const userName = `${fullUser?.last_name || ""}`.trim() || "Үл мэдэгдэх";
-      const userPhone = fullUser?.phone || "N/A";
+      const userName = `${fullUser?.last_name || ""}`.trim() || "Захиалга";
+      const userPhone = fullUser?.phone || "";
 
       if (company.firebase_token) {
         const notifResult = await sendFirebaseNotification({

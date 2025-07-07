@@ -89,7 +89,7 @@ exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
   // зөвхөн тухайн artist-ийн schedule бүхий paid appointments
   const appointments = await Appointment.find({
     date: date,
-    status: "paid",
+    status: { $in: ["paid", "pending"] },
   }).populate({
     path: "schedule",
     match: { artistId: artist },

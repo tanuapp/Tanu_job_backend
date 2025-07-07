@@ -125,50 +125,30 @@ exports.getCustomerAppointments = asyncHandler(async (req, res) => {
   console.log("📥 [getCustomerAppointments] Called by user:", req.userId);
 
   try {
-    // 1. Find appointments with related schedule, service, artist
+    // 1️⃣ Appointment хайж татах + schedule → service → company, artist-ийг populate хийх
+    console.log("🔎 [1] Fetching appointments for user:", req.userId);
     const allAppointments = await Appointment.find({
       user: req.userId,
-      status: { $in: ["paid", "done", "completed"] },
-    }).populate({
-      path: "schedule",
-      populate: [
-        {
-          path: "serviceId",
-          model: "Service",
-        },
-        {
-          path: "artistId",
-          model: "Artist",
-        },
-      ],
-    });
-
-    // 2. Map & attach company info
-    const result = await Promise.all(
-      allAppointments.map(async (appointment) => {
-        const services = appointment?.schedule?.serviceId;
-        const firstService = Array.isArray(services) ? services[0] : services;
-        const companyId = firstService?.companyId;
-
-        let company = null;
-        if (companyId) {
-          company = await Company.findById(companyId);
-        }
-
-        return {
-          company,
-          ...appointment.toObject(),
-        };
+      status: { $in: ["paid", "done", "completed", "pending"] },
+    })
+      .populate({
+        path: "schedule",
+        populate: [
+          { path: "serviceId" },
+          { path: "artistId" },
+          { path: "companyId" }, // Schedule → company
+        ],
       })
-    );
+      .populate("company"); // Appointment → company
 
-    // 3. Return final result
+    // 3️⃣ Эцсийн үр дүнг буцаах
     res.status(200).json({
       success: true,
-      data: result,
+      data: allAppointments,
     });
+    console.log("✅ [3] Response sent successfully");
   } catch (error) {
-    console.error("❌ getCustomerAppointments error:", error.message);
+    console.error("❌ [ERROR] getCustomerAppointments:", error.message);
     customResponse.error(res, error.message);
   }
 });
