@@ -51,91 +51,78 @@ exports.getOtpAgain = asyncHandler(async (req, res) => {
   }
 });
 
-// Register with phone
-exports.registerWithPhone = asyncHandler(async (req, res, next) => {
-  try {
-    const { password, phone } = req.body;
+exports.registerWithPhone = asyncHandler(async (req, res) => {
+  const { password, phone } = req.body;
 
-    console.log(req.body);
-
-    let existingUser = await User.findOne({ phone });
-
-    if (existingUser) {
-      res.status(400).json({
-        success: false,
-        message: "Утасны дугаар бүртгэлтэй байна",
-      });
-    }
-
-    const inputData = {
-      ...req.body,
-      photo: req.file ? req.file.filename : "no-img.png",
-    };
-
-    const user = await User.create(inputData);
-
-    const otp = generateOTP();
-    if (existingUser) {
-      await UserOtp.findByIdAndUpdate(
-        {
-          user: user._id,
-        },
-        {
-          otp,
-          user: user._id,
-        }
-      );
-    } else {
-      await UserOtp.create({
-        otp,
-        user: user._id,
-      });
-    }
-
-    await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
-
-    return res.status(200).json({
-      success: true,
-      message: "Бүртгэл амжилттай. Нэг удаагийн нууц үг илгээгдлээ",
+  if (!phone || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Утасны дугаар болон нууц үг шаардлагатай.",
     });
-  } catch (error) {
-    console.log(error);
-    customResponse.error(res, error.message);
   }
+
+  const existingUser = await User.findOne({ phone });
+  if (existingUser) {
+    return res.status(400).json({
+      success: false,
+      message: "Утасны дугаар бүртгэлтэй байна.",
+    });
+  }
+  const user = await User.create({
+    ...req.body,
+    status: false, // 🚨 шинэ хэрэглэгчийг баталгаажаагүй гэж тэмдэглэ
+    photo: req.file ? req.file.filename : "no-img.png",
+  });
+
+  const otp = generateOTP();
+  await UserOtp.create({ otp, user: user._id });
+
+  await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
+
+  return res.status(200).json({
+    success: true,
+    message: "Бүртгэл амжилттай. Нэг удаагийн нууц үг илгээгдлээ",
+  });
 });
 
 exports.registerVerify = asyncHandler(async (req, res) => {
-  try {
-    const { otp, phone, count, password } = req.body;
+  const { otp, phone, password } = req.body;
 
-    if (Number(count) < 3) {
+  const user = await User.findOne({ phone });
+  if (!user) return customResponse.error(res, "Утас бүртгэлгүй байна");
+
+  const userOtp = await UserOtp.findOne({ user: user._id });
+  if (!userOtp)
+    return res.status(400).json({ success: false, message: "OTP олдсонгүй" });
+
+  if (userOtp.otp !== otp) {
+    userOtp.failCount = (userOtp.failCount || 0) + 1;
+    await userOtp.save();
+
+    if (userOtp.failCount >= 3) {
+      await User.findByIdAndDelete(user._id);
+      await UserOtp.deleteOne({ user: user._id });
       return res.status(400).json({
         success: false,
-        message: "Та түр хүлээн дахин оролдоно уу",
+        message: "3 удаа буруу оруулсан тул бүртгэлийг хүчингүй болголоо.",
       });
     }
 
-    const user = await User.findOne({ phone });
-    if (!user) return customResponse.error(res, "Утас бүртгэлгүй байна");
-
-    const userOtp = await UserOtp.findOne({ user: user._id });
-    if (!userOtp || userOtp.otp !== otp) {
-      return res
-        .status(200)
-        .json({ success: false, message: "Буруу нэг удаагийн нууц үг" });
-    }
-
-    user.password = password;
-    user.status = true;
-    await user.save();
-
-    const token = user.getJsonWebToken();
-    await UserOtp.deleteOne({ user: user._id });
-
-    res.status(200).json({ success: true, token, data: user });
-  } catch (error) {
-    customResponse.error(res, error.message);
+    return res.status(400).json({
+      success: false,
+      message: `Буруу нэг удаагийн нууц үг. Оролдлого: ${userOtp.failCount}/3`,
+    });
   }
+
+  // Зөв OTP
+  user.password = password;
+  user.status = true;
+  await user.save();
+
+  const token = user.getJsonWebToken();
+  await UserOtp.deleteOne({ user: user._id });
+
+  res.status(200).json({ success: true, token, data: user });
 });
 
 exports.forgotPassword = asyncHandler(async (req, res) => {

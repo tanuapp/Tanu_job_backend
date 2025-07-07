@@ -11,11 +11,9 @@ const path = require("path");
 var serviceAccount = require("./tanu-app-928a8-firebase-adminsdk-mrr1i-28babc6869.json");
 const asyncHandler = require("./middleware/asyncHandler");
 
-// Socket
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 
-// Global Error Handler
 const errorHandler = require("./middleware/error.js");
 
 // Routes
