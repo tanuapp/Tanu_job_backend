@@ -178,7 +178,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         user: req.userId || null,
         date,
         finalPrice: discountedTotalPrice,
-        status: "paid",
+        company: company._id, // 🟢 энд компанийн ID-г хадгалж байна
       });
 
       const fullUser = await Customer.findById(app.user);
@@ -228,6 +228,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       user: req.userId || null,
       date,
       finalPrice: discountedTotalPrice,
+      company: company._id, // 🟢 энд компанийн ID-г хадгалж байна
     });
 
     const fullUser = await Customer.findById(app.user);

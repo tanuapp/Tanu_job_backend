@@ -583,11 +583,11 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
     console.log("📌 Step 2 - User document fetched:", user);
 
     if (!user) {
-      console.error("❌ Step 2 - User not found for ID:", User);
+      console.error("❌ User not found for ID:", User);
       return customResponse.error(res, "Хэрэглэгчийн мэдээлэл олдсонгүй");
     }
 
-    // 2. Determine ownerId: if user has a userRole.user, use it; otherwise, use the user's own ID
+    // 2. Determine ownerId: if userRole has user, use it; else use user._id
     const ownerId =
       user.userRole && user.userRole.user ? user.userRole.user : user._id;
     console.log("📌 Step 3 - Determined ownerId:", ownerId);
@@ -597,50 +597,44 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
     console.log("📌 Step 4 - Company found:", company);
 
     if (!company) {
-      console.error("❌ Step 5 - Company not found for ownerId:", ownerId);
+      console.error("❌ Company not found for ownerId:", ownerId);
       return customResponse.error(res, "Компанийн мэдээлэл олдсонгүй");
     }
 
     // 4. Fetch artists belonging to the company
-    const artist = await Artist.find({ companyId: company._id });
-    console.log("📌 Step 6 - Artists count:", artist.length);
+    const artists = await Artist.find({ companyId: company._id });
+    console.log("📌 Step 5 - Artists count:", artists.length);
 
-    // 5. Fetch appointments directly linked to this company
+    // 5. Fetch appointments directly linked to this company with FULL populate
     const appointments = await Appointment.find({ company: company._id })
-      .populate({
-        path: "schedule",
-        populate: [
-          { path: "serviceId", model: "Service" },
-          { path: "artistId", model: "Artist" },
-          { path: "companyId", model: "Company" },
-        ],
-      })
-      .populate("user")
-      .populate("company");
+      .populate([
+        {
+          path: "schedule",
+          populate: [
+            { path: "artistId", model: "Artist" },
+            { path: "serviceId", model: "Service" },
+            { path: "companyId", model: "Company" },
+          ],
+        },
+        { path: "user" },
+        { path: "company" },
+      ])
+      .lean(); // ⚡️ илүү хурдан plain JSON авахад
 
     console.log(
-      "📌 Step 7 - Company appointments fetched, count:",
+      "📌 Step 6 - Company appointments fetched, count:",
       appointments.length
     );
 
-    // 6. Filter pending appointments (if needed, for separate logic)
-    const pendingAppointments = appointments.filter(
-      (a) => a.status === "pending"
-    );
-    console.log(
-      "📌 Step 8 - Pending appointments count:",
-      pendingAppointments.length
-    );
-
-    // 7. Return result
+    // 6. Return result
     return res.status(200).json({
       success: true,
       data: appointments,
       company,
-      artist,
+      artist: artists,
     });
   } catch (error) {
-    console.error("❌ Step 9 - Error occurred:", error);
+    console.error("❌ Step 7 - Error occurred:", error);
     return customResponse.error(res, error.message || "Алдаа гарлаа");
   }
 });
