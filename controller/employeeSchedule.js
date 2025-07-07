@@ -13,7 +13,6 @@ exports.getAll = asyncHandler(async (req, res) => {
     data: schedules,
   });
 });
-
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     const {
