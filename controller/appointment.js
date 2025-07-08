@@ -786,7 +786,10 @@ exports.confirmAppointment = asyncHandler(async (req, res) => {
 });
 exports.finishAppointment = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const appointment = await Appointment.findById(id);
+  const appointment = await Appointment.findById(id)
+    .populate("user") // хэрэглэгчийн token авахын тулд populate хийж байна
+    .populate("companyId");
+
   if (!appointment) {
     return res
       .status(404)
@@ -795,6 +798,21 @@ exports.finishAppointment = asyncHandler(async (req, res) => {
 
   appointment.status = "done";
   await appointment.save();
+
+  // Firebase push notification явуулах
+  const user = appointment.user;
+  if (user?.firebase_token) {
+    await sendFirebaseNotification({
+      title: "Үйлчилгээ дууслаа",
+      body: "Таны захиалсан үйлчилгээ амжилттай дууслаа!",
+      token: user.firebase_token,
+      data: {
+        type: "appointment_done",
+        appointmentId: appointment._id.toString(),
+        companyName: appointment.companyId?.name || "Tanu",
+      },
+    });
+  }
 
   return res
     .status(200)
