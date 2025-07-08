@@ -17,7 +17,6 @@ const { Server } = require("socket.io");
 const errorHandler = require("./middleware/error.js");
 
 // Routes
-const onlineContractRouter = require("./routes/onlineContractRouter.js");
 const optionRouter = require("./routes/option.js");
 const categoryRoutes = require("./routes/category.js");
 const seriescategoryRoutes = require("./routes/seriescategory.js");
@@ -52,7 +51,9 @@ const userRoleRoute = require("./routes/user_role.js");
 const companyArtistRequestRoute = require("./routes/company_artist_request.js");
 const commentRoute = require("./routes/comment.js");
 const agentRoute = require("./routes/agent.js");
-const contractRenderRouter = require("./routes/contractRender.js");
+const onlineContractRouter = require("./routes/onlineContractRouter.js");
+const onlineContractRender = require("./routes/contractRender.js");
+
 // Multer setup
 const multer = require("multer");
 const initFirebase = require("./firebaseInit.js");
@@ -107,8 +108,8 @@ app.use(
 );
 app.options(cors());
 app.use(logger);
-app.use(express.json());
-
+app.use(bodyParser.json({ limit: "300mb" }));
+app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));
 // FIREBASE
 // async function initializeFirebase() {
 //   try {
@@ -142,7 +143,6 @@ app.post(
 );
 
 app.use("/api/v1/option", optionRouter);
-app.use("/api/v1/contract", onlineContractRouter);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/seriescategory", seriescategoryRoutes);
 app.use("/api/v1/company", companyRoutes);
@@ -176,9 +176,9 @@ app.use("/api/v1/direct-payment", direct_paymentRoute);
 app.use("/api/v1/company-artist-request", companyArtistRequestRoute);
 app.use("/api/v1/comment", commentRoute);
 app.use("/api/v1/agent", agentRoute);
-app.use("/api/v1/contract", contractRenderRouter);
-app.use(bodyParser.json({ limit: "300mb" }));
-app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));
+app.use("/api/v1/contract", onlineContractRouter);
+app.use("/api/v1/contract-render", onlineContractRender);
+
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
 // File upload
