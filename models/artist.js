@@ -11,6 +11,11 @@ const artistSchema = new Schema({
     required: [true, "Утасны дугаар заавал бичнэ үү!"],
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },
+  color: {
+    type: String,
+    default: "#234343", 
+    match: [/^#([0-9A-F]{3}){1,2}$/i, "Зөв өнгөний код оруулна уу!"],
+  },
   firebase_token: String,
   isAndroid: {
     type: Boolean,
@@ -25,6 +30,7 @@ const artistSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Company",
   },
+  idNumber:String,
   pin: {
     type: String,
     select: false,

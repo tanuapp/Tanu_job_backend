@@ -30,14 +30,16 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
-    if (!req.body.pin) {
-      return customResponse.error(res, "Та пин оруулж өгнө үү");
-    }
+    // if (!req.body.pin) {
+    //   return customResponse.error(res, "Та пин оруулж өгнө үү");
+    // }
 
     const artister = await company.findById(req.body.companyId);
     artister.numberOfArtist++;
     await artister.save();
-
+    if (!req.body.color || req.body.color.trim() === "") {
+      delete req.body.color;
+    }
     const inputData = {
       ...req.body,
       companyId: artister._id.toString(),
@@ -219,16 +221,14 @@ exports.update = asyncHandler(async (req, res, next) => {
 
       // 🧷 Шууд `companyId`-г онооно
       updatedData.companyId = foundCompany._id;
-      console.log("ollo23", updatedData);
       // 🧮 Компанийн artist тоог нэмэгдүүлэх (хэрэв хүсвэл)
     }
-    console.log("4updatedData", updatedData);
     const updatedArtist = await Artist.findByIdAndUpdate(
       artistId,
       updatedData,
       { new: true }
     );
-    console.log("yes", updatedArtist);
+
     if (!updatedArtist) {
       return res.status(404).json({
         success: false,
