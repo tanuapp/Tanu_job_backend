@@ -53,7 +53,6 @@ const companyArtistRequestRoute = require("./routes/company_artist_request.js");
 const commentRoute = require("./routes/comment.js");
 const agentRoute = require("./routes/agent.js");
 const contractRenderRouter = require("./routes/contractRender.js");
-
 // Multer setup
 const multer = require("multer");
 const initFirebase = require("./firebaseInit.js");
@@ -180,6 +179,7 @@ app.use("/api/v1/agent", agentRoute);
 app.use("/api/v1/contract", contractRenderRouter);
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
 // File upload
 app.post("/api/v1/upload-pdf", upload.single("pdfFile"), (req, res) => {

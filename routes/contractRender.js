@@ -58,18 +58,22 @@ router.post(
       await browser.close();
       console.log("✅ [PDF RENDER] PDF үүсгэгдлээ!");
 
-      const filename = `contract-${meta?.contractNumber || Date.now()}.pdf`;
-      const filePath = path.join(
-        __dirname,
-        "../public/uploads/contracts",
-        filename
+      const sanitizeFilename = (name) => {
+        return name.replace(/[^a-zA-Z0-9-_]/g, "_"); // зөвшөөрөгдсөн тэмдэгтүүд
+      };
+
+      const contractNumber = sanitizeFilename(
+        meta?.contractNumber || Date.now().toString()
       );
+      const filename = `contract-${contractNumber}.pdf`;
+
+      const filePath = path.join(__dirname, "../public/uploads", filename);
 
       console.log("💾 [PDF RENDER] Файлыг хадгалж байна:", filePath);
       await fs.mkdir(path.dirname(filePath), { recursive: true });
       await fs.writeFile(filePath, pdfBuffer);
 
-      const publicUrl = `https://booking.tanuweb.cloud/uploads/contracts/${filename}`;
+      const publicUrl = `https://booking.tanuweb.cloud/uploads/${filename}`;
       console.log("✅ [PDF RENDER] Амжилттай! Public URL:", publicUrl);
 
       return res.status(200).json({
