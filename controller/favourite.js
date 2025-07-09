@@ -1,10 +1,38 @@
 const Model = require("../models/favourite");
+const Company = require("../models/company");
 const asyncHandler = require("../middleware/asyncHandler");
 const customResponse = require("../utils/customResponse");
 
 exports.getUserSavedCompany = asyncHandler(async (req, res, next) => {
   try {
-    const savedCompanies = await Model.find({ user: req.userId })
+    // Алхам 1: хэрэглэгчийн бүх Favourite-уудыг авна
+    const savedCompanies = await Model.find({ user: req.userId }).lean();
+
+    // Favourite-ууд доторх company ID-г цуглуулна
+    const companyIds = savedCompanies.map((fav) => fav.company);
+
+    // Алхам 2: Company collection-оос байгаа ID-уудыг авна
+    const existingCompanies = await Company.find(
+      { _id: { $in: companyIds } },
+      "_id"
+    ).lean();
+    const existingCompanyIds = existingCompanies.map((c) => c._id.toString());
+
+    // Алхам 3: Хоёр жагсаалтыг харьцуулж, байхгүй (устсан) компаниудыг олно
+    const invalidFavouriteIds = savedCompanies
+      .filter((fav) => !existingCompanyIds.includes(fav.company.toString()))
+      .map((fav) => fav._id);
+
+    // Устсан компанитай favourite-уудыг устгана
+    if (invalidFavouriteIds.length > 0) {
+      await Model.deleteMany({ _id: { $in: invalidFavouriteIds } });
+    }
+
+    // Алхам 4: Үлдсэн зөв компанитай favourite-уудыг populate хийнэ
+    const validFavourites = await Model.find({
+      user: req.userId,
+      company: { $in: existingCompanyIds },
+    })
       .populate({
         path: "company",
         populate: {
@@ -14,9 +42,8 @@ exports.getUserSavedCompany = asyncHandler(async (req, res, next) => {
       })
       .lean();
 
-    const formattedCompanies = savedCompanies.map((saved) => ({
+    const formattedCompanies = validFavourites.map((saved) => ({
       ...saved.company,
-      // category: saved.company.category.map((cat) => cat.toString()),
       isSaved: true,
     }));
 

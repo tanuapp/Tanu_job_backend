@@ -30,6 +30,10 @@ const appointmentSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Company",
   },
+  notified: {
+    type: Boolean,
+    default: false,
+  },
   phone: {
     type: String,
   },

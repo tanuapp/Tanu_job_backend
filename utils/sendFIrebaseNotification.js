@@ -4,6 +4,7 @@ const sendFirebaseNotification = async ({ title, body, data = {}, token }) => {
   }
 
   const message = {
+    token,
     notification: {
       title: String(title),
       body: String(body),
@@ -11,10 +12,12 @@ const sendFirebaseNotification = async ({ title, body, data = {}, token }) => {
     data: Object.fromEntries(
       Object.entries(data).map(([k, v]) => [k, String(v)])
     ),
-    token,
     android: {
       notification: {
+        icon: "ic_notification", // ✅ Android-д icon заана (цааш доорх тайлбар хар)
+        color: "#3A86FF",
         sound: "default",
+        priority: "high",
       },
     },
     apns: {
@@ -23,8 +26,14 @@ const sendFirebaseNotification = async ({ title, body, data = {}, token }) => {
       },
       payload: {
         aps: {
-          contentAvailable: true,
+          alert: {
+            title: String(title),
+            body: String(body),
+          },
           sound: "default",
+          badge: 1,
+          contentAvailable: true,
+          mutableContent: true,
         },
       },
     },
@@ -39,41 +48,5 @@ const sendFirebaseNotification = async ({ title, body, data = {}, token }) => {
     return { success: false, error };
   }
 };
-
-// console.log("📤 Firebase Message:", message);
-// const message = {
-//   notification: {
-//     title,
-//     body,
-//   },
-//   data: {
-//     ...data,
-//     title,
-//     body,
-//   },
-//   token,
-//   android: {
-//     notification: {
-//       sound: "default",
-//     },
-//   },
-//   apns: {
-//     payload: {
-//       aps: {
-//         sound: "default",
-//       },
-//     },
-//   },
-// };
-//   console.log(message);
-//   try {
-//     const response = await global.fireadmin.messaging().send(message);
-//     console.log("✅ Firebase notification sent:", response);
-//     return { success: true, response };
-//   } catch (error) {
-//     console.error("❌ Firebase notification error:", error.message);
-//     return { success: false, error };
-//   }
-// };
 
 module.exports = sendFirebaseNotification;
