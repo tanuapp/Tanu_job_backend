@@ -610,29 +610,14 @@ exports.updateUserFCM = asyncHandler(async (req, res, next) => {
     const { token, isAndroid } = req.body;
 
     console.log(req.userId);
-
     const userFind = await User.findById(req.userId);
-
-    const artistFind = await Artist.findById(req.userId);
-    console.log(userFind);
-
-    if (!userFind && !artistFind) {
-      return res.status(400).json({
-        success: false,
-        message: "Бүртгэлгүй",
-      });
-    }
 
     if (userFind) {
       userFind.firebase_token = token;
       userFind.isAndroid = isAndroid;
       await userFind.save();
     }
-    if (artistFind) {
-      artistFind.firebase_token = token;
-      artistFind.isAndroid = isAndroid;
-      await artistFind.save();
-    }
+
     res.status(200).json({
       success: true,
     });

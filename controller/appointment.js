@@ -787,9 +787,14 @@ exports.confirmAppointment = asyncHandler(async (req, res) => {
 exports.finishAppointment = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const appointment = await Appointment.findById(id)
-    .populate("user") // хэрэглэгчийн token авахын тулд populate хийж байна
-    .populate("companyId");
-
+    .populate("user")
+    .populate({
+      path: "schedule",
+      populate: {
+        path: "artistId", // Энэ нь artist модел
+        model: "Artist", // таны actual model нэр
+      },
+    });
   if (!appointment) {
     return res
       .status(404)
@@ -798,25 +803,38 @@ exports.finishAppointment = asyncHandler(async (req, res) => {
 
   appointment.status = "done";
   await appointment.save();
-
+  console.log(appointment.schedule.artistId._id.toString(), "artist");
   // Firebase push notification явуулах
   const user = appointment.user;
   if (user?.firebase_token) {
-    await sendFirebaseNotification({
+    const notifData = {
       title: "Үйлчилгээ дууслаа",
       body: "Таны захиалсан үйлчилгээ амжилттай дууслаа!",
       token: user.firebase_token,
       data: {
         type: "appointment_done",
         appointmentId: appointment._id.toString(),
-        companyName: appointment.companyId?.name || "Tanu",
+        companyid: appointment.company.toString(),
+        artistid: appointment.schedule.artistId._id.toString(),
+        artistid: appointment.schedule.artistId._id.toString(),
+        artistName:
+          appointment.schedule.artistId.nick_name ||
+          appointment.schedule.artistId.last_name ||
+          "Нэргүй",
+        artistProfile: appointment.schedule.artistId.photo || "",
       },
-    });
-  }
+    };
 
+    console.log(
+      "📨 Sending FCM Notification with data:",
+      JSON.stringify(notifData, null, 2)
+    );
+
+    await sendFirebaseNotification(notifData);
+  }
   return res
     .status(200)
-    .json({ success: true, message: "Appointment confirmed by artist" });
+    .json({ success: true, message: "Амжилттай захиалгаа дуусгалаа" });
 });
 
 // Энд дуусаж байгаа шүүү

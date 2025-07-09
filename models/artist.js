@@ -13,7 +13,7 @@ const artistSchema = new Schema({
   },
   color: {
     type: String,
-    default: "#234343", 
+    default: "#234343",
     match: [/^#([0-9A-F]{3}){1,2}$/i, "Зөв өнгөний код оруулна уу!"],
   },
   firebase_token: String,
@@ -30,7 +30,14 @@ const artistSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Company",
   },
-  idNumber:String,
+  avgRating: {
+    type: Number,
+    default: 5,
+    min: 1,
+    max: 5,
+  },
+
+  idNumber: String,
   pin: {
     type: String,
     select: false,
