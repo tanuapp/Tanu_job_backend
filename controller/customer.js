@@ -216,64 +216,53 @@ exports.customerUpdateTheirOwnInformation = asyncHandler(
 );
 
 exports.registerWithPhone = asyncHandler(async (req, res) => {
-  const session = await User.startSession();
-  session.startTransaction();
+  console.log("📥 registerWithPhone called with body:", req.body);
   try {
-    const { pin, phone } = req.body;
+    const { phone } = req.body;
 
-    const existingUser = await User.findOne({ phone }).session(session);
+    // 1. Хуучин бүртгэлтэй, баталгаажсан хэрэглэгч байна уу?
+    const existingUser = await User.findOne({ phone, status: true });
+    console.log(
+      "🔍 Existing user found:",
+      existingUser ? existingUser._id : null
+    );
     if (existingUser) {
-      await session.abortTransaction();
-      return res.status(400).json({
+      console.log("❌ Already registered and verified. Sending 400.");
+      const errorResponse = {
         success: false,
         message: "Утасны дугаар бүртгэлтэй байна",
-      });
+      };
+      console.log("📤 Response:", errorResponse);
+      return res.status(400).json(errorResponse);
     }
 
-    const inputData = {
-      ...req.body,
-      photo: req.file ? req.file.filename : "no-img.png",
-    };
-
-    const user = await User.create([inputData], { session });
+    // 2. OTP үүсгэх
     const otp = generateOTP();
 
-    await OTP.create(
-      [
-        {
-          otp,
-          customer: user[0]._id,
-        },
-      ],
-      { session }
-    );
-
-    // 🟢 Энд SMS илгээнэ:
-    try {
-      await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
-    } catch (smsError) {
-      // SMS амжилтгүй бол хэрэглэгч, OTP-г устгаж transaction-г болиулна
-      await session.abortTransaction();
-      session.endSession();
-      console.error("OTP илгээхэд алдаа гарлаа:", smsError.message);
-      return res.status(500).json({
-        success: false,
-        message: "OTP илгээх явцад алдаа гарлаа. Бүртгэл хийгдсэнгүй.",
-      });
+    const existingOtp = await OTP.findOne({ phone });
+    if (existingOtp) {
+      await OTP.updateOne({ phone }, { otp, data: req.body });
+      console.log("♻️ Updated existing OTP record");
+    } else {
+      await OTP.create({ phone, otp, data: req.body });
+      console.log("✅ Created new OTP record");
     }
 
-    await session.commitTransaction();
-    session.endSession();
+    // 3. SMS илгээх
+    await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
+    console.log("📤 Sent OTP SMS");
 
+    // 4. Хариу илгээх
     return res.status(200).json({
       success: true,
-      message: "Бүртгэл амжилттай. Нэг удаагийн нууц үг илгээгдлээ.",
+      message: "OTP илгээгдлээ",
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    console.error(error);
-    customResponse.error(res, error.message);
+    console.error("🔥 Error occurred in registerWithPhone:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Дотоод серверийн алдаа",
+    });
   }
 });
 
@@ -371,78 +360,96 @@ exports.registerWithEmail = asyncHandler(async (req, res, next) => {
 });
 
 // OTP verification endpoint
-exports.registerVerify = asyncHandler(async (req, res, next) => {
+exports.verifyOtp = asyncHandler(async (req, res) => {
   try {
-    const { otp, phone, email, isEmail, count, pin } = req.body;
+    const { phone, otp } = req.body;
 
-    if (Number(count) < 3) {
-      res.status(400).json({
+    const userOtp = await OTP.findOne({ phone });
+    if (!userOtp || userOtp.otp !== otp) {
+      return res.status(400).json({
         success: false,
-        message: "Та түр хүлээн дахин оролдоно уу",
+        message: "OTP буруу эсвэл хугацаа дууссан байна.",
       });
     }
 
-    let existingUser;
-
-    if (isEmail && email) {
-      existingUser = await User.findOneAndUpdate({ email }, { pin });
-
-      if (!existingUser) {
-        return res.status(200).json({
-          success: false,
-          message: "Цахим хаяг бүртгэлгүй байна",
-        });
-      }
-    } else {
-      existingUser = await User.findOneAndUpdate(
-        { phone },
-        {
-          pin,
-        }
-      );
-
-      if (!existingUser) {
-        return res.status(200).json({
-          success: false,
-          message: "Утасны дугаар бүртгэлгүй байна",
-        });
-      }
-    }
-
-    const userOtp = await OTP.findOne({
-      customer: existingUser._id,
-    });
-
-    if (!userOtp) {
+    const existingUser = await User.findOne({ phone });
+    if (existingUser) {
+      await OTP.deleteOne({ phone });
       return res.status(200).json({
-        success: false,
-        message: "OTP not found. Please request a new one.",
+        success: true,
+        message: "Баталгаажсан байна",
+        token: existingUser.getJsonWebToken(),
+        data: existingUser,
       });
     }
 
-    // Correct OTP comparison
-    if (otp !== userOtp.otp) {
-      return res.status(200).json({
-        success: false,
-        message: "Буруу нэг удаагийн нууц үг",
-      });
-    }
+    // ✅ OTP дээр хадгалсан өгөгдлөөр бүрэн хэрэглэгч үүсгэнэ
+    const newUser = await User.create(userOtp.data);
 
-    existingUser.status = true;
-    await existingUser.save();
-
-    // If OTP is correct, generate JWT token
-    const token = existingUser.getJsonWebToken();
-
-    // Optionally, delete the OTP after successful verification
-    await OTP.deleteOne({ customer: existingUser._id });
+    await OTP.deleteOne({ phone });
 
     return res.status(200).json({
       success: true,
-      token,
-      data: existingUser,
+      message: "OTP амжилттай баталгаажсан. Хэрэглэгч бүртгэгдлээ.",
+      token: newUser.getJsonWebToken(),
+      data: newUser,
     });
   } catch (error) {
+    customResponse.error(res, error.message);
+  }
+});
+
+exports.setPin = asyncHandler(async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    console.log("📥 setPin called. Header:", authHeader);
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.log("❌ Authorization header буруу байна");
+      return res.status(401).json({
+        success: false,
+        message: "Токен дамжуулаагүй байна",
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const { pin } = req.body;
+    console.log("🔐 Decoding token:", token);
+
+    if (!pin) {
+      console.log("❌ PIN дутуу байна");
+      return res.status(400).json({
+        success: false,
+        message: "PIN код дутуу байна",
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("✅ Token decoded:", decoded);
+
+    const user = await User.findById(decoded.Id);
+    console.log("👤 User found:", user ? user._id : null);
+
+    if (!user || !user.status) {
+      console.log("❌ User not found or not verified");
+      return res.status(403).json({
+        success: false,
+        message: "Хэрэглэгч баталгаажаагүй байна",
+      });
+    }
+
+    user.pin = pin;
+    await user.save();
+    console.log("✅ PIN хадгалсан");
+
+    return res.status(200).json({
+      success: true,
+      message: "PIN амжилттай хадгалагдлаа",
+      token, // ← энэ дутагдаж байна!
+      data: user,
+    });
+  } catch (error) {
+    console.error("🔥 setPin алдаа:", error.message);
     customResponse.error(res, error.message);
   }
 });

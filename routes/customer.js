@@ -21,6 +21,8 @@ const {
   updateUserFCM,
   getCustomerAppointments,
   forgotPassword,
+  verifyOtp,
+  setPin,
 } = require("../controller/customer");
 const router = express.Router();
 
@@ -38,11 +40,12 @@ router.route("/login/phone").post(loginWithPhone);
 
 router.route("/register/email").post(registerWithEmail);
 router.route("/register/phone").post(registerWithPhone);
+router.route("/verify-otp").post(verifyOtp);
+router.route("/set-pin").post(setPin);
 
 router.route("/register").post(register);
 router.route("/forgotPassword").post(forgotPassword);
 
-router.route("/register-verify").post(registerVerify);
 router.route("/").get(protect, getAll);
 
 router

@@ -3,15 +3,23 @@ const { Schema } = mongoose;
 
 const otpSchema = new Schema(
   {
-    customer: {
-      type: mongoose.Types.ObjectId,
-      ref: "Customer",
+    phone: {
+      type: String,
+    },
+    email: {
+      type: String,
+    },
+    otp: {
+      type: String,
       required: true,
     },
-    otp: String,
+    data: {
+      type: Object, // 👈 Түр хадгалах бүртгэлийн мэдээлэл (name, phone, firebaseToken, гэх мэт)
+    },
   },
   {
-    timestamps: true, // Automatically manages createdAt and updatedAt fields
+    timestamps: true,
+    expires: 300, // 🕔 5 минутын дараа автоматаар устах
   }
 );
 
