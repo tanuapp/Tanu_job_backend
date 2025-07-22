@@ -5,7 +5,7 @@ const customResponse = require("../utils/customResponse");
 exports.getAllModel = asyncHandler(async (req, res, next) => {
   try {
     const allUser = await Model.find({
-      company: req.params.id,
+      companyId: req.params.id,
     });
 
     customResponse.success(res, allUser);
@@ -17,8 +17,6 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
 exports.createModel = asyncHandler(async (req, res, next) => {
   console.log(req.body, "data");
   try {
-    console.log("Body:", req.body);
-    console.log("Files:", req.files);
     const result = await Model.create({
       ...req.body,
       gallery:
@@ -33,6 +31,29 @@ exports.createModel = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.deletePhoto = asyncHandler(async (req, res, next) => {
+  const { id, filename } = req.params;
+
+  const galleryDoc = await Model.findById(id);
+  if (!galleryDoc) {
+    return res.status(404).json({ success: false, message: 'Gallery not found' });
+  }
+
+  // Filter out the file to delete
+  const updatedGallery = galleryDoc.gallery.filter(file => file !== filename);
+  galleryDoc.gallery = updatedGallery;
+
+  await galleryDoc.save();
+
+  // 🧹 optionally: remove from disk
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.join(__dirname, '../public/uploads', filename);
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+  customResponse.success(res, galleryDoc);
+});
+
 exports.updateModel = asyncHandler(async (req, res, next) => {
   try {
     const old = await Model.findById(req.params.id);
@@ -40,11 +61,14 @@ exports.updateModel = asyncHandler(async (req, res, next) => {
       req.files && req.files.gallery
         ? req.files.gallery.map((file) => file.filename)
         : old.gallery;
-
-    const result = await Model.findByIdAndUpdate(req.params.id, {
-      ...req.body,
-      gallery,
-    });
+    const result = await Model.findByIdAndUpdate(
+      req.params.id,
+      {
+        ...req.body,
+        gallery,
+      },
+      { new: true }
+    );
 
     customResponse.success(res, result);
   } catch (error) {
