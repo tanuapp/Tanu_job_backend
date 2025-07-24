@@ -17,6 +17,7 @@ const { Server } = require("socket.io");
 const errorHandler = require("./middleware/error.js");
 
 // Routes
+const versionRoute = require("./routes/version.js");
 const optionRouter = require("./routes/option.js");
 const categoryRoutes = require("./routes/category.js");
 const seriescategoryRoutes = require("./routes/seriescategory.js");
@@ -141,7 +142,7 @@ app.post(
     );
   })
 );
-
+app.use("/api/v1/version", versionRoute);
 app.use("/api/v1/option", optionRouter);
 app.use("/api/v1/category", categoryRoutes);
 app.use("/api/v1/seriescategory", seriescategoryRoutes);
