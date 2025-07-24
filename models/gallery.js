@@ -3,11 +3,8 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const gallerySchema = new mongoose.Schema({
-
-
   gallery: { type: [String] },
-
-  company: {
+  companyId: {
     type: Schema.Types.ObjectId,
     ref: "Company",
     required: true,
@@ -19,3 +16,4 @@ const gallerySchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model("Gallery", gallerySchema);
+ 

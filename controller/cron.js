@@ -8,8 +8,8 @@ const sendFirebaseNotification = require("../utils/sendFIrebaseNotification");
 cron.schedule("* * * * *", async () => {
   const now = moment().tz("Asia/Ulaanbaatar");
   const in5min = now.clone().add(5, "minutes");
-  const expiryTime = 3 * 60 * 1000;
-
+  const expiryTime = 3 * 60 * 1000; 
+ 
   console.log("🟡 CRON ажиллаж байна:", now.format("YYYY-MM-DD HH:mm:ss"));
 
   /** ✅ 1. Push notification 5 мин дараа болох appointment-д **/
