@@ -2,6 +2,7 @@ const Appointment = require("../models/appointment");
 const Schedule = require("../models/schedule");
 const Invoice = require("../models/invoice");
 const Company = require("../models/company");
+const Favourite = require("../models/favourite");
 const asyncHandler = require("../middleware/asyncHandler");
 const { default: axios } = require("axios");
 const customResponse = require("../utils/customResponse");
@@ -180,6 +181,20 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         finalPrice: discountedTotalPrice,
         company: company._id, // 🟢 энд компанийн ID-г хадгалж байна
       });
+      const alreadySaved = await Favourite.findOne({
+        user: req.userId,
+        company: company._id,
+      });
+
+      if (!alreadySaved) {
+        await Favourite.create({
+          user: req.userId,
+          company: company._id,
+        });
+        console.log("💾 Company saved to favourites");
+      } else {
+        console.log("ℹ️ Company already in favourites");
+      }
 
       const fullUser = await Customer.findById(app.user);
       const userName = `${fullUser?.last_name || ""}`.trim() || "Захиалга";
@@ -230,6 +245,20 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       finalPrice: discountedTotalPrice,
       company: company._id, // 🟢 энд компанийн ID-г хадгалж байна
     });
+    const alreadySaved = await Favourite.findOne({
+      user: req.userId,
+      company: company._id,
+    });
+
+    if (!alreadySaved) {
+      await Favourite.create({
+        user: req.userId,
+        company: company._id,
+      });
+      console.log("💾 Company saved to favourites");
+    } else {
+      console.log("ℹ️ Company already in favourites");
+    }
 
     const fullUser = await Customer.findById(app.user);
     const userName = `${fullUser?.last_name || ""}`.trim() || "Үл мэдэгдэх";
