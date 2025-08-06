@@ -22,7 +22,6 @@ const artistSchema = new Schema({
   email: {
     type: String,
     sparse: true,
-    unique: true,
   },
   companyId: {
     type: Schema.Types.ObjectId,
