@@ -6,8 +6,6 @@ const { Schema } = mongoose;
 const artistSchema = new Schema({
   phone: {
     type: String,
-    sparse: true,
-    unique: true,
     required: [true, "Утасны дугаар заавал бичнэ үү!"],
     maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
   },

@@ -54,7 +54,7 @@ const commentRoute = require("./routes/comment.js");
 const agentRoute = require("./routes/agent.js");
 const onlineContractRouter = require("./routes/onlineContractRouter.js");
 const onlineContractRender = require("./routes/contractRender.js");
-
+const danAuthRoute = require("./routes/dan.js");
 // Multer setup
 const multer = require("multer");
 const initFirebase = require("./firebaseInit.js");
@@ -179,7 +179,7 @@ app.use("/api/v1/comment", commentRoute);
 app.use("/api/v1/agent", agentRoute);
 app.use("/api/v1/contract", onlineContractRouter);
 app.use("/api/v1/contract-render", onlineContractRender);
-
+app.use("/api/v1/dan", danAuthRoute);
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
 // File upload
