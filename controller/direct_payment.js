@@ -204,23 +204,23 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
     const userName = `${fullUser?.last_name || ""}`.trim() || "Үл мэдэгдэх";
     const userPhone = fullUser?.phone || "N/A";
 
-    // if (company.firebase_token) {
-    //   const notifResult = await sendFirebaseNotification({
-    //     title: "Шинэ захиалга",
-    //     body: "Таны компанид шинэ захиалга ирлээ!",
-    //     token: company.firebase_token,
-    //     data: {
-    //       type: "advancedPayment",
-    //       id: app._id.toString(),
-    //       name: userName,
-    //       phone: userPhone,
-    //       date,
-    //       time: scheduleDoc.start || "00:00",
-    //       service: services.map((s) => s.service_name).join(", "),
-    //     },
-    //   });
-    //   console.log("📲 Firebase notification sent:", notifResult);
-    // }
+    if (company.firebase_token) {
+      const notifResult = await sendFirebaseNotification({
+        title: "Шинэ захиалга",
+        body: "Таны компанид шинэ захиалга ирлээ!",
+        token: company.firebase_token,
+        data: {
+          type: "advancedPayment",
+          id: app._id.toString(),
+          name: userName,
+          phone: userPhone,
+          date,
+          time: scheduleDoc.start || "00:00",
+          service: services.map((s) => s.service_name).join(", "),
+        },
+      });
+      console.log("📲 Firebase notification sent:", notifResult);
+    }
 
     // QR үүсгэх
     const qrData = `Appointment ID: ${app._id}\nDate: ${app.date}\nUser ID: ${app.user}`;
