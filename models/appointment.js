@@ -54,7 +54,15 @@ const appointmentSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "paid", "expired", "declined", "completed", "done"], // ← нэмсэн
+    enum: [
+      "pending",
+      "paid",
+      "expired",
+      "declined",
+      "completed",
+      "done",
+      "advance",
+    ], // ← нэмсэн
     default: "pending",
   },
   isCash: {
