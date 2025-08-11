@@ -2,14 +2,10 @@ const axios = require("axios");
 const asyncHandler = require("../middleware/asyncHandler.js");
 const invoiceModel = require("../models/invoice.js");
 const qpay = require("../middleware/qpay");
-const customerModel = require("../models/customer.js");
-const companyModel = require("../models/company.js");
+
 const Appointment = require("../models/appointment.js");
 const Option = require("../models/option.js");
-const Service = require("../models/service.js");
-const schedule = require("../models/schedule.js");
-const company = require("../models/company.js");
-const customResponse = require("../utils/customResponse");
+
 const { generateCredential } = require("../middleware/khan");
 const { sendNotification } = require("../utils/apnService.js");
 
@@ -307,10 +303,11 @@ exports.callback = asyncHandler(async (req, res) => {
     console.log("🔁 Current Status:", originalStatus);
 
     if (originalStatus === "completed") {
-      app.status = "done";
+      app.status = "done"; // Mark as done after completion
       record.status = "done";
       console.log("✅ Төлөв updated to done");
 
+      // Send notification when status is "done"
       if (app.user?.deviceToken) {
         console.log("📲 Push мэдэгдэл илгээж байна...");
         try {
@@ -323,10 +320,24 @@ exports.callback = asyncHandler(async (req, res) => {
           console.error("🚫 Push илгээхэд алдаа:", err.message);
         }
       }
-    } else {
-      app.status = "paid";
+    } else if (originalStatus === "advance") {
+      app.status = "paid"; // Mark as paid after successful payment
       record.status = "paid";
       console.log("✅ Төлөв updated to paid");
+
+      // Send notification when status is "paid"
+      if (app.user?.deviceToken) {
+        console.log("📲 Push мэдэгдэл илгээж байна...");
+        try {
+          await sendNotification(
+            [app.user.deviceToken],
+            "Шинэ захиалга ирлээ!"
+          );
+          console.log("✅ Push илгээгдлээ.");
+        } catch (err) {
+          console.error("🚫 Push илгээхэд алдаа:", err.message);
+        }
+      }
     }
 
     await app.save();
