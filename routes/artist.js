@@ -6,6 +6,7 @@ const {
   Login,
   create,
   deleteModel,
+  deleteArtist,
   getArtistServices,
   get,
   getAll,
@@ -40,7 +41,7 @@ router
 router
   .route("/:id")
   .put(upload.single("photo"), update)
-  .delete(deleteModel)
+  .delete(deleteArtist)
   .get(get);
 
 module.exports = router;

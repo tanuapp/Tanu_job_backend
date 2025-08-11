@@ -1,3 +1,4 @@
+const { isValidObjectId } = require("mongoose");
 const Artist = require("../models/artist");
 const asyncHandler = require("../middleware/asyncHandler");
 const customResponse = require("../utils/customResponse");
@@ -303,6 +304,30 @@ exports.deleteModel = async function deleteUser(req, res, next) {
     customResponse.success(res, deletePost);
   } catch (error) {
     customResponse.error(res, error.message);
+  }
+};
+
+exports.deleteArtist = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!isValidObjectId(id)) {
+      return customResponse.error(res, "Invalid artist id", 400);
+    }
+
+    // If your API is company-scoped
+    const companyId = req.user?.companyId || req.body?.companyId;
+    const filter = companyId ? { _id: id, companyId } : { _id: id };
+
+    const deleted = await Artist.findOneAndDelete(filter);
+    if (!deleted) {
+      return customResponse.error(res, "Artist not found", 404);
+    }
+
+    return customResponse.success(res, { _id: deleted._id });
+    // or: return res.status(204).send();
+  } catch (err) {
+    return customResponse.error(res, err.message || "Server error", 500);
   }
 };
 
