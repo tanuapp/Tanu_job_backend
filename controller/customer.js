@@ -614,22 +614,34 @@ exports.loginWithEmail = asyncHandler(async (req, res, next) => {
 
 exports.updateUserFCM = asyncHandler(async (req, res, next) => {
   try {
-    const { token, isAndroid } = req.body;
+    console.log("🔹 updateUserFCM called");
+    console.log("📩 Request body:", req.body);
+    console.log("📌 req.userId:", req.userId);
 
-    console.log(req.userId);
+    const { token, isAndroid } = req.body;
+    console.log("✅ Extracted token:", token);
+    console.log("✅ Extracted isAndroid:", isAndroid);
+
     const userFind = await User.findById(req.userId);
+    console.log("👤 Found user:", userFind);
 
     if (userFind) {
+      console.log("🛠 Updating user FCM & platform...");
       userFind.firebase_token = token;
       userFind.isAndroid = isAndroid;
-      await userFind.save();
+
+      const savedUser = await userFind.save();
+      console.log("💾 User saved:", savedUser);
+    } else {
+      console.log("⚠ No user found with ID:", req.userId);
     }
 
+    console.log("✅ Sending success response");
     res.status(200).json({
       success: true,
     });
   } catch (error) {
-    console.log(error);
+    console.log("❌ Error in updateUserFCM:", error);
     customResponse.error(res, error.message);
   }
 });

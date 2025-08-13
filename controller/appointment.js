@@ -786,55 +786,69 @@ exports.confirmAppointment = asyncHandler(async (req, res) => {
 });
 exports.finishAppointment = asyncHandler(async (req, res) => {
   const { id } = req.params;
+
   const appointment = await Appointment.findById(id)
     .populate("user")
     .populate({
       path: "schedule",
-      populate: {
-        path: "artistId", // Энэ нь artist модел
-        model: "Artist", // таны actual model нэр
-      },
+      populate: { path: "artistId", model: "Artist" },
     });
+
   if (!appointment) {
     return res
       .status(404)
       .json({ success: false, message: "Appointment not found" });
   }
 
-  appointment.status = "done";
-  await appointment.save();
-  console.log(appointment.schedule.artistId._id.toString(), "artist");
-  // Firebase push notification явуулах
-  const user = appointment.user;
-  if (user?.firebase_token) {
-    const notifData = {
-      title: "Үйлчилгээ дууслаа",
-      body: "Таны захиалсан үйлчилгээ амжилттай дууслаа!",
-      token: user.firebase_token,
-      data: {
-        type: "appointment_done",
-        appointmentId: appointment._id.toString(),
-        companyid: appointment.company.toString(),
-        artistid: appointment.schedule.artistId._id.toString(),
-        artistid: appointment.schedule.artistId._id.toString(),
-        artistName:
-          appointment.schedule.artistId.nick_name ||
-          appointment.schedule.artistId.last_name ||
-          "Нэргүй",
-        artistProfile: appointment.schedule.artistId.photo || "",
-      },
-    };
-
-    console.log(
-      "📨 Sending FCM Notification with data:",
-      JSON.stringify(notifData, null, 2)
-    );
-
-    await sendFirebaseNotification(notifData);
+  // Хоёр дахиа дарахаас сэргийлэх
+  if (appointment.status === "done" && appointment.isCash === true) {
+    return res.status(200).json({
+      success: true,
+      message: "Already finished as cash",
+      isCash: true,
+      status: appointment.status,
+    });
   }
-  return res
-    .status(200)
-    .json({ success: true, message: "Амжилттай захиалгаа дуусгалаа" });
+
+  // ✅ Дууссан болгож, мөнгийг "cash" гэж тэмдэглэнэ (frontend-ээс хамаарахгүй)
+  appointment.status = "done";
+  appointment.isCash = true;
+
+  await appointment.save();
+
+  // 🔔 Push notification (алдаа залгиж унагахгүй)
+  try {
+    const user = appointment.user;
+    if (user?.firebase_token) {
+      const notifData = {
+        title: "Үйлчилгээ дууслаа",
+        body: "Таны захиалсан үйлчилгээ амжилттай дууслаа!",
+        token: user.firebase_token,
+        data: {
+          type: "appointment_done",
+          appointmentId: appointment._id.toString(),
+          companyid: appointment.company.toString(),
+          artistid: appointment.schedule.artistId._id.toString(),
+          artistName:
+            appointment.schedule.artistId.nick_name ||
+            appointment.schedule.artistId.last_name ||
+            "Нэргүй",
+          artistProfile: appointment.schedule.artistId.photo || "",
+        },
+      };
+      await sendFirebaseNotification(notifData);
+    }
+  } catch (e) {
+    console.error("FCM send error:", e);
+  }
+
+  // ✅ isCash-г ил тод буцаана
+  return res.status(200).json({
+    success: true,
+    message: "Амжилттай захиалгаа дуусгалаа",
+    isCash: true,
+    status: "done",
+  });
 });
 
 // Энд дуусаж байгаа шүүү
