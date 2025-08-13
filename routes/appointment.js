@@ -19,6 +19,7 @@ const {
   confirmAppointment,
   getAvailableTimesAdmin,
   updateAppointmentTime,
+  updateAppointmentSchedule,
   finishAppointment,
 } = require("../controller/appointment");
 
@@ -51,6 +52,7 @@ router.route("/").post(protect, create).get(getAll);
 
 // Тухайн ID-тай захиалгыг харах, засах, устгах (хамгийн сүүлд байх ёстой)
 router.route("/edit/time/:id").put(protect, updateAppointmentTime);
+router.route("/update/time/:id").put(protect, updateAppointmentSchedule);
 
 router.route("/:id").put(protect, update).delete(protect, deleteModel).get(get);
 router.route("/update/:id").post(protect, updateStatus); // ✅ зөв синтакс + POST method

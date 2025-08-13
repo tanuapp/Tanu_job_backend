@@ -428,6 +428,102 @@ exports.updateAppointmentTime = asyncHandler(async (req, res) => {
     schedule: scheduleDoc,
   });
 });
+exports.updateAppointmentSchedule = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  // Body энгийн эсвэл schedule дотор ирж болно — хоёуланг дэмжиж авна
+  const endFromBody =
+    (req.body && req.body.end) ||
+    (req.body && req.body.schedule && req.body.schedule.end);
+
+  if (!endFromBody) {
+    return customResponse.error(res, "end (HH:mm) шаардлагатай");
+  }
+
+  // 1) Захиалга олох (schedule-той нь)
+  const appointment = await Appointment.findById(id).populate("schedule");
+  if (!appointment) {
+    return customResponse.error(res, "Захиалга олдсонгүй");
+  }
+  if (!appointment.schedule) {
+    return customResponse.error(res, "Schedule олдсонгүй (сунгах боломжгүй)");
+  }
+
+  const scheduleDoc = appointment.schedule;
+  const start = scheduleDoc.start; // "HH:mm" гэж үзэж байна
+  const end = endFromBody; // шинэ төгсгөл
+
+  // 2) Формат энгийн шалгалт (HH:mm)
+  const isValidHHmm = (str) => /^\d{2}:\d{2}$/.test(str);
+  if (!isValidHHmm(start) || !isValidHHmm(end)) {
+    return customResponse.error(res, "Цагийн формат HH:mm байх ёстой");
+  }
+
+  const [sH, sM] = start.split(":").map(Number);
+  const [eH, eM] = end.split(":").map(Number);
+  const startMin = sH * 60 + sM;
+  const endMin = eH * 60 + eM;
+
+  if (endMin <= startMin) {
+    return customResponse.error(
+      res,
+      "Дуусах цаг нь эхлэх цагаас ХОЙШ (алдаагүй) байх ёстой"
+    );
+  }
+
+  // 3) (СОНГОЛТ) Давхцлын энгийн шалгалт — ижил artist, ижил өдөр, өөр appointment-уудтай
+  const simpleOverlapCheck = true; // хэрэггүй бол false болгоорой
+  if (simpleOverlapCheck) {
+    const sameDayAppts = await Appointment.find({
+      _id: { $ne: appointment._id },
+      date: appointment.date, // танайд yyyy-MM-dd гэж хадгалдаг
+      status: { $in: ["paid", "pending"] },
+    }).populate({
+      path: "schedule",
+      match: { artistId: scheduleDoc.artistId },
+      select: "start end",
+    });
+
+    // schedule-тэй бичлэгүүд л шалгана
+    const conflicts = (sameDayAppts || [])
+      .filter((a) => a.schedule)
+      .some((a) => {
+        const [aSH, aSM] = a.schedule.start.split(":").map(Number);
+        const [aEH, aEM] = a.schedule.end.split(":").map(Number);
+        const aStart = aSH * 60 + aSM;
+        const aEnd = aEH * 60 + aEM;
+        // [startMin, endMin) vs [aStart, aEnd) давхцаж байна уу?
+        return endMin > aStart && aEnd > startMin;
+      });
+
+    if (conflicts) {
+      return customResponse.error(
+        res,
+        "Энэ сунгалт өөр цагтай давхцаж байна. (Өдрийн өөр appointment-уудтай давхцаж болохгүй)"
+      );
+    }
+  }
+
+  // 4) duration-ыг дахин тооцоод schedule-аа шинэчилнэ
+  const newDuration = endMin - startMin;
+
+  const updatedSchedule = await Schedule.findByIdAndUpdate(
+    scheduleDoc._id,
+    { end, duration: newDuration },
+    { new: true }
+  );
+
+  // 5) Амжилттай
+  return customResponse.success(res, {
+    message: "Дуусах цаг амжилттай шинэчлэгдлээ",
+    appointment: {
+      _id: appointment._id,
+      date: appointment.date,
+      status: appointment.status,
+    },
+    schedule: updatedSchedule,
+  });
+});
 
 exports.getAvailableTimesAdmin = asyncHandler(async (req, res, next) => {
   const { date, artist } = req.body;
