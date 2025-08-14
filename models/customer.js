@@ -33,7 +33,6 @@ const customerSchema = new Schema({
   email: {
     type: String,
     index: true,
-    unique: true,
     sparse: true,
   },
   coupon: {
@@ -60,7 +59,6 @@ customerSchema.pre("save", async function (next) {
 customerSchema.methods.checkPassword = async function (pin) {
   return await bcrypt.compare(pin, this.pin);
 };
-
 
 customerSchema.methods.getJsonWebToken = function () {
   return jwt.sign({ Id: this._id, phone: this.phone }, process.env.JWT_SECRET, {
