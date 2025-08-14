@@ -20,7 +20,7 @@ const userSchema = new Schema({
   name: String,
   status: {
     type: Boolean,
-    default: false,
+    default: true,
   },
   photo: String,
   companyId: {
