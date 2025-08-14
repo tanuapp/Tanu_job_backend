@@ -10,19 +10,7 @@ const userRoleSchema = new Schema({
     type: String,
   },
 
-  isRealtime: {
-    type: Boolean,
-    default: false,
-  },
-  notif: {
-    type: Boolean,
-    default: false,
-  },
-  story: {
-    type: Boolean,
-    default: false,
-  },
-  static: {
+  dashboard: {
     type: Boolean,
     default: false,
   },
@@ -30,12 +18,15 @@ const userRoleSchema = new Schema({
     type: Boolean,
     default: false,
   },
-  isAdmin: {
+  admin: {
     type: Boolean,
     default: false,
   },
-
-  yearReport: {
+  package: {
+    type: Boolean,
+    default: false,
+  },
+  settings: {
     type: Boolean,
     default: false,
   },
