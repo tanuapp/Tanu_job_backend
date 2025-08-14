@@ -13,8 +13,8 @@ router.get("/", (req, res) => {
 });
 router.get("/business", (req, res) => {
   res.json({
-    latest_version: "1.0.17",
-    version_code: 11,
+    latest_version: "1.0.19",
+    version_code: 13,
     force_update: false, // заавал шинэчлэх шаардлагатай эсэх
     message:
       "Бид аппыг улам сайжрууллаа!. Илүү хурдан, найдвартай болгохын тулд шинэчлэлт хийгээрэй!",
