@@ -180,14 +180,12 @@ exports.qpayCallback = asyncHandler(async (req, res) => {
   console.log("===== 📡 QPAY CALLBACK START =====");
 
   try {
-    // 1) Params ба query лог
     const { sender_invoice_no } = req.params;
     const { qpay_payment_id } = req.query;
 
     console.log("📥 Callback params:", { sender_invoice_no });
     console.log("📥 Callback query:", { qpay_payment_id });
 
-    // 2) qpay_payment_id байхгүй бол
     if (!qpay_payment_id) {
       console.warn("⚠️ Missing qpay_payment_id");
       return res
@@ -195,14 +193,12 @@ exports.qpayCallback = asyncHandler(async (req, res) => {
         .json({ success: false, message: "Missing qpay_payment_id" });
     }
 
-    // 3) QPay token авах
     console.log("🔑 Requesting QPay token...");
     const qpay_token = await qpay.makeRequest();
     console.log("✅ QPay token received:", qpay_token);
 
-    // 4) QPay төлбөрийн статус шалгах
     console.log("🔍 Checking QPay payment status for:", qpay_payment_id);
-    // 1. DB-с QPay invoice_id-г авах
+
     const localInvoice = await Invoice.findOne({
       sender_invoice_id: sender_invoice_no,
     });
@@ -212,12 +208,11 @@ exports.qpayCallback = asyncHandler(async (req, res) => {
         .json({ success: false, message: "Invoice not found" });
     }
 
-    // 2. QPay төлбөрийн статус шалгах
     const statusRes = await axios.post(
       `${process.env.qpayUrl}payment/check`,
       {
         object_type: "INVOICE",
-        object_id: localInvoice.qpay_invoice_id, // ✅ зөв ID
+        object_id: localInvoice.qpay_invoice_id,
         offset: { page_number: 1, page_limit: 100 },
       },
       { headers: { Authorization: `Bearer ${qpay_token.access_token}` } }
@@ -225,12 +220,14 @@ exports.qpayCallback = asyncHandler(async (req, res) => {
 
     console.log("✅ QPay status response:", statusRes.data);
 
-    // 5) Хэрэв төлөгдсөн бол
-    if (statusRes.data.payment_status === "PAID") {
+    const paymentStatus = statusRes.data.rows?.[0]?.payment_status;
+    console.log("📌 Extracted paymentStatus:", paymentStatus);
+
+    if (paymentStatus === "PAID") {
       console.log("💰 Payment is PAID, fetching invoice...");
 
       const invoice = await Invoice.findOne({
-        qpay_invoice_id: statusRes.data.invoice_id,
+        qpay_invoice_id: localInvoice.qpay_invoice_id,
       }).populate("companyId");
 
       if (!invoice) {
@@ -242,7 +239,6 @@ exports.qpayCallback = asyncHandler(async (req, res) => {
 
       console.log("📄 Invoice found:", invoice);
 
-      // 6) Компани update
       console.log("🏢 Updating company package info...");
       await Company.findByIdAndUpdate(invoice.companyId._id, {
         package: [invoice.package],
@@ -252,12 +248,10 @@ exports.qpayCallback = asyncHandler(async (req, res) => {
       });
       console.log("✅ Company updated");
 
-      // 7) Invoice update
       invoice.status = "paid";
       await invoice.save();
       console.log("✅ Invoice status updated to 'paid'");
 
-      // 8) Socket event
       console.log("📢 Emitting socket event: contractPaymentDone");
       io.emit("contractPaymentDone", {
         message: "Төлбөр амжилттай",
@@ -265,10 +259,7 @@ exports.qpayCallback = asyncHandler(async (req, res) => {
         companyId: invoice.companyId._id,
       });
     } else {
-      console.warn(
-        "⚠️ Payment is NOT PAID yet:",
-        statusRes.data.payment_status
-      );
+      console.warn("⚠️ Payment is NOT PAID yet:", paymentStatus);
     }
 
     console.log("===== ✅ QPAY CALLBACK END =====");
