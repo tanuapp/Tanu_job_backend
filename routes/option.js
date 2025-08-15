@@ -5,11 +5,16 @@ const {
   deleteModel,
   getAllModel,
   getModel,
+  createPackageQpay,
   updateModel,
+  qpayCallback,
 } = require("../controller/option");
 const router = express.Router();
-
+router.route("/contract-payment").post(createPackageQpay);
 router.route("/").post(createModel).get(getAllModel);
+// option.js (route)
+router.post("/qpay/callback", qpayCallback);
+
 router.route("/:id").put(updateModel).delete(deleteModel).get(getModel);
 
 module.exports = router;
