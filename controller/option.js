@@ -191,8 +191,10 @@ exports.qpayCallback = asyncHandler(async (req, res) => {
 
     const qpay_token = await qpay.makeRequest();
     const statusRes = await axios.get(
-      `${process.env.qpayUrl}payment/check/${qpay_payment_id}`,
-      { headers: { Authorization: `Bearer ${qpay_token.access_token}` } }
+      `${process.env.qpayUrl}payment/checkPayment/${qpay_payment_id}`,
+      {
+        headers: { Authorization: `Bearer ${qpay_token.access_token}` },
+      }
     );
 
     if (statusRes.data.payment_status === "PAID") {
