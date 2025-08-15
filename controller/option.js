@@ -180,7 +180,7 @@ exports.qpayCallback = asyncHandler(async (req, res) => {
   console.log("io", bn2q);
 
   try {
-    const { qpay_payment_id } = req.query; // GET query-с авна
+    const { payment_id, invoice_id, payment_status } = req.body;
 
     // QPay API руу энэ ID-гаар нь төлбөрийн статус шалгах хүсэлт явуулна
     const qpay_token = await qpay.makeRequest();

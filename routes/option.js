@@ -13,7 +13,8 @@ const router = express.Router();
 router.route("/contract-payment").post(createPackageQpay);
 router.route("/").post(createModel).get(getAllModel);
 // option.js (route)
-router.route("/qpay/callback/:id").get(qpayCallback); // GET хүсэлт хүлээнэ
+router.post("/qpay/callback", qpayCallback);
+// GET хүсэлт хүлээнэ
 
 router.route("/:id").put(updateModel).delete(deleteModel).get(getModel);
 
