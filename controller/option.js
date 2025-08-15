@@ -202,11 +202,23 @@ exports.qpayCallback = asyncHandler(async (req, res) => {
 
     // 4) QPay төлбөрийн статус шалгах
     console.log("🔍 Checking QPay payment status for:", qpay_payment_id);
+    // 1. DB-с QPay invoice_id-г авах
+    const localInvoice = await Invoice.findOne({
+      sender_invoice_id: sender_invoice_no,
+    });
+    if (!localInvoice) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Invoice not found" });
+    }
+
+    // 2. QPay төлбөрийн статус шалгах
     const statusRes = await axios.post(
       `${process.env.qpayUrl}payment/check`,
       {
         object_type: "INVOICE",
-        object_id: sender_invoice_no, // instead of qpay_payment_id
+        object_id: localInvoice.qpay_invoice_id, // ✅ зөв ID
+        offset: { page_number: 1, page_limit: 100 },
       },
       { headers: { Authorization: `Bearer ${qpay_token.access_token}` } }
     );
