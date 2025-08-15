@@ -177,18 +177,22 @@ exports.createPackageQpay = asyncHandler(async (req, res) => {
 exports.qpayCallback = asyncHandler(async (req, res) => {
   const io = req.app.get("io");
 
-  console.log("io", bn2q);
-
   try {
-    const { payment_id, invoice_id, payment_status } = req.body;
+    const { sender_invoice_no } = req.params;
+    const { qpay_payment_id } = req.query;
 
-    // QPay API руу энэ ID-гаар нь төлбөрийн статус шалгах хүсэлт явуулна
+    console.log("📥 QPay callback:", sender_invoice_no, qpay_payment_id);
+
+    if (!qpay_payment_id) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing qpay_payment_id" });
+    }
+
     const qpay_token = await qpay.makeRequest();
     const statusRes = await axios.get(
-      `${process.env.qpayUrl}payment/${qpay_payment_id}`,
-      {
-        headers: { Authorization: `Bearer ${qpay_token.access_token}` },
-      }
+      `${process.env.qpayUrl}payment/check/${qpay_payment_id}`,
+      { headers: { Authorization: `Bearer ${qpay_token.access_token}` } }
     );
 
     if (statusRes.data.payment_status === "PAID") {
@@ -221,7 +225,10 @@ exports.qpayCallback = asyncHandler(async (req, res) => {
 
     res.status(200).json({ success: true });
   } catch (error) {
-    console.error("QPay callback error:", error);
+    console.error(
+      "QPay callback error:",
+      error.response?.data || error.message
+    );
     res.status(500).json({ success: false, error: error.message });
   }
 });
