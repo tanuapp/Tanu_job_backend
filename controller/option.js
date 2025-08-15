@@ -176,6 +176,8 @@ exports.createPackageQpay = asyncHandler(async (req, res) => {
 exports.qpayCallback = asyncHandler(async (req, res) => {
   const io = req.app.get("io");
 
+  console.log("io", io);
+
   try {
     const { qpay_payment_id } = req.query; // GET query-с авна
 
