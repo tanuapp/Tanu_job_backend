@@ -190,8 +190,12 @@ exports.qpayCallback = asyncHandler(async (req, res) => {
     }
 
     const qpay_token = await qpay.makeRequest();
-    const statusRes = await axios.get(
-      `${process.env.qpayUrl}payment/checkPayment/${qpay_payment_id}`,
+    const statusRes = await axios.post(
+      `${process.env.qpayUrl}payment/check`,
+      {
+        object_type: "INVOICE", // QPay API зааварт INVOICE гэж заасан
+        object_id: qpay_payment_id,
+      },
       {
         headers: { Authorization: `Bearer ${qpay_token.access_token}` },
       }
