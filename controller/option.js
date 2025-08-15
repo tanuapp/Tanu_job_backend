@@ -185,7 +185,7 @@ exports.qpayCallback = asyncHandler(async (req, res) => {
     // QPay API руу энэ ID-гаар нь төлбөрийн статус шалгах хүсэлт явуулна
     const qpay_token = await qpay.makeRequest();
     const statusRes = await axios.get(
-      `${process.env.qpayUrl}payment/check/${qpay_payment_id}`,
+      `${process.env.qpayUrl}payment/${qpay_payment_id}`,
       {
         headers: { Authorization: `Bearer ${qpay_token.access_token}` },
       }
