@@ -312,12 +312,12 @@ exports.create = asyncHandler(async (req, res, next) => {
 
 exports.Login = asyncHandler(async (req, res, next) => {
   try {
-    console.log(req.body);
     const { phone, password } = req.body;
-
     const pop = Number(phone);
 
-    const user = await User.findOne({ phone: pop }).select("+password");
+    const user = await User.findOne({ phone: pop })
+      .select("+password")
+      .populate("userRole"); // ← populate нэмлээ
 
     if (!user) {
       return res.status(401).json({
@@ -333,6 +333,7 @@ exports.Login = asyncHandler(async (req, res, next) => {
         message: "Нэвтрэх нэр эсвэл нууц үг буруу байна!",
       });
     }
+
     const token = user.getJsonWebToken();
     return res.status(200).json({
       success: true,
@@ -343,6 +344,7 @@ exports.Login = asyncHandler(async (req, res, next) => {
     customResponse.server(res, error.message);
   }
 });
+
 exports.updateUserFCM = asyncHandler(async (req, res, next) => {
   try {
     const { token, isAndroid } = req.body;

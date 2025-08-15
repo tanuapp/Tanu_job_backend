@@ -18,9 +18,13 @@ const userRoleSchema = new Schema({
     type: Boolean,
     default: false,
   },
-  admin: {
+  comment: {
     type: Boolean,
     default: false,
+  },
+  help: {
+    type: Boolean,
+    default: true,
   },
   package: {
     type: Boolean,
