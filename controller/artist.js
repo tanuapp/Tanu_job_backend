@@ -7,6 +7,13 @@ const company = require("../models/company");
 const User = require("../models/user");
 const OTP = require("../models/artistOTP");
 const sendMessage = require("../utils/callpro");
+const BlacklistEntry = require("../models/blackList");
+
+function truthy(x) {
+  if (typeof x === "boolean") return x;
+  const s = String(x || "").toLowerCase();
+  return s === "1" || s === "true" || s === "yes";
+}
 
 function generateOTP(length = 4) {
   let otp = "";
@@ -29,31 +36,88 @@ exports.getAll = asyncHandler(async (req, res, next) => {
   }
 });
 
-exports.create = asyncHandler(async (req, res, next) => {
+exports.create = asyncHandler(async (req, res) => {
   try {
-    // if (!req.body.pin) {
-    //   return customResponse.error(res, "Та пин оруулж өгнө үү");
-    // }
+    const { idNumber, companyId } = req.body;
+    const force = truthy(req.query.force ?? req.body.force);
 
-    const artister = await company.findById(req.body.companyId);
-    artister.numberOfArtist++;
-    await artister.save();
+    if (!companyId) {
+      return customResponse.error(res, "companyId заавал");
+    }
+
+    // sanitize optional
     if (!req.body.color || req.body.color.trim() === "") {
       delete req.body.color;
     }
+
+    // -------- 1) Blacklist check by idNumber (public only) --------
+    let hits = [];
+    if (idNumber) {
+      // Try to find an artist with this idNumber
+      const matchedArtist = await Artist.findOne({ idNumber }).select(
+        "_id first_name last_name idNumber"
+      );
+      if (matchedArtist) {
+        const publicHits = await BlacklistEntry.find({
+          artistId: matchedArtist._id,
+          visibility: "public",
+        })
+          .sort({ createdAt: -1 })
+          .populate({ path: "reportedByCompanyId", select: "name" })
+          .lean();
+
+        hits = publicHits.map((b) => ({
+          entryId: b._id,
+          reasonCode: b.reasonCode,
+          reasonText: b.reasonText,
+          severity: b.severity,
+          repeatCount: b.repeatCount,
+          reportedBy: b.reportedByCompanyId?.name,
+          incidentDate: b.incidentDate,
+          createdAt: b.createdAt,
+        }));
+      }
+    }
+
+    if (hits.length > 0 && !force) {
+      // Ask client to confirm
+      return res.status(409).json({
+        success: false,
+        code: "BLACKLIST_HIT",
+        confirmRequired: true,
+        message:
+          "Энэ РД дугаартай иргэн blacklist-д бүртгэлтэй байна. Үргэлжлүүлэх үү?",
+        data: hits,
+      });
+    }
+
+    // -------- 2) Proceed with creation --------
+    const comp = await company.findById(companyId);
+    if (!comp) return customResponse.error(res, "Компанийн ID буруу");
+
     const inputData = {
       ...req.body,
-      companyId: artister._id.toString(),
+      companyId: comp._id.toString(),
       photo: req.file?.filename ? req.file.filename : "no user photo",
     };
 
     const user = await Artist.create(inputData);
-    const token = user.getJsonWebToken();
 
-    customResponse.success(res, "Амжилттай хүсэлт илгээлээ");
+    // increment AFTER successful create
+    comp.numberOfArtist = (comp.numberOfArtist || 0) + 1;
+    await comp.save();
+
+    // If you want to return created doc:
+    // return res.status(201).json({ success: true, data: user, blacklisted: hits.length > 0 });
+    return customResponse.success(
+      res,
+      hits.length > 0
+        ? "Blacklist байгааг үл харгалзан амжилттай үүсгэв."
+        : "Амжилттай үүсгэв."
+    );
   } catch (error) {
     console.log(error);
-    customResponse.error(res, error.message);
+    return customResponse.error(res, error.message);
   }
 });
 
