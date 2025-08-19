@@ -86,7 +86,7 @@ exports.create = asyncHandler(async (req, res) => {
         code: "BLACKLIST_HIT",
         confirmRequired: true,
         message:
-          "Энэ РД дугаартай иргэн blacklist-д бүртгэлтэй байна. Үргэлжлүүлэх үү?",
+          "Дараах РД дугаартай иргэн blacklist-д бүртгэлтэй байна. Үргэлжлүүлэх үү?",
         data: hits,
       });
     }
