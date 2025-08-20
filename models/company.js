@@ -66,10 +66,6 @@ const companySchema = new mongoose.Schema({
   logo: { type: String },
   sliderImages: [String],
   companyNumber: { type: String, unique: true },
-  isHome: {
-    type: Boolean,
-    default: false,
-  },
   package: { type: Schema.Types.ObjectId, ref: "Option" },
   isPackage: { type: Boolean, default: false },
   packageEndDate: { type: Date },
