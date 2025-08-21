@@ -33,7 +33,19 @@ const HAIR_SALON_REASONS = [
 
   "other", // Бусад
 ];
-
+const EvidenceSchema = new Schema(
+  {
+    type: {
+      type: String,
+      enum: ["image", "video", "doc", "url"],
+      default: "image",
+      required: true,
+    },
+    file: { type: String, required: true }, // e.g. "uploads/blacklist/2025/08/abc123.jpg" or a URL string if type=url
+    label: { type: String, default: "" },
+  },
+  { _id: false, timestamps: false }
+);
 const VISIBILITY = ["public", "private"];
 
 const blacklistEntrySchema = new Schema(
@@ -67,17 +79,7 @@ const blacklistEntrySchema = new Schema(
 
     incidentDate: { type: Date, required: true, default: Date.now },
 
-    // Нотлох баримт ( зураг/баримт URL, фaйл ID г.м. )
-    evidences: [
-      {
-        type: {
-          type: String, // image, video, doc, url
-          default: "image",
-        },
-        url: String, // файлын URL эсвэл storage key
-        label: String, // тайлбар
-      },
-    ],
+    evidences: { type: [EvidenceSchema], default: [] },
 
     visibility: {
       type: String,
@@ -106,7 +108,13 @@ const blacklistEntrySchema = new Schema(
 );
 
 blacklistEntrySchema.index(
-  { artistId: 1, reportedByCompanyId: 1, reasonCode: 1, visibility: 1 },
+  {
+    artistId: 1,
+    reportedByCompanyId: 1,
+    reasonCode: 1,
+    visibility: 1,
+    evidences: { type: [EvidenceSchema], default: [] },
+  },
   { unique: false }
 );
 

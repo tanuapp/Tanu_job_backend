@@ -106,12 +106,12 @@ exports.getServicesByIds = asyncHandler(async (req, res) => {
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
-    const photo =
-      req.file && req.file.filename ? req.file.filename : "no-img.png";
-    const user = await Model.create({
+    const inputData = {
       ...req.body,
-      photo,
-    });
+      photo: req.file?.filename ? req.file.filename : "no user photo",
+    };
+
+    const user = await Model.create(inputData);
 
     res.status(200).json({
       success: true,
