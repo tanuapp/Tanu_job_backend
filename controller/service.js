@@ -178,3 +178,42 @@ exports.deleteModel = async function deleteUser(req, res, next) {
     customResponse.error(res, error.message);
   }
 };
+exports.getDiscountedServices = asyncHandler(async (req, res, next) => {
+  try {
+    const services = await Model.find({ discount: { $gt: 0 } })
+      .sort({ discount: -1 })
+      .populate({
+        path: "artistId",
+        select: "first_name last_name photo",
+      });
+
+    // ⏰ үлдсэн өдрийг тооцоолох
+    const now = new Date();
+    const servicesWithRemaining = services.map((service) => {
+      let remainingDays = null;
+
+      if (service.discountEnd) {
+        const diffMs = new Date(service.discountEnd).getTime() - now.getTime();
+        if (diffMs > 0) {
+          remainingDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)); // өдөр болгон хувиргана
+        }
+      }
+
+      return {
+        ...service.toObject(),
+        remainingDays, // ⏰ зөвхөн өдөр
+      };
+    });
+
+    console.log("servicesWithRemaining", servicesWithRemaining);
+
+    return res.status(200).json({
+      success: true,
+      count: servicesWithRemaining.length,
+      data: servicesWithRemaining,
+    });
+  } catch (error) {
+    console.error("❌ [getDiscountedServices] Error:", error.message);
+    customResponse.error(res, error.message);
+  }
+});

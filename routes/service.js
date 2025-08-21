@@ -10,7 +10,8 @@ const {
   update,
   getcompany,
   getServicesByArtist,
-  getServicesByIds ,
+  getServicesByIds,
+  getDiscountedServices,
 } = require("../controller/service");
 const router = express.Router();
 
@@ -21,6 +22,7 @@ router
 
 router.post("/filterByIds", getServicesByIds);
 router.route("/company/:id").get(getcompany);
+router.get("/discounted", getDiscountedServices);
 router.post("/getcompany", protect, getServicesByArtist);
 router
   .route("/:id")
