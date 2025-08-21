@@ -11,6 +11,7 @@ const {
   getcompany,
   getServicesByArtist,
   getServicesByIds,
+  getDiscountedServices,
 } = require("../controller/service");
 const router = express.Router();
 
