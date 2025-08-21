@@ -2,15 +2,19 @@ const express = require("express");
 const router = express.Router();
 const ctrl = require("../controller/blackList");
 const { protect } = require("../middleware/protect");
-
+const upload = require("../middleware/fileUpload");
 // Create
-router.post("/", /* requireAuth, requireCompany, */ ctrl.createEntry);
+router.post(
+  "/",
+  /* requireAuth, requireCompany, */ upload.single("evidences", 30),
+  ctrl.createEntry
+);
 
 // List (with filters & pagination)
 router.get("/", /* requireAuth, */ ctrl.listEntries);
 
 // Single
-router.get("/:id", /* requireAuth, */  ctrl.getEntry);
+router.get("/:id", /* requireAuth, */ ctrl.getEntry);
 
 // Update
 router.patch(

@@ -1,9 +1,25 @@
-// controllers/blacklist.controller.js
+
 const mongoose = require("mongoose");
 const BlacklistEntry = require("../models/blackList");
-
+const path = require("path");
 // Small helper
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
+
+function inferType(mime) {
+  if (!mime) return "doc";
+  if (mime.startsWith("image/")) return "image";
+  if (mime.startsWith("video/")) return "video";
+  return "doc";
+}
+
+// Convert absolute path to a public path for serving.
+// If you serve static '/uploads', store "uploads/..." so FE can GET "/uploads/...".
+function toPublicPath(absPath) {
+  const i = absPath.lastIndexOf(path.sep + "uploads" + path.sep);
+  if (i === -1) return absPath; // fallback
+  const rel = absPath.slice(i + 1); // remove leading separator
+  return rel.replace(/\\/g, "/"); // Windows -> URL style
+}
 
 exports.createEntry = async (req, res) => {
   try {
@@ -13,7 +29,6 @@ exports.createEntry = async (req, res) => {
       reasonCode = "other",
       reasonText,
       incidentDate,
-      evidences,
       visibility = "public",
       severity = 3,
       repeatCount = 1,
@@ -25,6 +40,46 @@ exports.createEntry = async (req, res) => {
         message: "artistId, reportedByCompanyId, reasonText заавал.",
       });
     }
+
+    // 1) Build evidence array from uploaded files
+    const files = req.files || [];
+    // Optional per-file labels: can be sent as evidenceLabels[] (array) or evidenceLabels (single)
+    let labels = [];
+    if (Array.isArray(req.body["evidenceLabels[]"])) {
+      labels = req.body["evidenceLabels[]"];
+    } else if (req.body.evidenceLabels) {
+      labels = [req.body.evidenceLabels];
+    }
+
+    const fileEvidences = files.map((f, idx) => ({
+      type: inferType(f.mimetype),
+      file: toPublicPath(f.path), // e.g. "uploads/blacklist/2025/08/xyz.mp4"
+      label: labels[idx] || "",
+    }));
+    // 2) Merge with JSON evidences if provided (e.g. URL items)
+    //    send body field "evidencesJson" as a JSON string array:
+    //    [{"type":"url","file":"https://..."},{"type":"doc","file":"uploads/..."}, ...]
+    let extraEvidences = [];
+    if (req.body.evidencesJson) {
+      try {
+        const parsed = JSON.parse(req.body.evidencesJson);
+        if (Array.isArray(parsed)) {
+          // sanitize minimally
+          extraEvidences = parsed
+            .filter((x) => x && typeof x === "object")
+            .map((x) => ({
+              type: ["image", "video", "doc", "url"].includes(x.type)
+                ? x.type
+                : "doc",
+              file: String(x.file || "").trim(),
+              label: String(x.label || ""),
+            }))
+            .filter((x) => !!x.file);
+        }
+      } catch (_) {}
+    }
+
+    const evidences = [...fileEvidences, ...extraEvidences];
 
     const doc = await BlacklistEntry.create({
       artistId,
