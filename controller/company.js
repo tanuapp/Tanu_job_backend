@@ -10,6 +10,43 @@ const Schedule = require("../models/schedule");
 const Fav = require("../models/favourite");
 const customResponse = require("../utils/customResponse");
 const User = require("../models/user"); // ← энэ мөрийг нэм
+const generateBranchCode = require("../middleware/branchCodeGenerator"); // Branch code generator
+
+exports.generateBranchCode = async (req, res) => {
+  try {
+    const code = await generateBranchCode();
+
+    // тухайн компанид код оноох
+    const company = await Company.findByIdAndUpdate(
+      req.userCompanyId,
+      { branchCode: code },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      code,
+      company,
+    });
+  } catch (error) {
+    customResponse.error(res, error.message);
+  }
+};
+
+// Салбаруудаа шүүх
+exports.getBranchesByCode = async (req, res) => {
+  try {
+    const { branchCode } = req.params;
+    const companies = await Company.find({ branchCode });
+
+    res.status(200).json({
+      success: true,
+      data: companies,
+    });
+  } catch (error) {
+    customResponse.error(res, error.message);
+  }
+};
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
@@ -228,37 +265,50 @@ exports.createModel = asyncHandler(async (req, res, next) => {
 });
 
 exports.update = asyncHandler(async (req, res, next) => {
-  console.log(req.body, "datas irlee");
+  console.log(req.body, "datas222222222 irlee");
 
   try {
     const old = await Model.findById(req.params.id);
+    if (!old) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Company not found" });
+    }
 
-    // 🖼️ Logo зураг
-    const logo =
-      req.files && req.files.logo ? req.files.logo[0].filename : old.logo;
+    // 🖼️ Logo
+    const logo = req.files?.logo ? req.files.logo[0].filename : old.logo;
 
-    // 🖼️ Slider зургууд
+    // 🖼️ Slider
     let uploadedFiles = [];
-
-    if (
-      req.files &&
-      req.files.sliderImages &&
-      Array.isArray(req.files.sliderImages)
-    ) {
-      const newUploaded = req.files.sliderImages.map((file) => file.filename);
-
-      // Client-аас ирсэн хуучин зургууд
+    if (req.files?.sliderImages && Array.isArray(req.files.sliderImages)) {
+      const newUploaded = req.files.sliderImages.map((f) => f.filename);
       const existingSliderImages = req.body.existingSliderImages;
       const oldImages = Array.isArray(existingSliderImages)
         ? existingSliderImages
         : existingSliderImages
         ? [existingSliderImages]
         : old.sliderImages;
-
       uploadedFiles = [...oldImages, ...newUploaded];
     } else {
-      // Зураг ирээгүй бол хуучныг үлдээ
       uploadedFiles = old.sliderImages;
+    }
+
+    let category;
+
+    // Хэрэв шинэ category ирвэл түүнийг ашиглана
+    if (req.body.category) {
+      if (Array.isArray(req.body.category)) {
+        category = req.body.category;
+      } else {
+        try {
+          category = JSON.parse(req.body.category);
+        } catch (e) {
+          category = [req.body.category];
+        }
+      }
+    } else {
+      // Хэрэв ирээгүй бол хуучин хадгалсан category-г ашиглана
+      category = old.category;
     }
 
     const company = await Model.findByIdAndUpdate(
@@ -270,16 +320,14 @@ exports.update = asyncHandler(async (req, res, next) => {
         ...req.body,
         logo,
         sliderImages: uploadedFiles,
-        category: JSON.parse(req.body.category || "[]") || [],
+        category,
       },
       { new: true }
     );
 
-    res.status(200).json({
-      success: true,
-      data: company,
-    });
+    res.status(200).json({ success: true, data: company });
   } catch (error) {
+    console.error("❌ update error:", error);
     customResponse.error(res, error.message);
   }
 });

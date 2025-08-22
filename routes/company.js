@@ -7,9 +7,9 @@ const {
   get,
   getAll,
   update,
-  getAllPopulated,
+  getBranchesByCode,
   getCompanyPopulate,
-  getCompanyBanner,
+  generateBranchCode,
   deleteModel,
   addContract,
   updateUserFCM,
@@ -31,7 +31,8 @@ router
   )
   .get(getAll);
 router.post("/fcm/clear", protect, clearFCM);
-
+router.post("/branch-code", generateBranchCode);
+router.get("/branch-code/:branchCode", getBranchesByCode);
 router.route("/fcm").post(protect, updateUserFCM);
 
 router

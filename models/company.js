@@ -29,11 +29,13 @@ const companySchema = new mongoose.Schema({
   interval: { type: String },
   fb: { type: String },
   instagram: { type: String },
-  category: {
-    type: mongoose.Types.ObjectId,
-    ref: "Category",
-    required: true,
-  },
+  category: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      // required: true,
+    },
+  ],
 
   onlineContract: {
     type: Schema.Types.ObjectId,
