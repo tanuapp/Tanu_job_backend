@@ -14,22 +14,42 @@ const generateBranchCode = require("../middleware/branchCodeGenerator"); // Bran
 
 exports.generateBranchCode = async (req, res) => {
   try {
+    const { companyId } = req.body; // 🟢 frontend-ээс ирсэн companyId
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: "companyId шаардлагатай",
+      });
+    }
+
     const code = await generateBranchCode();
 
     // тухайн компанид код оноох
     const company = await Company.findByIdAndUpdate(
-      req.userCompanyId,
+      companyId,
       { branchCode: code },
       { new: true }
     );
 
-    res.status(200).json({
+    if (!company) {
+      return res.status(404).json({
+        success: false,
+        message: "Компанийн ID олдсонгүй",
+      });
+    }
+
+    return res.status(200).json({
       success: true,
       code,
       company,
     });
   } catch (error) {
-    customResponse.error(res, error.message);
+    console.error("❌ Branch code generate error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Дотоод серверийн алдаа",
+    });
   }
 };
 

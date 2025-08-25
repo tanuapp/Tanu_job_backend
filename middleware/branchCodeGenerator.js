@@ -6,17 +6,20 @@ async function generateBranchCode() {
   let exists = true;
 
   while (exists) {
+    // 2 үсэг
     const letters = Array.from({ length: 2 }, () =>
       String.fromCharCode(65 + Math.floor(Math.random() * 26))
     ).join("");
-    const numbers = Math.floor(10000 + Math.random() * 90000)
+
+    // 4 оронтой тоо (0001 - 9999 хүртэл)
+    const numbers = Math.floor(Math.random() * 10000)
       .toString()
-      .slice(0, 4);
+      .padStart(4, "0");
 
     code = `${letters}${numbers}`;
 
     // Компанид ашиглагдсан эсэхийг шалгана
-    exists = await Company.findOne({ branchCode: code });
+    exists = await Company.exists({ branchCode: code });
   }
 
   return code;

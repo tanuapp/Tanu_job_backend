@@ -50,7 +50,7 @@ const companySchema = new mongoose.Schema({
     default: 0,
   },
   agent: String,
-
+  branchCode: { type: String, sparse: true },
   phone: { type: String },
   orderCancelHour: { type: Number, default: 2 },
   advancePayment: { type: Number, default: 10 },
@@ -122,6 +122,38 @@ companySchema.pre("save", async function (next) {
       // 4) Combine them
       this.companyNumber = `${letters}${numberPart}`;
 
+      next();
+    } catch (error) {
+      next(error);
+    }
+  } else {
+    next();
+  }
+});
+
+companySchema.pre("save", async function (next) {
+  if (this.isNew && !this.branchCode) {
+    try {
+      let unique = false;
+      let code;
+
+      while (!unique) {
+        const letters = Array.from({ length: 2 }, () =>
+          String.fromCharCode(65 + Math.floor(Math.random() * 26))
+        ).join("");
+        const numbers = Math.floor(10000 + Math.random() * 90000)
+          .toString()
+          .slice(0, 4);
+
+        code = `${letters}${numbers}`;
+
+        const exists = await mongoose.models.Company.findOne({
+          branchCode: code,
+        });
+        if (!exists) unique = true;
+      }
+
+      this.branchCode = code;
       next();
     } catch (error) {
       next(error);
