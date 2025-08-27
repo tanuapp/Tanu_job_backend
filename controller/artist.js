@@ -162,49 +162,57 @@ exports.checkArtistEmail = asyncHandler(async (req, res, next) => {
 
 exports.registerArtist = asyncHandler(async (req, res, next) => {
   try {
-    console.log(req.body);
-    let existingUser = await Artist.findOne({ phone: req.body.phone }); // Fixed query
+    console.log("==== [REGISTER ARTIST API] ====");
+    console.log("📥 Request Body:", req.body);
+    console.log("📷 File:", req.file);
 
+    let existingUser = await Artist.findOne({ phone: req.body.phone });
     if (existingUser) {
+      console.log("⚠️ User already exists with phone:", req.body.phone);
       return res.status(400).json({
         success: false,
         message: "Утасны дугаар бүртгэлтэй байна",
       });
     }
+
     const body = req.body;
-    // const artister = await company.findById(body.companyId);
-    // artister.numberOfArtist++;
-    // await artister.save();
     const inputData = {
       ...body,
       photo: req.file?.filename ? req.file.filename : "no user photo",
     };
+
+    console.log("📝 Prepared Artist Data:", inputData);
+
     const user = await Artist.create(inputData);
+    console.log("✅ Artist created successfully:", user._id);
+
     const otp = generateOTP();
-    if (existingUser) {
-      await OTP.findByIdAndUpdate(
-        {
-          artist: user._id,
-        },
-        {
-          otp,
-          artist: user._id,
-        }
-      );
-      console.log("irj bnn221");
+    console.log("🔑 Generated OTP:", otp);
+
+    // OTP update эсвэл шинээр үүсгэх
+    let otpRecord = await OTP.findOne({ artist: user._id });
+    if (otpRecord) {
+      console.log("♻️ Updating existing OTP record for artist:", user._id);
+      otpRecord.otp = otp;
+      await otpRecord.save();
     } else {
+      console.log("➕ Creating new OTP record for artist:", user._id);
       await OTP.create({
         otp,
         artist: user._id,
       });
     }
-    console.log("irj bnn123");
 
-    await sendMessage(req.body.phone, `Таны нэг удаагийн нууц үг: ${otp}`); // Fixed syntax
+    console.log("📲 Sending OTP SMS to:", req.body.phone);
+    await sendMessage(req.body.phone, `Таны нэг удаагийн нууц үг: ${otp}`);
+
     const token = user.getJsonWebToken();
+    console.log("🔒 Generated JWT Token:", token);
 
+    console.log("==== [REGISTER ARTIST SUCCESS] ====");
     customResponse.success(res, user, token);
   } catch (error) {
+    console.error("❌ Error in registerArtist:", error);
     customResponse.error(res, error.message);
   }
 });
@@ -260,23 +268,21 @@ exports.Login = asyncHandler(async (req, res, next) => {
 });
 
 exports.update = asyncHandler(async (req, res, next) => {
-  console.log("", req.body);
+  console.log("req.body:", req.body);
   try {
     const artistId = req.params.id;
     const updatedData = { ...req.body };
-    console.log("1", req.body);
+
     if (req.file?.filename) {
       updatedData.photo = req.file.filename;
     }
-    console.log("2", updatedData);
-    // ✅ Хэрвээ companyNumber ирсэн бол companyId-г олж, `updatedData` дээр оноох
+
+    // ✅ companyNumber ирсэн бол компани хайж холбох
     if (req.body.companyNumber) {
       const foundCompany = await company.findOne({
-        companyNumber: Number(req.body.companyNumber),
+        companyNumber: req.body.companyNumber, // ⬅️ String хайлт
       });
-      console.log("3", req.body);
 
-      console.log("ollo2", foundCompany);
       if (!foundCompany) {
         return res.status(400).json({
           success: false,
@@ -284,10 +290,10 @@ exports.update = asyncHandler(async (req, res, next) => {
         });
       }
 
-      // 🧷 Шууд `companyId`-г онооно
+      // 🧷 companyId онооно
       updatedData.companyId = foundCompany._id;
-      // 🧮 Компанийн artist тоог нэмэгдүүлэх (хэрэв хүсвэл)
     }
+
     const updatedArtist = await Artist.findByIdAndUpdate(
       artistId,
       updatedData,
@@ -306,34 +312,63 @@ exports.update = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+
 exports.artistUpdateTheirOwnInformation = asyncHandler(
   async (req, res, next) => {
     try {
-      console.log("req.params.id", req.params.id);
-      console.log("body", req.body);
+      console.log("========== Artist Update Their Own Info ==========");
+      console.log("req.params.id:", req.params.id);
+      console.log("req.body:", req.body);
+
+      // Хэрэглэгч зөвхөн өөрийнхөө мэдээллийг өөрчилж болохыг шалгах
       // if (req.userId != req.params.id) {
       //   return res.status(200).json({
       //     success: false,
       //     msg: "Та зөвхөн өөрийн мэдээллийг өөрчлөж болно",
       //   });
       // }
+
       const old = await Artist.findById(req.params.id);
-      const data = await Artist.findByIdAndUpdate(req.params.id, {
+      if (!old) {
+        console.log("Artist not found with id:", req.params.id);
+        return res.status(404).json({
+          success: false,
+          msg: "Artist not found",
+        });
+      }
+
+      console.log("Old artist data:", old);
+
+      const updateData = {
         ...req.body,
         photo: req.file ? req.file.filename : old.photo,
+      };
+      console.log("Final update data:", updateData);
+
+      const data = await Artist.findByIdAndUpdate(req.params.id, updateData, {
+        new: true, // ✅ шинэчилсэн document буцаана
+        runValidators: true,
       });
+
+      console.log("Updated artist data:", data);
+
       const token = old.getJsonWebToken();
+      console.log("Generated token:", token);
+
       return res.status(200).json({
         success: true,
         data,
         token,
       });
     } catch (error) {
+      console.error("Error in artistUpdateTheirOwnInformation:", error);
       customResponse.error(res, error.message);
     }
   }
 );
+
 exports.get = asyncHandler(async (req, res, next) => {
+  console.log("✌️s --->", req.params.id);
   try {
     const allText = await Artist.findById(req.params.id);
     return res.status(200).json({
@@ -399,7 +434,7 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
   try {
     const { otp, phone, count, pin } = req.body;
 
-    console.log(req.body, "yavaa otp verufy1222222");
+    console.log("req.body", req.body);
 
     if (Number(count) < 3) {
       return res.status(400).json({
@@ -466,6 +501,40 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
       data: existingUser,
     });
   } catch (error) {
+    customResponse.error(res, error.message);
+  }
+});
+
+exports.updateArtistFCM = asyncHandler(async (req, res, next) => {
+  try {
+    console.log("🔹 updateUserFCM called");
+    console.log("📩 Request body:", req.body);
+    console.log("📌 req.userId:", req.userId);
+
+    const { token, isAndroid } = req.body;
+    console.log("✅ Extracted token:", token);
+    console.log("✅ Extracted isAndroid:", isAndroid);
+
+    const userFind = await Artist.findById(req.userId);
+    console.log("👤 Found user:", userFind);
+
+    if (userFind) {
+      console.log("🛠 Updating user FCM & platform...");
+      userFind.firebase_token = token;
+      userFind.isAndroid = isAndroid;
+
+      const savedUser = await userFind.save();
+      console.log("💾 User saved:", savedUser);
+    } else {
+      console.log("⚠ No user found with ID:", req.userId);
+    }
+
+    console.log("✅ Sending success response");
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    console.log("❌ Error in updateUserFCM:", error);
     customResponse.error(res, error.message);
   }
 });

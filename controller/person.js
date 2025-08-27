@@ -471,11 +471,30 @@ exports.getPersonServices = asyncHandler(async (req, res, next) => {
 
 exports.getPersonType = asyncHandler(async (req, res, next) => {
   try {
-    const user = await Person.findById(req.userId);
-    // const artist = await artist.findById(req.userId);
+    const person = await Person.findById(req.userId);
+    const artist = await Artist.findById(req.userId);
 
-    customResponse.success(res, {
-      type: user ? false : true,
+    console.log("Company ID from token:", req.companyId);
+    console.log("person", person);
+    console.log("artist", artist);
+
+    if (person) {
+      return res.status(200).json({
+        success: true,
+        data: { type: false }, // Company (Person user)
+      });
+    }
+
+    if (artist) {
+      return res.status(200).json({
+        success: true,
+        data: { type: true }, // Artist user
+      });
+    }
+
+    return res.status(401).json({
+      success: false,
+      msg: "Та эхлээд нэвтрэнэ үү",
     });
   } catch (error) {
     customResponse.error(res, error.message);

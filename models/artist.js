@@ -14,7 +14,6 @@ const artistSchema = new Schema({
     default: "#234343",
     match: [/^#([0-9A-F]{3}){1,2}$/i, "Зөв өнгөний код оруулна уу!"],
   },
-  firebase_token: String,
   isAndroid: {
     type: Boolean,
     default: false,
@@ -47,6 +46,10 @@ const artistSchema = new Schema({
   first_name: String,
   last_name: String,
   nick_name: String,
+  firebase_token: {
+    type: String,
+    default: "",
+  },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
   createdAt: {

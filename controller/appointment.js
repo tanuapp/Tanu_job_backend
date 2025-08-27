@@ -627,36 +627,52 @@ exports.endAppointment = asyncHandler(async (req, res, next) => {
 });
 exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
   try {
-    const artistId = req.userId;
+    const id = req.userId;
 
-    const appointments = await Appointment.find({
-      status: { $ne: "pending" },
-    })
-      .populate({
-        path: "schedule",
-        populate: [
-          { path: "serviceId", model: "Service" },
-          { path: "artistId", model: "Artist" },
-          { path: "companyId", model: "Company" },
-        ],
-      })
-      .populate("user")
-      .populate("company");
+    // 1. Fetch user document (Admin/Artist)
+    const artist = await Artist.findOne({ _id: id });
 
-    const filteredAppointments = appointments.filter((appointment) => {
-      const artist = appointment.schedule?.artistId;
-      const isCurrentArtist =
-        artist && artist._id.toString() === artistId.toString();
+    if (!artist) {
+      console.error("❌ Artist not found for ID:", artist);
+      return customResponse.error(res, "Хэрэглэгчийн мэдээлэл олдсонгүй");
+    }
 
-      const isNotDone = appointment.status !== "done";
+    const company = await Company.findOne({ _id: artist.companyId });
 
-      return isCurrentArtist && isNotDone;
+    if (!company) {
+      console.error("❌ Company not found for ownerId:", ownerId);
+      return customResponse.error(res, "Компанийн мэдээлэл олдсонгүй");
+    }
+
+    const artists = await Artist.find({ companyId: company._id });
+
+    // 5. Fetch appointments directly linked to this company with FULL populate
+    const appointments = await Appointment.find({ company: company._id })
+      .populate([
+        {
+          path: "schedule",
+          populate: [
+            { path: "serviceId", model: "Service" },
+            { path: "companyId", model: "Company" },
+          ],
+        },
+        { path: "user" },
+        { path: "company" },
+      ])
+      .lean(); // ⚡️ илүү хурдан plain JSON авахад
+
+    console.log("✌️artist --->", artist);
+
+    // 6. Return result
+    return res.status(200).json({
+      success: true,
+      data: appointments,
+      company,
+      artist: artist,
     });
-
-    customResponse.success(res, filteredAppointments);
   } catch (error) {
-    console.error("❌ Error fetching artist appointments:", error);
-    customResponse.error(res, error.message || "Алдаа гарлаа");
+    console.error("❌ Step 7 - Error occurred:", error);
+    return customResponse.error(res, error.message || "Алдаа гарлаа");
   }
 });
 exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {

@@ -156,6 +156,32 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         });
         console.log("📲 Firebase notification sent:", notifResult);
       }
+      if (scheduleDoc.artistId?.firebase_token) {
+        console.log(
+          "✌️scheduleDoc.artistId?.firebase_token --->",
+          scheduleDoc.artistId?.firebase_token
+        );
+        const notifResultArtist = await sendFirebaseNotification({
+          title: "Танд шинэ захиалга ирлээ",
+          body: `Хэрэглэгч ${userName} ${services
+            .map((s) => s.service_name)
+            .join(", ")} үйлчилгээ захиаллаа.`,
+          token: scheduleDoc.artistId.firebase_token,
+          data: {
+            type: "appointment",
+            id: app._id.toString(),
+            name: userName,
+            phone: userPhone,
+            date,
+            time: scheduleDoc.start || "00:00",
+            service: services.map((s) => s.service_name).join(", "),
+          },
+        });
+        console.log(
+          "📲 Firebase notification sent to artist:",
+          notifResultArtist
+        );
+      }
 
       const io = req.app.get("io");
       if (io) {
@@ -220,6 +246,32 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         },
       });
       console.log("📲 Firebase notification sent:", notifResult);
+    }
+    if (scheduleDoc.artistId?.firebase_token) {
+      console.log(
+        "✌️scheduleDoc.artistId?.firebase_token --->",
+        scheduleDoc.artistId?.firebase_token
+      );
+      const notifResultArtist = await sendFirebaseNotification({
+        title: "Танд шинэ захиалга ирлээ",
+        body: `Хэрэглэгч ${userName} ${services
+          .map((s) => s.service_name)
+          .join(", ")} үйлчилгээ захиаллаа.`,
+        token: scheduleDoc.artistId.firebase_token,
+        data: {
+          type: "appointment",
+          id: app._id.toString(),
+          name: userName,
+          phone: userPhone,
+          date,
+          time: scheduleDoc.start || "00:00",
+          service: services.map((s) => s.service_name).join(", "),
+        },
+      });
+      console.log(
+        "📲 Firebase notification sent to artist:",
+        notifResultArtist
+      );
     }
 
     // QR үүсгэх

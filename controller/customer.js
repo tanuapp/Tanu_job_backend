@@ -559,7 +559,7 @@ exports.loginWithEmail = asyncHandler(async (req, res, next) => {
 
     // Validate input
     if (!email || !pin) {
-      return customResponse.error(res, "Имейл болон PIN кодоо оруулна уу");
+      return customResponse.error(res, "Имэйл болон PIN кодоо оруулна уу");
     }
 
     // Find user or artist by email

@@ -5,7 +5,7 @@ const { authorize } = require("../middleware/protect");
 const {
   Login,
   create,
-  deleteModel,
+  updateArtistFCM,
   deleteArtist,
   getArtistServices,
   get,
@@ -31,7 +31,7 @@ router.route("/checkArtistEmail").post(checkArtistEmail);
 router.route("/registerArtist").post(registerArtist);
 router.route("/type").get(protect, getPersonType);
 router.route("/register-verify").post(registerVerify);
-
+router.route("/fcm").post(protect, updateArtistFCM);
 router.route("/checkArtistPhone").post(checkArtistPhone);
 
 router.route("/").post(upload.single("photo"), create).get(getAll);
