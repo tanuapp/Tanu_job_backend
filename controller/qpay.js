@@ -1,16 +1,11 @@
 const asyncHandler = require("../middleware/asyncHandler.js");
 const invoiceModel = require("../models/invoice.js");
 const qpay = require("../middleware/qpay");
-const customerModel = require("../models/customer.js");
-const companyModel = require("../models/company.js");
 const Appointment = require("../models/appointment.js");
 const Option = require("../models/option.js");
-const Service = require("../models/service.js");
-const schedule = require("../models/schedule.js");
-const company = require("../models/company.js");
-const customResponse = require("../utils/customResponse");
 const { generateCredential } = require("../middleware/khan");
 const { sendNotification } = require("../utils/apnService.js");
+const axios = require("axios");
 
 exports.createqpay = asyncHandler(async (req, res) => {
   try {
