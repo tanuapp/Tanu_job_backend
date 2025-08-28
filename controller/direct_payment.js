@@ -1,20 +1,41 @@
-import Appointment from "../models/appointment.js";
-import Schedule from "../models/schedule.js";
-import Invoice from "../models/invoice.js";
-import Customer from "../models/customer.js";
-import asyncHandler from "../middleware/asyncHandler.js";
-import customResponse from "../utils/customResponse.js";
-import axios from "axios";
-import {
-  calculateDiscountedTotal,
-  saveFavourite,
-  sendAndSaveNotification,
-  generateQR,
-} from "../utils/paymentHelpers.js";
+const Appointment = require("../models/appointment");
+const Schedule = require("../models/schedule");
+const Invoice = require("../models/invoice");
+const Favourite = require("../models/favourite");
+const asyncHandler = require("../middleware/asyncHandler");
+const { default: axios } = require("axios");
+const customResponse = require("../utils/customResponse");
+const path = require("path");
+const sendFirebaseNotification = require("../utils/sendFIrebaseNotification");
+const Notification = require("../models/notification");
 
-export const createPayment = asyncHandler(async (req, res) => {
+const Customer = require("../models/customer");
+const QRCode = require("qrcode");
+
+exports.createPayment = asyncHandler(async (req, res, next) => {
   try {
     const { schedule, date } = req.body;
+
+    console.log("📥 createPayment called");
+    console.log("📅 Request body:", { schedule, date });
+    console.log("🔐 Token:", req.token);
+    console.log("👤 User ID:", req.userId);
+
+    // Check for existing appointment
+    const existing = await Appointment.findOne({
+      schedule,
+      date,
+      status: { $in: ["paid", "pending"] },
+    });
+
+    if (existing) {
+      console.log("⚠️ Existing appointment found:", existing._id);
+      return res.status(400).json({
+        success: false,
+        message: "Тухайн цагт захиалга аль хэдийн үүссэн байна.",
+      });
+    }
+
     const scheduleDoc = await Schedule.findById(schedule)
       .populate("artistId")
       .populate({
@@ -24,58 +45,222 @@ export const createPayment = asyncHandler(async (req, res) => {
         populate: {
           path: "companyId",
           model: "Company",
-          select: "advancePayment firebase_token name",
+          select: "advancePayment firebase_token name ",
         },
       });
 
-    if (!scheduleDoc) return customResponse.error(res, "Schedule олдсонгүй");
-    const services = scheduleDoc.serviceId;
-    const company = services[0]?.companyId;
-    if (!company) return customResponse.error(res, "Компани олдсонгүй");
+    console.log("📋 ScheduleDoc:", scheduleDoc);
 
-    const discountedTotalPrice = calculateDiscountedTotal(services);
+    const services = scheduleDoc.serviceId;
+    if (!Array.isArray(services) || services.length === 0) {
+      console.log("❌ Үйлчилгээ олдсонгүй");
+      return customResponse.error(res, "Үйлчилгээ олдсонгүй");
+    }
+
+    const company = services[0].companyId;
+    if (!company) {
+      console.log("❌ Компани олдсонгүй");
+      return customResponse.error(res, "Компани олдсонгүй");
+    }
+
+    const totalPrice = services.reduce(
+      (sum, s) => sum + parseFloat(s.price || 0),
+      0
+    );
+    console.log("💵 Original total price:", totalPrice);
+
+    // ✅ Хямдрал идэвхтэй эсэхийг шалгах
+    let discountedTotalPrice = 0;
+
+    services.forEach((service) => {
+      const price = parseFloat(service.price || 0);
+
+      let serviceFinalPrice = price;
+
+      const discountActive =
+        service.discountStart &&
+        service.discountEnd &&
+        new Date() >= new Date(service.discountStart) &&
+        new Date() <= new Date(service.discountEnd);
+
+      if (discountActive && service.discount) {
+        const discountPercent = parseFloat(
+          service.discount.replace(/[^0-9]/g, "")
+        );
+        if (!isNaN(discountPercent) && discountPercent > 0) {
+          serviceFinalPrice = price * (1 - discountPercent / 100);
+          console.log(
+            `🏷️ Service ${service.service_name}: Discount ${discountPercent}%, discounted price: ${serviceFinalPrice}`
+          );
+        }
+      }
+
+      discountedTotalPrice += serviceFinalPrice;
+    });
+
     const advancePercent = parseFloat(company.advancePayment || 0);
     const advanceAmount = Math.floor(
       (discountedTotalPrice * advancePercent) / 100
     );
+    console.log("📅 Now:", new Date());
+    console.log("📅 Discount start:", company.discountStart);
+    console.log("📅 Discount end:", company.discountEnd);
+    console.log("📅 discountedTotalPrice", discountedTotalPrice);
 
-    // ✅ Appointment үүсгэнэ
+    console.log("💰 Advance percent:", advancePercent);
+    console.log("💸 Advance amount:", advanceAmount);
+
+    if (advanceAmount === 0) {
+      console.log(
+        "📣 Урьдчилгаа төлбөр 0 — Баталгаажуулалт руу шилжүүлж байна..."
+      );
+      const app = await Appointment.create({
+        schedule,
+        user: req.userId || null,
+        date,
+        finalPrice: discountedTotalPrice,
+        company: company._id, // 🟢 энд компанийн ID-г хадгалж байна
+      });
+      const alreadySaved = await Favourite.findOne({
+        user: req.userId,
+        company: company._id,
+      });
+
+      if (!alreadySaved) {
+        await Favourite.create({
+          user: req.userId,
+          company: company._id,
+        });
+        console.log("💾 Company saved to favourites");
+      } else {
+        console.log("ℹ️ Company already in favourites");
+      }
+
+      const fullUser = await Customer.findById(app.user);
+      const userName = `${fullUser?.last_name || ""}`.trim() || "Захиалга";
+      const userPhone = fullUser?.phone || "";
+
+      if (company.firebase_token) {
+        const notifResult = await sendFirebaseNotification({
+          title: "Шинэ захиалга",
+          body: "Таны компанид шинэ захиалга ирлээ!",
+          token: company.firebase_token,
+          data: {
+            type: "appointment",
+            id: app._id.toString(),
+            name: userName,
+            phone: userPhone,
+            date,
+            time: scheduleDoc.start || "00:00",
+            service: services.map((s) => s.service_name).join(", "),
+          },
+        });
+        console.log("📲 Firebase notification sent:", notifResult);
+      }
+      if (scheduleDoc.artistId?.firebase_token) {
+        console.log(
+          "✌️scheduleDoc.artistId?.firebase_token --->",
+          scheduleDoc.artistId?.firebase_token
+        );
+        const notifResultArtist = await sendFirebaseNotification({
+          title: "Танд шинэ захиалга ирлээ",
+          body: `Хэрэглэгч ${userName} ${services
+            .map((s) => s.service_name)
+            .join(", ")} үйлчилгээ захиаллаа.`,
+          token: scheduleDoc.artistId.firebase_token,
+          data: {
+            type: "appointment",
+            id: app._id.toString(),
+            name: userName,
+            phone: userPhone,
+            date,
+            time: scheduleDoc.start || "00:00",
+            service: services.map((s) => s.service_name).join(", "),
+          },
+        });
+        console.log(
+          "📲 Firebase notification sent to artist:",
+          notifResultArtist
+        );
+      }
+
+      const io = req.app.get("io");
+      if (io) {
+        io.to(company._id.toString()).emit("newPendingAppointment", {
+          _id: app._id,
+          serviceName: services.map((s) => s.service_name).join(", "),
+          date,
+        });
+        console.log("📢 Socket emitted to:", company._id.toString());
+      } else {
+        console.log("⚠️ io object is undefined");
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Artist баталгаажуулалт хүлээгдэж байна",
+        appointmentId: app._id,
+      });
+    }
+
+    // ⚡ Урьдчилгаа байгаа бол үргэлжлүүлнэ
     const app = await Appointment.create({
       schedule,
       user: req.userId || null,
       date,
       finalPrice: discountedTotalPrice,
+      company: company._id, // 🟢 энд компанийн ID-г хадгалж байна
+      status: "advance",
+    });
+    const alreadySaved = await Favourite.findOne({
+      user: req.userId,
       company: company._id,
-      status: advanceAmount === 0 ? "pending" : "advance",
     });
 
-    await saveFavourite(req.userId, company._id);
+    if (!alreadySaved) {
+      await Favourite.create({
+        user: req.userId,
+        company: company._id,
+      });
+      console.log("💾 Company saved to favourites");
+    } else {
+      console.log("ℹ️ Company already in favourites");
+    }
 
     const fullUser = await Customer.findById(app.user);
     const userName = `${fullUser?.last_name || ""}`.trim() || "Үл мэдэгдэх";
     const userPhone = fullUser?.phone || "N/A";
 
-    // ✅ Notification -> Company
-    await sendAndSaveNotification({
-      title: "Шинэ захиалга",
-      body: "Таны компанид шинэ захиалга ирлээ!",
-      token: company.firebase_token,
-      data: {
-        type: advanceAmount === 0 ? "appointment" : "advancedPayment",
-        id: app._id.toString(),
-        name: userName,
-        phone: userPhone,
-        date,
-        time: scheduleDoc.start || "00:00",
-        service: services.map((s) => s.service_name).join(", "),
-      },
+    if (company.firebase_token) {
+      const notifResult = await sendFirebaseNotification({
+        title: "Шинэ захиалга",
+        body: "Таны компанид шинэ захиалга ирлээ!",
+        token: company.firebase_token,
+        data: {
+          type: "advancedPayment",
+          id: app._id.toString(),
+          name: userName,
+          phone: userPhone,
+          date,
+          time: scheduleDoc.start || "00:00",
+          service: services.map((s) => s.service_name).join(", "),
+        },
+      });
+      console.log("📲 Firebase notification sent:", notifResult);
+    }
+    await Notification.create({
+      title: notifPayload.title,
+      body: notifPayload.body,
+      data: notifPayload.data,
       companyId: company._id,
       appointmentId: app._id,
     });
-
-    // ✅ Notification -> Artist
-    if (scheduleDoc.artistId) {
-      await sendAndSaveNotification({
+    if (scheduleDoc.artistId?.firebase_token) {
+      console.log(
+        "✌️scheduleDoc.artistId?.firebase_token --->",
+        scheduleDoc.artistId?.firebase_token
+      );
+      const notifResultArtist = await sendFirebaseNotification({
         title: "Танд шинэ захиалга ирлээ",
         body: `Хэрэглэгч ${userName} ${services
           .map((s) => s.service_name)
@@ -90,38 +275,64 @@ export const createPayment = asyncHandler(async (req, res) => {
           time: scheduleDoc.start || "00:00",
           service: services.map((s) => s.service_name).join(", "),
         },
+      });
+      await Notification.create({
+        title: notifPayloadArtist.title,
+        body: notifPayloadArtist.body,
+        data: notifPayloadArtist.data,
         companyId: company._id,
         artistId: scheduleDoc.artistId._id,
         appointmentId: app._id,
       });
-    }
-
-    // ✅ QR code only when advance
-    if (advanceAmount > 0) {
-      await generateQR(app);
-      const inv = await Invoice.create({
-        amount: advanceAmount,
-        appointment: app._id,
-        isAdvance: true,
-      });
-
-      const duk = await axios.post(
-        `http://localhost:9090/api/v1/qpay/${inv._id}`,
-        {},
-        { headers: { Authorization: `Bearer ${req.token}` } }
+      console.log(
+        "📲 Firebase notification sent to artist:",
+        notifResultArtist
       );
-
-      return res.status(200).json({
-        success: true,
-        data: duk.data.data,
-        invoice: duk.data.invoice.sender_invoice_id,
-      });
     }
+
+    // QR үүсгэх
+    const qrData = `Appointment ID: ${app._id}\nDate: ${app.date}\nUser ID: ${app.user}`;
+    const qrFilePath = path.join(
+      __dirname,
+      "../public/uploads/",
+      `${app._id}-qr.png`
+    );
+    await QRCode.toFile(qrFilePath, qrData);
+    app.qr = `${app._id}-qr.png`;
+    await app.save();
+
+    console.log("📸 QR created:", app.qr);
+
+    const inv = await Invoice.create({
+      amount: advanceAmount,
+      appointment: app._id,
+      isAdvance: true,
+    });
+
+    console.log("📄 Invoice created:", inv._id);
+
+    // QPay рүү илгээх
+    console.log("🌐 Sending to QPay:", {
+      url: `http://localhost:9090/api/v1/qpay/${inv._id}`,
+      token: req.token,
+    });
+
+    const duk = await axios.post(
+      `http://localhost:9090/api/v1/qpay/${inv._id}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${req.token}`,
+        },
+      }
+    );
+
+    console.log("✅ QPay success:", duk.data);
 
     return res.status(200).json({
       success: true,
-      message: "Artist баталгаажуулалт хүлээгдэж байна",
-      appointmentId: app._id,
+      data: duk.data.data,
+      invoice: duk.data.invoice.sender_invoice_id,
     });
   } catch (error) {
     console.error("❌ createPayment error:", error.message);
