@@ -212,22 +212,8 @@ exports.create = asyncHandler(async (req, res, next) => {
 
     // Захиалга үүсгэх
     const appointment = await Model.create(appointmentData);
-    console.log("✅ Created Appointment:", appointment);
 
-    // QR Code үүсгэх
-    const qrData = `Appointment ID: ${appointment._id}\nDate: ${appointment.date}\nUser ID: ${appointment.user}`;
-    const qrFilePath = path.join(
-      __dirname,
-      "../public/uploads/",
-      `${appointment._id}-qr.png`
-    );
-
-    await QRCode.toFile(qrFilePath, qrData);
-    console.log("🖨️ QR code saved:", qrFilePath);
-
-    appointment.qr = `${appointment._id}-qr.png`;
     await appointment.save();
-    console.log("📌 Appointment updated with QR");
 
     // Socket ба Firebase Push
     if (appointment.status === "pending" && sch?.companyId) {
@@ -352,11 +338,12 @@ exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
 
 exports.updateAppointmentTime = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { name, schedule } = req.body; // ⬅ name-ийг авна
+  const { name, schedule, extraInfo } = req.body; // ⬅ extraInfo-г авна
 
   console.log("🔔 [updateAppointmentTime] Called with ID:", id);
   console.log("📝 Request name:", name);
   console.log("📝 Request schedule data:", schedule);
+  console.log("📝 Request extraInfo:", extraInfo);
 
   if (!schedule || !schedule.start || !schedule.end || !schedule.artistId) {
     return customResponse.error(
@@ -370,9 +357,14 @@ exports.updateAppointmentTime = asyncHandler(async (req, res) => {
     return customResponse.error(res, "Захиалга олдсонгүй");
   }
 
-  // 🆕 name-ийг шинэчилнэ
+  // 🆕 name шинэчлэх
   if (name) {
     appointment.name = name;
+  }
+
+  // 🆕 extraInfo шинэчлэх
+  if (extraInfo) {
+    appointment.extraInfo = extraInfo;
   }
 
   // duration тооцно
@@ -411,6 +403,7 @@ exports.updateAppointmentTime = asyncHandler(async (req, res) => {
   }
 
   await appointment.save();
+
   return customResponse.success(res, {
     message: "Захиалга амжилттай шинэчлэгдлээ",
     appointment,
@@ -678,11 +671,9 @@ exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
 exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
   try {
     const User = req.userId;
-    console.log("📌 Step 1 - Authenticated user ID:", User);
 
     // 1. Fetch user document (Admin/Artist)
     const user = await AdminAppointment.findById(User).populate("userRole");
-    console.log("📌 Step 2 - User document fetched:", user);
 
     if (!user) {
       console.error("❌ User not found for ID:", User);
@@ -692,11 +683,9 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
     // 2. Determine ownerId: if userRole has user, use it; else use user._id
     const ownerId =
       user.userRole && user.userRole.user ? user.userRole.user : user._id;
-    console.log("📌 Step 3 - Determined ownerId:", ownerId);
 
     // 3. Fetch the company by ownerId
     const company = await Company.findOne({ companyOwner: ownerId });
-    console.log("📌 Step 4 - Company found:", company);
 
     if (!company) {
       console.error("❌ Company not found for ownerId:", ownerId);
@@ -705,7 +694,6 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
 
     // 4. Fetch artists belonging to the company
     const artists = await Artist.find({ companyId: company._id });
-    console.log("📌 Step 5 - Artists count:", artists.length);
 
     // 5. Fetch appointments directly linked to this company with FULL populate
     const appointments = await Appointment.find({ company: company._id })
@@ -722,11 +710,6 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
         { path: "company" },
       ])
       .lean(); // ⚡️ илүү хурдан plain JSON авахад
-
-    console.log(
-      "📌 Step 6 - Company appointments fetched, count:",
-      appointments.length
-    );
 
     // 6. Return result
     return res.status(200).json({

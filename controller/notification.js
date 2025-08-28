@@ -4,7 +4,7 @@ const asyncHandler = require("../middleware/asyncHandler");
 const apnService = require("../utils/apnService");
 const User = require("../models/customer");
 const customResponse = require("../utils/customResponse");
-
+const Model = require("../models/notification");
 const sendFirebaseNotification = require("./../utils/sendFIrebaseNotification");
 
 exports.send = asyncHandler(async (req, res, next) => {
@@ -49,22 +49,35 @@ exports.sendMass = asyncHandler(async (req, res, next) => {
   }
 });
 
+exports.getAllModel = asyncHandler(async (req, res, next) => {
+  try {
+    const allUser = await Model.find();
+    const total = await Model.countDocuments();
+    res.status(200).json({
+      success: true,
+      count: total,
+      data: allUser,
+    });
+  } catch (error) {
+    customResponse.server(res, error.message);
+  }
+});
 
 exports.sendFirebase = asyncHandler(async (req, res) => {
   try {
     const user = await User.findOne({
-      phone:"80641595"
+      phone: "80641595",
     });
     // console.log(user);
 
-    // const sendFirebaseNotification = 
+    // const sendFirebaseNotification =
     // async ({ title, body, data = {}, topic = null, token = null }) => {
-      
+
     const result = await sendFirebaseNotification({
       title: req.body.title,
       body: req.body.body,
       data: req.body.data,
-      token: user.firebase_token // or use token: "device_token"
+      token: user.firebase_token, // or use token: "device_token"
     });
     console.log(result);
     if (result.success) {
@@ -82,4 +95,3 @@ exports.sendFirebase = asyncHandler(async (req, res) => {
     customResponse.error(res, error.message);
   }
 });
-

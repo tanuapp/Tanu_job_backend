@@ -1,20 +1,16 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
-const notificationSchema = new Schema({
-  amount: {
-    type: Number,
-    required: true,
+const notificationSchema = new Schema(
+  {
+    title: { type: String, required: true },
+    body: { type: String, required: true },
+    data: { type: Object, default: {} }, // FCM data payload
+    companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company" },
+    appointmentId: { type: mongoose.Schema.Types.ObjectId, ref: "Appointment" },
+    read: { type: Boolean, default: false }, // уншсан эсэх
   },
-  title: String,
-  user: {
-    type: mongoose.Types.ObjectId,
-    ref: "Customer",
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  { timestamps: true } // createdAt, updatedAt автоматаар нэмэгдэнэ
+);
 
 module.exports = mongoose.model("Notification", notificationSchema);

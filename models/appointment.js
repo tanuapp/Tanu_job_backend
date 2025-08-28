@@ -40,6 +40,9 @@ const appointmentSchema = new Schema({
   name: {
     type: String,
   },
+  extraInfo: {
+    type: String,
+  },
   isManual: {
     type: Boolean,
     default: false,

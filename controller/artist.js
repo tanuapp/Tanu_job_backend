@@ -481,7 +481,7 @@ exports.registerVerify = asyncHandler(async (req, res, next) => {
     if (otp !== userOtp.otp) {
       return res.status(200).json({
         success: false,
-        message: "Буруу нэг удаагийн нууц үг 111",
+        message: "Таны баталгаажуулах код буруу байна. Дахин оролдоно уу.",
       });
     }
 
@@ -535,6 +535,41 @@ exports.updateArtistFCM = asyncHandler(async (req, res, next) => {
     });
   } catch (error) {
     console.log("❌ Error in updateUserFCM:", error);
+    customResponse.error(res, error.message);
+  }
+});
+
+exports.clearFCM = asyncHandler(async (req, res, next) => {
+  try {
+    const { token, isAndroid } = req.body;
+
+    const artistFind = await Artist.findOne({ _id: req.userId });
+
+    if (!token) {
+      return res.status(404).json({
+        success: false,
+        message: "token  олдсонгүй",
+      });
+    }
+
+    // Хэрвээ FCM токен тохирохгүй байвал шууд OK буцаана
+    if (artistFind.firebase_token !== token) {
+      return res.status(200).json({
+        success: true,
+        message: "FCM token давхцахгүй, устгах шаардлагагүй",
+      });
+    }
+
+    artistFind.firebase_token = null;
+    artistFind.isAndroid = null;
+    await artistFind.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "FCM token амжилттай устгагдлаа",
+    });
+  } catch (error) {
+    console.error("FCM clear error:", error);
     customResponse.error(res, error.message);
   }
 });

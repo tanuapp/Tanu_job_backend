@@ -16,9 +16,11 @@ const {
   checkArtistEmail,
   artistUpdateTheirOwnInformation,
   checkArtistPhone,
+  clearFCM,
 } = require("../controller/artist");
 const { getPersonType } = require("../controller/person");
 const router = express.Router();
+router.post("/fcm/clear", protect, clearFCM);
 
 router.route("/getArtistServices/:id").get(getArtistServices);
 
