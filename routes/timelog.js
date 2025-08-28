@@ -1,8 +1,21 @@
 const express = require("express");
 const router = express.Router();
-const { logTime, getMyLogs, getDailyLogs } = require("../controller/timelog");
 const { protect } = require("../middleware/protect");
+const {
+  clockIn,
+  clockOut,
+  getDailyLogs,
+  getCompanyDailyLogs,
+  getAll,
+} = require("../controller/timelog");
 
-router.post("/", protect, logTime);
-router.get("/", protect, getMyLogs);
-router.get("/daily", protect, getDailyLogs); // 🆕 өдөр бүрийн цаг
+// Ирсэн цаг
+router.post("/clock-in", protect, clockIn);
+router.route("/").get(getAll);
+// Явсан цаг
+router.post("/clock-out", protect, clockOut);
+router.get("/daily/company", protect, getCompanyDailyLogs);
+// Өдөр тутмын тайлан
+router.get("/daily", protect, getDailyLogs);
+
+module.exports = router;

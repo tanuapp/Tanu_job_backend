@@ -4,12 +4,12 @@ const { Schema } = mongoose;
 const DailyWorkSummarySchema = new mongoose.Schema({
   artistId: { type: Schema.Types.ObjectId, ref: "Artist", required: true },
   companyId: { type: Schema.Types.ObjectId, ref: "Company", required: true },
-  date: { type: String, required: true }, // yyyy-mm-dd хэлбэр
+  date: { type: String, required: true }, // yyyy-mm-dd
   sessions: [
     {
       in: Date,
       out: Date,
-      workedMinutes: Number,
+      workedMinutes: { type: Number, default: 0 },
     },
   ],
   totalMinutes: { type: Number, default: 0 },

@@ -56,6 +56,7 @@ const onlineContractRouter = require("./routes/onlineContractRouter.js");
 const onlineContractRender = require("./routes/contractRender.js");
 const danAuthRoute = require("./routes/dan.js");
 const blackListRoute = require("./routes/blackList.js");
+const attendanceRoute = require("./routes/timelog.js");
 // Multer setup
 const multer = require("multer");
 const initFirebase = require("./firebaseInit.js");
@@ -168,6 +169,7 @@ app.use("/api/v1/favourite", favRoute);
 app.use("/api/v1/journal", journalRoute);
 app.use("/api/v1/reject", rejectRoute);
 app.use("/api/v1/notification", notRoute);
+app.use("/api/v1/attendance", attendanceRoute);
 app.use("/api/v1/mongoose", mongooseRoute);
 app.use("/api/v1/email", emailRoute);
 app.use("/api/v1/series", seriesRoute);
