@@ -114,13 +114,16 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       console.log(
         "📣 Урьдчилгаа төлбөр 0 — Баталгаажуулалт руу шилжүүлж байна..."
       );
+
       const app = await Appointment.create({
         schedule,
         user: req.userId || null,
         date,
         finalPrice: discountedTotalPrice,
-        company: company._id, // 🟢 энд компанийн ID-г хадгалж байна
+        company: company._id, // 🟢 компанийн ID хадгалж байна
       });
+
+      // 📌 Save Favourite
       const alreadySaved = await Favourite.findOne({
         user: req.userId,
         company: company._id,
@@ -136,54 +139,77 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         console.log("ℹ️ Company already in favourites");
       }
 
+      // 📌 User info
       const fullUser = await Customer.findById(app.user);
       const userName = `${fullUser?.last_name || ""}`.trim() || "Захиалга";
       const userPhone = fullUser?.phone || "";
 
+      // 📌 Company notification payload
+      const notifPayloadCompany = {
+        title: "Шинэ захиалга",
+        body: "Таны компанид шинэ захиалга ирлээ!",
+        data: {
+          type: "appointment",
+          id: app._id.toString(),
+          name: userName,
+          phone: userPhone,
+          date,
+          time: scheduleDoc.start || "00:00",
+          service: services.map((s) => s.service_name).join(", "),
+        },
+      };
+
       if (company.firebase_token) {
         const notifResult = await sendFirebaseNotification({
-          title: "Шинэ захиалга",
-          body: "Таны компанид шинэ захиалга ирлээ!",
+          ...notifPayloadCompany,
           token: company.firebase_token,
-          data: {
-            type: "appointment",
-            id: app._id.toString(),
-            name: userName,
-            phone: userPhone,
-            date,
-            time: scheduleDoc.start || "00:00",
-            service: services.map((s) => s.service_name).join(", "),
-          },
         });
-        console.log("📲 Firebase notification sent:", notifResult);
+        console.log("📲 Firebase notification sent to company:", notifResult);
+
+        await Notification.create({
+          title: notifPayloadCompany.title,
+          body: notifPayloadCompany.body,
+          data: notifPayloadCompany.data,
+          companyId: company._id,
+          appointmentId: app._id,
+        });
       }
+
+      // 📌 Artist notification payload
+      const notifPayloadArtist = {
+        title: "Танд шинэ захиалга ирлээ",
+        body: `Хэрэглэгч ${userName} ${services
+          .map((s) => s.service_name)
+          .join(", ")} үйлчилгээ захиаллаа.`,
+        data: notifPayloadCompany.data,
+      };
+
       if (scheduleDoc.artistId?.firebase_token) {
         console.log(
-          "✌️scheduleDoc.artistId?.firebase_token --->",
-          scheduleDoc.artistId?.firebase_token
+          "✌️ Artist firebase_token --->",
+          scheduleDoc.artistId.firebase_token
         );
+
         const notifResultArtist = await sendFirebaseNotification({
-          title: "Танд шинэ захиалга ирлээ",
-          body: `Хэрэглэгч ${userName} ${services
-            .map((s) => s.service_name)
-            .join(", ")} үйлчилгээ захиаллаа.`,
+          ...notifPayloadArtist,
           token: scheduleDoc.artistId.firebase_token,
-          data: {
-            type: "appointment",
-            id: app._id.toString(),
-            name: userName,
-            phone: userPhone,
-            date,
-            time: scheduleDoc.start || "00:00",
-            service: services.map((s) => s.service_name).join(", "),
-          },
         });
         console.log(
           "📲 Firebase notification sent to artist:",
           notifResultArtist
         );
+
+        await Notification.create({
+          title: notifPayloadArtist.title,
+          body: notifPayloadArtist.body,
+          data: notifPayloadArtist.data,
+          companyId: company._id,
+          artistId: scheduleDoc.artistId._id,
+          appointmentId: app._id,
+        });
       }
 
+      // 📌 Socket event
       const io = req.app.get("io");
       if (io) {
         io.to(company._id.toString()).emit("newPendingAppointment", {
@@ -231,51 +257,64 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
     const userName = `${fullUser?.last_name || ""}`.trim() || "Үл мэдэгдэх";
     const userPhone = fullUser?.phone || "N/A";
 
+    // 📌 Company notification payload
+    const notifPayloadCompany = {
+      title: "Шинэ захиалга",
+      body: "Таны компанид шинэ захиалга ирлээ!",
+      data: {
+        type: "advancedPayment",
+        id: app._id.toString(),
+        name: userName,
+        phone: userPhone,
+        date,
+        time: scheduleDoc.start || "00:00",
+        service: services.map((s) => s.service_name).join(", "),
+      },
+    };
+
     if (company.firebase_token) {
       const notifResult = await sendFirebaseNotification({
-        title: "Шинэ захиалга",
-        body: "Таны компанид шинэ захиалга ирлээ!",
+        ...notifPayloadCompany,
         token: company.firebase_token,
-        data: {
-          type: "advancedPayment",
-          id: app._id.toString(),
-          name: userName,
-          phone: userPhone,
-          date,
-          time: scheduleDoc.start || "00:00",
-          service: services.map((s) => s.service_name).join(", "),
-        },
       });
-      console.log("📲 Firebase notification sent:", notifResult);
+      console.log("📲 Firebase notification sent to company:", notifResult);
+
+      // ✅ Notification DB-д хадгалах
+      await Notification.create({
+        title: notifPayloadCompany.title,
+        body: notifPayloadCompany.body,
+        data: notifPayloadCompany.data,
+        companyId: company._id,
+        appointmentId: app._id,
+      });
     }
-    await Notification.create({
-      title: notifPayload.title,
-      body: notifPayload.body,
-      data: notifPayload.data,
-      companyId: company._id,
-      appointmentId: app._id,
-    });
+
+    // 📌 Artist notification payload
+    const notifPayloadArtist = {
+      title: "Танд шинэ захиалга ирлээ",
+      body: `Хэрэглэгч ${userName} ${services
+        .map((s) => s.service_name)
+        .join(", ")} үйлчилгээ захиаллаа.`,
+      data: notifPayloadCompany.data,
+    };
+
     if (scheduleDoc.artistId?.firebase_token) {
       console.log(
-        "✌️scheduleDoc.artistId?.firebase_token --->",
-        scheduleDoc.artistId?.firebase_token
+        "✌️ Artist firebase_token --->",
+        scheduleDoc.artistId.firebase_token
       );
+
       const notifResultArtist = await sendFirebaseNotification({
-        title: "Танд шинэ захиалга ирлээ",
-        body: `Хэрэглэгч ${userName} ${services
-          .map((s) => s.service_name)
-          .join(", ")} үйлчилгээ захиаллаа.`,
+        ...notifPayloadArtist,
         token: scheduleDoc.artistId.firebase_token,
-        data: {
-          type: "appointment",
-          id: app._id.toString(),
-          name: userName,
-          phone: userPhone,
-          date,
-          time: scheduleDoc.start || "00:00",
-          service: services.map((s) => s.service_name).join(", "),
-        },
       });
+
+      console.log(
+        "📲 Firebase notification sent to artist:",
+        notifResultArtist
+      );
+
+      // ✅ Notification DB-д хадгалах
       await Notification.create({
         title: notifPayloadArtist.title,
         body: notifPayloadArtist.body,
@@ -284,24 +323,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         artistId: scheduleDoc.artistId._id,
         appointmentId: app._id,
       });
-      console.log(
-        "📲 Firebase notification sent to artist:",
-        notifResultArtist
-      );
     }
-
-    // QR үүсгэх
-    const qrData = `Appointment ID: ${app._id}\nDate: ${app.date}\nUser ID: ${app.user}`;
-    const qrFilePath = path.join(
-      __dirname,
-      "../public/uploads/",
-      `${app._id}-qr.png`
-    );
-    await QRCode.toFile(qrFilePath, qrData);
-    app.qr = `${app._id}-qr.png`;
-    await app.save();
-
-    console.log("📸 QR created:", app.qr);
 
     const inv = await Invoice.create({
       amount: advanceAmount,
