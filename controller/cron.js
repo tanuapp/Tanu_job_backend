@@ -83,8 +83,6 @@ cron.schedule("* * * * *", async () => {
       date: now.format("YYYY-MM-DD"),
     }).populate("schedule");
 
-    console.log(`✅ DONE шалгалт - ${todayAppointments.length} appointment`);
-
     for (const a of todayAppointments) {
       if (!a.schedule) {
         console.log("⚠️ Schedule байхгүй, алгаслаа:", a._id);
