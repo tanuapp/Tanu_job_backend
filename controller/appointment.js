@@ -109,35 +109,57 @@ exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
 
 exports.declineAppointment = asyncHandler(async (req, res, next) => {
   try {
+    console.log("📥 Цуцлах хүсэлт орж ирлээ:", {
+      appointmentId: req.params.id,
+    });
+
+    // 1. Захиалгыг ID-аар хайна
     const decline = await Appointment.findById(req.params.id).populate(
       "schedule"
     );
-    console.log("decline", decline);
+    console.log("🔍 Олдсон захиалга:", decline);
+
     if (!decline) {
+      console.log("⚠️ Захиалга олдсонгүй:", req.params.id);
       return customResponse.error(res, "Захиалга олдсонгүй");
     }
 
-    if (decline.status === "pending") {
-      return customResponse.error(res, "Таны захиалга баталгаажаагүй байна");
-    }
-
-    // Захиалгын статусыг declined болгоно
+    // 3. Статусыг declined болгоно
     decline.status = "declined";
     await decline.save();
+    console.log("✅ Захиалгын статус declined болголоо:", decline._id);
 
-    // ✨ isRescheduled = false байвал true болгож шинэчилнэ
-    if (decline.schedule && decline.schedule.isRescheduled === false) {
-      // 1. isRescheduled = true болгож шинэчлэх (эсвэл устгах)
-      // await Schedule.findByIdAndUpdate(decline.schedule._id, {
-      //   isRescheduled: true,
-      // });
+    // 4. Schedule-тай холбоотой логик
+    if (decline.schedule) {
+      console.log("📅 Холбогдсон schedule байна:", decline.schedule._id);
 
-      // 2. ✨ Шууд устгах бол дараах мөр ашиглана:
-      await Schedule.findByIdAndDelete(decline.schedule._id);
+      if (decline.schedule.isRescheduled === false) {
+        console.log(
+          "⚡ Schedule isRescheduled = false → Устгаж байна:",
+          decline.schedule._id
+        );
+
+        // Хэрэв устгах биш зөвхөн update хийх бол:
+        // await Schedule.findByIdAndUpdate(decline.schedule._id, { isRescheduled: true });
+
+        // Шууд устгах:
+        await Schedule.findByIdAndDelete(decline.schedule._id);
+        console.log("🗑️ Schedule амжилттай устгагдлаа:", decline.schedule._id);
+      } else {
+        console.log(
+          "ℹ️ Schedule аль хэдийн rescheduled байна, өөрчлөлт хийгдээгүй:",
+          decline.schedule._id
+        );
+      }
+    } else {
+      console.log("ℹ️ Энэ захиалгад холбоотой schedule байхгүй байна.");
     }
+
+    // 5. Response буцаана
+    console.log("🎉 Амжилттай цуцаллаа:", decline._id);
     return customResponse.success(res, "Амжилттай цуцаллаа");
   } catch (error) {
-    console.error("❌ Цуцлах үед алдаа:", error);
+    console.error("❌ Цуцлах үед алдаа гарлаа:", error);
     customResponse.error(res, error.message || "Алдаа гарлаа");
   }
 });
