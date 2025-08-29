@@ -1,16 +1,23 @@
 const express = require("express");
-const upload = require("../middleware/fileUpload");
 const {
-  create,
-  deleteModel,
-  get,
+  sendOtp,
+  signup,
+  signin,
+  resetPassword,
   getAll,
+  get,
   update,
+  deleteModel,
 } = require("../controller/agent");
+
 const router = express.Router();
 
-router.route("/").post(create).get(getAll);
+router.post("/send-otp", sendOtp);
+router.post("/signup", signup);
+router.post("/signin", signin);
+router.post("/reset-password", resetPassword);
 
-router.route("/:id").put(update).delete(deleteModel).get(get);
+router.route("/").get(getAll);
+router.route("/:id").get(get).put(update).delete(deleteModel);
 
 module.exports = router;
