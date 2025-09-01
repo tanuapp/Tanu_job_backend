@@ -162,5 +162,5 @@ companySchema.pre("save", async function (next) {
     next();
   }
 });
-
+ 
 module.exports = mongoose.model("Company", companySchema);

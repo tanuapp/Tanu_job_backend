@@ -8,7 +8,6 @@ const Otp = require("../models/agent-otp");
 const crypto = require("crypto");
 const sendMessage = require("../utils/callpro");
 
-
 exports.sendOtp = asyncHandler(async (req, res) => {
   try {
     const { phone } = req.body;
@@ -206,37 +205,6 @@ exports.getAll = asyncHandler(async (req, res, next) => {
   }
 });
 
-exports.signup = asyncHandler(async (req, res, next) => {
-  try {
-    // Сүүлд үүссэн агентыг олж авна
-    const lastAgent = await Model.findOne().sort({ createdAt: -1 }).limit(1);
-
-    let lastNumber = 0;
-
-    if (lastAgent && lastAgent.agent) {
-      // "AG000123" → 123 болгон хөрвүүлж, дараагийн дугаар гаргана
-      lastNumber = parseInt(lastAgent.agent.slice(2), 10);
-    }
-
-    const formattedCode = `AG${String(lastNumber + 1).padStart(6, "0")}`; // AG000001, AG000002 ...
-
-    // Агентын мэдээлэл
-    const inputData = {
-      ...req.body,
-      agent: formattedCode,
-    };
-
-    const newAgent = await Model.create(inputData);
-
-    return res.status(200).json({
-      success: true,
-      data: newAgent,
-    });
-  } catch (error) {
-    customResponse.error(res, error.message);
-  }
-});
-
 exports.update = asyncHandler(async (req, res, next) => {
   try {
     const updatedData = {
@@ -270,6 +238,49 @@ exports.get = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+// controllers/agent.js
+exports.getAgentInfo = asyncHandler(async (req, res) => {
+  const { agentId } = req.params;
+
+  const agent = await Model.findById(agentId)
+    .populate({
+      path: "totalcompany",
+      populate: { path: "package", select: "name price type" }, // 👈 package info
+    })
+    .lean();
+
+  if (!agent) {
+    return res.status(404).json({ success: false, message: "Агент олдсонгүй" });
+  }
+
+  res.json({ success: true, data: agent });
+});
+
+// controllers/agent.js
+exports.getAgentWithCompanies = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const agentWithCompanies = await Model.findById(id).populate({
+      path: "totalcompany",
+      select: "name companyCode phone email package", // 👈 package талбар нэмэв
+      populate: {
+        path: "package", // package -> Option model
+        select: "name price", // ямар багц гэдгийг харах
+      },
+    });
+
+    if (!agentWithCompanies) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Agent олдсонгүй" });
+    }
+
+    res.status(200).json({ success: true, data: agentWithCompanies });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 exports.deleteModel = async function deleteUser(req, res, next) {
   try {
