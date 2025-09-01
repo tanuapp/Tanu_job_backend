@@ -51,42 +51,48 @@ exports.validatePhone = asyncHandler(async (req, res) => {
 
 exports.getOtpAgain = asyncHandler(async (req, res, next) => {
   try {
-    const otp = generateOTP();
+    console.log("📥 [getOtpAgain] Request body:", req.body);
+
     const { phone } = req.body;
-    const dat = await User.findOne({
-      phone,
-    });
+    if (!phone) {
+      return customResponse.error(res, "Утасны дугаараа оруулна уу");
+    }
 
-    const p = await OTP.findOne({
-      customer: dat._id.toString(),
-    });
+    // Хэрэглэгч байгаа эсэхийг шалгах
+    const user = await User.findOne({ phone });
+    if (!user) {
+      return customResponse.error(res, "Утас бүртгэлгүй байна");
+    }
 
-    if (p) {
-      await OTP.findOneAndUpdate(
-        {
-          customer: dat._id.toString(),
-        },
+    // Шинэ OTP үүсгэх
+    const otp = generateOTP();
+    console.log("📞 Phone:", phone);
+    console.log("🔑 Generated OTP:", otp);
 
-        {
-          otp,
-          // customer: user._id,
-        }
-      );
+    // Хуучин OTP байгаа эсэхийг шалгаад шинэчлэх эсвэл шинээр үүсгэх
+    const existingOtp = await OTP.findOne({ customer: user._id.toString() });
+    if (existingOtp) {
+      await OTP.findOneAndUpdate({ customer: user._id.toString() }, { otp });
+      console.log("♻️ Existing OTP шинэчлэгдлээ");
     } else {
       await OTP.create({
         otp,
-        customer: dat._id.toString(),
-        // customer: user._id,
+        customer: user._id.toString(),
       });
+      console.log("✅ Шинэ OTP бичигдлээ");
     }
 
+    // SMS илгээх
     await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
+    console.log("📨 SMS sent to:", phone);
 
     res.status(200).json({
       success: true,
+      message: "OTP амжилттай дахин илгээгдлээ",
     });
+    console.log("✅ Response sent: success true");
   } catch (error) {
-    console.log(error);
+    console.error("🔥 [getOtpAgain] Error:", error);
     customResponse.server(res, error.message);
   }
 });
@@ -470,6 +476,8 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
     });
   }
   const otp = generateOTP();
+
+  // console.log("otp", otp);
 
   try {
     user.pin = otp;
