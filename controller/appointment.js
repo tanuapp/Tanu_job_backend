@@ -16,6 +16,193 @@ const { generateCredential, send } = require("../utils/khan");
 const Company = require("../models/company");
 const sendFirebaseNotification = require("../utils/sendFIrebaseNotification");
 
+// POST /api/v1/appointment/slots
+// POST /api/v1/appointment/slots
+exports.getAvailableSlots = asyncHandler(async (req, res) => {
+  try {
+    const { date, artist, services } = req.body;
+    console.log("▶️ [getAvailableSlots] called:", { date, artist, services });
+
+    if (!date || !artist || !services || !services.length) {
+      console.log("❌ Missing required params");
+      return customResponse.error(
+        res,
+        "date, artist, services бүгд шаардлагатай"
+      );
+    }
+
+    // 1. Services-ийн нийт хугацаа
+    console.log("🔍 Step 1: Fetching services durations...");
+    const Service = require("../models/service");
+    const serviceDocs = await Service.find({ _id: { $in: services } });
+    console.log(
+      "📦 Found serviceDocs:",
+      serviceDocs.map((s) => ({ id: s._id, duration: s.duration }))
+    );
+
+    const totalDuration = serviceDocs.reduce(
+      (sum, s) => sum + (s.duration || 0),
+      0
+    );
+    console.log("🕒 TotalDuration (services sum):", totalDuration);
+
+    // 2. Company.interval авах
+    console.log("🔍 Step 2: Fetching artist & company...");
+    const artistDoc = await Artist.findById(artist).populate("companyId");
+    console.log("🎤 ArtistDoc:", artistDoc?._id);
+    const company = artistDoc?.companyId;
+    console.log("🏢 CompanyDoc:", company?._id);
+
+    const stepMinutes = company?.interval || 15;
+    console.log("➡️ StepMinutes (company.interval):", stepMinutes);
+
+    // 3. Artist-ийн тухайн өдрийн schedule
+    console.log("🔍 Step 3: Fetching employeeSchedules...");
+    const employeeSchedules = await employeeSchedule.find({
+      artistId: artist,
+      date: date,
+    });
+    if (!employeeSchedules.length) {
+      console.log("❌ employeeSchedules хоосон");
+      return customResponse.success(res, []);
+    }
+    console.log("✅ Found work schedules:", employeeSchedules.length);
+
+    // 4. Booked intervals
+    console.log("🔍 Step 4: Fetching appointments...");
+    const appointments = await Appointment.find({
+      date,
+      status: { $in: ["paid", "pending"] },
+    }).populate({
+      path: "schedule",
+      match: { artistId: artist },
+      populate: { path: "serviceId", model: "Service" },
+    });
+
+    console.log("📦 Appointments found:", appointments.length);
+    const validAppointments = appointments.filter((a) => a.schedule != null);
+    console.log(
+      "✅ Valid appointments (with schedule):",
+      validAppointments.length
+    );
+
+    let bookedIntervals = validAppointments.map((a) => {
+      let start = a.schedule.start;
+      let end = a.schedule.end;
+
+      const services = a.schedule.serviceId || [];
+      const durationSum = services.reduce(
+        (sum, s) => sum + (s.duration || 0),
+        0
+      );
+      console.log(
+        `📝 Appointment ${a._id} start=${start}, end=${end}, durationSum=${durationSum}`
+      );
+
+      if (durationSum > 0 && start) {
+        const [h, m] = start.split(":").map(Number);
+        const startDate = new Date(2000, 0, 1, h, m);
+        const computedEndDate = new Date(
+          startDate.getTime() + durationSum * 60000
+        );
+        const computedEnd = `${computedEndDate
+          .getHours()
+          .toString()
+          .padStart(2, "0")}:${computedEndDate
+          .getMinutes()
+          .toString()
+          .padStart(2, "0")}`;
+        if (!end || computedEnd > end) {
+          console.log(`🔄 Overriding end from ${end} → ${computedEnd}`);
+          end = computedEnd;
+        }
+      }
+      return { start, end };
+    });
+
+    console.log("⛔️ Booked intervals(raw):", bookedIntervals);
+
+    // merge
+    console.log("🔍 Step 5: Merging intervals...");
+    bookedIntervals = mergeIntervals(bookedIntervals);
+    console.log("📊 Booked intervals(merged):", bookedIntervals);
+
+    // 5. Dayoff merge
+    console.log("🔍 Step 6: Fetching dayOffs...");
+    const dayOffs = await Dayoff.find({ date });
+    console.log("📆 DayOffs found:", dayOffs.length);
+    for (const d of dayOffs) {
+      console.log("🚫 DayOff interval:", { start: d.start, end: d.end });
+      bookedIntervals.push({ start: d.start, end: d.end });
+    }
+
+    // 6. Slot generation
+    console.log("🔍 Step 7: Generating slots...");
+    const validSlots = [];
+    for (const sch of employeeSchedules) {
+      console.log("🗓 Processing schedule:", sch._id, {
+        start: sch.start,
+        end: sch.end,
+      });
+
+      const startTime = new Date(`2000-01-01T${sch.start}:00`);
+      const endTime = new Date(`2000-01-01T${sch.end}:00`);
+
+      let current = new Date(startTime);
+      while (new Date(current.getTime() + totalDuration * 60000) <= endTime) {
+        const slotEnd = new Date(current.getTime() + totalDuration * 60000);
+
+        const startStr = `${String(current.getHours()).padStart(
+          2,
+          "0"
+        )}:${String(current.getMinutes()).padStart(2, "0")}`;
+        const endStr = `${String(slotEnd.getHours()).padStart(2, "0")}:${String(
+          slotEnd.getMinutes()
+        ).padStart(2, "0")}`;
+
+        console.log(`⏳ Checking slot: ${startStr} → ${endStr}`);
+
+        // Overlap check
+        const overlap = bookedIntervals.some((b) => {
+          const bStart = new Date(`2000-01-01T${b.start}:00`);
+          const bEnd = new Date(`2000-01-01T${b.end}:00`);
+          const isOverlap = current < bEnd && slotEnd > bStart;
+          if (isOverlap) console.log(`🚫 Overlaps with: ${b.start} → ${b.end}`);
+          return isOverlap;
+        });
+
+        // Past time skip
+        const today = new Date();
+        const selectedDate = new Date(date);
+        const slotDateTime = new Date(
+          selectedDate.getFullYear(),
+          selectedDate.getMonth(),
+          selectedDate.getDate(),
+          current.getHours(),
+          current.getMinutes()
+        );
+        const isPast =
+          selectedDate.toDateString() === today.toDateString() &&
+          slotDateTime <= today;
+        if (isPast) console.log(`⚠️ Skipping past slot: ${startStr}`);
+
+        if (!overlap && !isPast) {
+          validSlots.push({ start: startStr, end: endStr });
+          console.log(`✅ Added slot: ${startStr} → ${endStr}`);
+        }
+
+        current = new Date(current.getTime() + stepMinutes * 60000);
+      }
+    }
+
+    console.log("📆 Total valid slots:", validSlots.length);
+    return customResponse.success(res, validSlots);
+  } catch (error) {
+    console.error("🔥 Error in getAvailableSlots:", error);
+    return customResponse.error(res, error.message);
+  }
+});
+
 exports.markCompleted = asyncHandler(async (req, res) => {
   const appointment = await Appointment.findById(req.params.id).populate(
     "userId"
@@ -75,37 +262,6 @@ function mergeIntervals(intervals) {
 
   return merged;
 }
-
-exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
-  const { date, artist } = req.query;
-
-  if (!date || !artist) {
-    return res.status(400).json({
-      success: false,
-      message: "date болон artist шаардлагатай",
-    });
-  }
-
-  // зөвхөн тухайн artist-ийн schedule бүхий paid appointments
-  const appointments = await Appointment.find({
-    date: date,
-    status: { $in: ["paid", "pending"] },
-  }).populate({
-    path: "schedule",
-    match: { artistId: artist },
-  });
-
-  const validAppointments = appointments.filter((a) => a.schedule != null);
-
-  const rawIntervals = validAppointments.map((a) => ({
-    start: a.schedule.start,
-    end: a.schedule.end,
-  }));
-
-  const merged = mergeIntervals(rawIntervals);
-
-  return customResponse.success(res, merged);
-});
 
 exports.declineAppointment = asyncHandler(async (req, res, next) => {
   try {
@@ -276,86 +432,6 @@ exports.create = asyncHandler(async (req, res, next) => {
     console.error("🔥 Error in create appointment:", error);
     return customResponse.error(res, error.message);
   }
-});
-
-exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
-  const { date, service, artist } = req.body;
-
-  console.log("▶️ Incoming request body:", { date, service, artist });
-
-  if (!date || !service || !artist) {
-    return res.status(400).json({
-      success: false,
-      message: "Date, service, artist бүгд шаардлагатай.",
-    });
-  }
-
-  // Сонгосон огнооны эхлэл, төгсгөлийн цагийг өдөр бүхэлд нь хамруулж тохируулна
-  const dayStart = new Date(date);
-  dayStart.setHours(0, 0, 0, 0);
-
-  const dayEnd = new Date(date);
-  dayEnd.setHours(23, 59, 59, 999);
-
-  console.log("📅 Searching schedules on:", dayStart.toISOString());
-
-  // 🔥 Тухайн өдөрт амралтын өдрүүдийг шалгах
-  const dayOffs = await Dayoff.find({
-    date: { $gte: dayStart, $lte: dayEnd },
-  });
-  console.log("📆 Dayoffs found:", dayOffs.length);
-
-  const dayOffArtistIds = dayOffs.map((dayOff) => String(dayOff.artistId));
-  const dayOffSchedules = dayOffs.flatMap((dayOff) =>
-    dayOff.schedule.map((scheduleId) => String(scheduleId))
-  );
-
-  console.log("🚫 Artists on day off:", dayOffArtistIds);
-  console.log("🚫 Schedule IDs on day off:", dayOffSchedules);
-
-  // ✅ Тухайн өдөр artist-д тохирох schedule-г хайна
-  const schedules = await employeeSchedule
-    .find({
-      artistId: artist,
-      date: { $gte: dayStart, $lte: dayEnd },
-      serviceId: { $in: Array.isArray(service) ? service : [service] },
-    })
-    .populate("artistId")
-    .populate("serviceId");
-
-  console.log("✅ Found schedules:", schedules.length);
-
-  // 🔍 Тухайн өдөр төлөгдсөн захиалгуудыг хайж авах
-  const appointments = await Appointment.find({
-    date: { $gte: dayStart, $lte: dayEnd },
-    status: "paid",
-  });
-  console.log("📅 Appointments on date:", appointments.length);
-
-  if (!schedules || schedules.length === 0) {
-    return res.status(404).json({
-      success: false,
-      message: "Тухайн өдөрт тохирох хуваарь олдсонгүй.",
-    });
-  }
-
-  const availableSchedules = schedules.filter((schedule) => {
-    const isArtistDayOff = dayOffArtistIds.includes(
-      String(schedule.artistId._id)
-    );
-    const isScheduleDayOff = dayOffSchedules.includes(String(schedule._id));
-    const isBooked = appointments.some(
-      (appointment) => String(appointment.schedule) === String(schedule._id)
-    );
-    return !isArtistDayOff && !isScheduleDayOff && !isBooked;
-  });
-
-  console.log(
-    "✅ Available schedules after filtering:",
-    availableSchedules.length
-  );
-
-  customResponse.success(res, availableSchedules);
 });
 
 exports.updateAppointmentTime = asyncHandler(async (req, res) => {

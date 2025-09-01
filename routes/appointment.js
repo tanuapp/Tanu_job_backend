@@ -9,9 +9,7 @@ const {
   deleteModel,
   endAppointment,
   declineAppointment,
-  getAvailableTimes,
   getArtistAppointments,
-  getBookedTimesForArtist,
   updateStatus,
   checkAppointment,
   markCashPaid,
@@ -21,6 +19,7 @@ const {
   updateAppointmentTime,
   updateAppointmentSchedule,
   finishAppointment,
+  getAvailableSlots,
 } = require("../controller/appointment");
 
 const router = express.Router();
@@ -38,10 +37,11 @@ router.route("/finish/:id").post(finishAppointment);
 router.route("/decline/:id").post(declineAppointment);
 
 // Захиалгатай (booked) цагуудыг авах
-router.route("/booked").get(getBookedTimesForArtist);
+// router.route("/booked").get(getBookedTimesForArtist);
+router.route("/slots").post(getAvailableSlots);
 
 // Боломжит (available) цагуудыг авах
-router.route("/available").post(getAvailableTimes);
+// router.route("/available").post(getAvailableTimes);
 router.route("/available/admin").post(getAvailableTimesAdmin);
 
 // Захиалгуудыг populate хийн харуулах
