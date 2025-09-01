@@ -1,8 +1,9 @@
 const User = require("../models/user");
 const Company = require("../models/company");
+const Agent = require("../models/agent");
+const UserOtp = require("../models/userOtp");
 const asyncHandler = require("../middleware/asyncHandler");
 const customResponse = require("../utils/customResponse");
-const UserOtp = require("../models/userOtp");
 const sendMessage = require("../utils/callpro");
 
 function generateOTP(length = 4) {
@@ -52,7 +53,8 @@ exports.getOtpAgain = asyncHandler(async (req, res) => {
 });
 
 exports.registerWithPhone = asyncHandler(async (req, res) => {
-  const { password, phone } = req.body;
+  const { phone, password, name, email, companyCode, numberOfArtist, agent } =
+    req.body;
 
   if (!phone || !password) {
     return res.status(400).json({
@@ -68,61 +70,123 @@ exports.registerWithPhone = asyncHandler(async (req, res) => {
       message: "Утасны дугаар бүртгэлтэй байна.",
     });
   }
-  const user = await User.create({
-    ...req.body,
-    status: false, // 🚨 шинэ хэрэглэгчийг баталгаажаагүй гэж тэмдэглэ
-    photo: req.file ? req.file.filename : "no-img.png",
+
+  const otp = generateOTP().toString().trim();
+
+  await UserOtp.create({
+    phone,
+    otp,
+    password,
+    name,
+    email,
+    companyCode,
+    numberOfArtist,
+    agent,
+    expireAt: new Date(Date.now() + 5 * 60 * 1000),
+    failCount: 0,
   });
-
-  const otp = generateOTP();
-  await UserOtp.create({ otp, user: user._id });
-
-  await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
+  // SMS илгээхийг try-catch дотор хийх
+  try {
+    await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
+  } catch (err) {
+    console.error("SMS send error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "OTP илгээхэд алдаа гарлаа. Та түр хүлээгээд дахин оролдоно уу.",
+    });
+  }
 
   return res.status(200).json({
     success: true,
-    message: "Бүртгэл амжилттай. Нэг удаагийн нууц үг илгээгдлээ",
+    message: "OTP илгээгдлээ. 5 минутын дотор баталгаажуулна уу.",
   });
 });
 
+// ====================== VERIFY OTP ======================
 exports.registerVerify = asyncHandler(async (req, res) => {
-  const { otp, phone, password } = req.body;
+  const { phone, otp } = req.body;
 
-  const user = await User.findOne({ phone });
-  if (!user) return customResponse.error(res, "Утас бүртгэлгүй байна");
-
-  const userOtp = await UserOtp.findOne({ user: user._id });
-  if (!userOtp)
+  const userOtp = await UserOtp.findOne({ phone });
+  if (!userOtp) {
     return res.status(400).json({ success: false, message: "OTP олдсонгүй" });
+  }
 
-  if (userOtp.otp !== otp) {
-    userOtp.failCount = (userOtp.failCount || 0) + 1;
+  // хугацаа дууссан эсэх
+  if (userOtp.expireAt < new Date()) {
+    await UserOtp.deleteOne({ phone });
+    return res
+      .status(400)
+      .json({ success: false, message: "OTP хугацаа дууссан" });
+  }
+
+  // OTP шалгах
+  if (String(userOtp.otp).trim() !== String(otp).trim()) {
+    userOtp.failCount += 1;
     await userOtp.save();
 
     if (userOtp.failCount >= 3) {
-      await User.findByIdAndDelete(user._id);
-      await UserOtp.deleteOne({ user: user._id });
+      await UserOtp.deleteOne({ phone });
       return res.status(400).json({
         success: false,
-        message: "3 удаа буруу оруулсан тул бүртгэлийг хүчингүй болголоо.",
+        message: "3 удаа буруу оруулсан тул хүчингүй боллоо",
       });
     }
 
     return res.status(400).json({
       success: false,
-      message: `Буруу нэг удаагийн нууц үг. Оролдлого: ${userOtp.failCount}/3`,
+      message: `OTP буруу байна. Оролдлого: ${userOtp.failCount}/3`,
     });
   }
 
-  // Зөв OTP
-  user.password = password;
-  user.status = true;
-  await user.save();
+  // ✅ Зөв OTP → User үүсгэнэ
+  const user = await User.create({
+    phone: userOtp.phone,
+    password: userOtp.password,
+    name: userOtp.name,
+    email: userOtp.email,
+    status: true,
+  });
+
+  // ✅ Company үүсгэнэ
+  const defaultPackageId = "68086a2ba8844afa1b4f384a";
+  const company = await Company.create({
+    companyOwner: user._id,
+    companyCode: userOtp.companyCode,
+    phone: userOtp.phone,
+    email: userOtp.email,
+    numberOfArtist: userOtp.numberOfArtist,
+    name: userOtp.name,
+    package: defaultPackageId,
+    isPackage: true,
+  });
+
+  // ✅ Agent-д холбох
+  if (userOtp.agent) {
+    const agent = await Agent.findOne({ agent: userOtp.agent });
+    if (agent) {
+      if (!agent.totalcompany) {
+        agent.totalcompany = [];
+      }
+      agent.totalcompany.push(company._id);
+      await agent.save();
+    }
+  }
 
   const token = user.getJsonWebToken();
-  await UserOtp.deleteOne({ user: user._id });
 
-  res.status(200).json({ success: true, token, data: user });
+  await UserOtp.deleteOne({ phone }); // OTP-г устгана
+
+  return res.status(200).json({
+    success: true,
+    message: "Хэрэглэгч амжилттай үүсгэгдлээ",
+    token,
+    data: {
+      _id: user._id,
+      phone: user.phone,
+      name: user.name,
+      email: user.email,
+    },
+  });
 });
 
 exports.forgotPassword = asyncHandler(async (req, res) => {

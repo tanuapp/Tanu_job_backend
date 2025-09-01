@@ -45,10 +45,13 @@ const AgentSchema = new mongoose.Schema(
       minlength: [6, "Нууц үг хамгийн багадаа 6 тэмдэгттэй байна!"],
       select: false,
     },
-    totalcompany: {
-      type: Number,
-      default: 0,
-    },
+    totalcompany: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Company",
+        default: [],
+      },
+    ],
   },
   { timestamps: true }
 );

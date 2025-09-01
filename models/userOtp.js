@@ -3,16 +3,21 @@ const { Schema } = mongoose;
 
 const userOtpSchema = new Schema(
   {
-    user: {
-      type: mongoose.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    otp: String,
+    phone: { type: String, required: true },
+    otp: { type: String, required: true },
+    expireAt: { type: Date, required: true },
+    failCount: { type: Number, default: 0 },
+
+    // түр хадгалах field-үүд
+    password: String,
+    name: String,
+    email: String,
+    companyCode: String,
+    numberOfArtist: String,
+    agent: String,
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
+
 
 module.exports = mongoose.model("UserOtp", userOtpSchema);

@@ -7,6 +7,7 @@ const {
   getAll,
   get,
   update,
+  getAgentWithCompanies,
   deleteModel,
 } = require("../controller/agent");
 
@@ -16,7 +17,7 @@ router.post("/send-otp", sendOtp);
 router.post("/signup", signup);
 router.post("/signin", signin);
 router.post("/reset-password", resetPassword);
-
+router.get("/:id/companies", getAgentWithCompanies);
 router.route("/").get(getAll);
 router.route("/:id").get(get).put(update).delete(deleteModel);
 
