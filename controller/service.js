@@ -86,10 +86,7 @@ exports.getServicesByIds = asyncHandler(async (req, res) => {
 
     const services = await Model.find({
       _id: { $in: serviceIds },
-    }).populate({
-      path: "artistId",
-      select: "first_name last_name photo",
-    });
+    }).populate("artistId");
 
     services.forEach((s) => {});
 
