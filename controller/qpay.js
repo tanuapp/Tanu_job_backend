@@ -344,21 +344,21 @@ exports.callback = asyncHandler(async (req, res) => {
 
     // // 💰 Шимтгэл тооцоолол
     const originalAmount = Number(record.price); // жишээ нь: 10
-    // const commissionPercent = 1;
+    const commissionPercent = 1;
 
-    // const commission = +(originalAmount * (commissionPercent / 100)).toFixed(2); // 0.10
-    // const payout = +(originalAmount - commission).toFixed(2); // 9.90
+    const commission = +(originalAmount * (commissionPercent / 100)).toFixed(2); // 0.10
+    const payout = +(originalAmount - commission).toFixed(2); // 9.90
 
-    // console.log("💸 Total:", originalAmount);
-    // console.log("💰 Commission:", commission);
-    // console.log("📤 Payout:", payout);
+    console.log("💸 Total:", originalAmount);
+    console.log("💰 Commission:", commission);
+    console.log("📤 Payout:", payout);
 
-    // if (!payout || isNaN(payout) || payout <= 0) {
-    //   console.error("❌ Платеж алдаатай:", payout);
-    //   return res
-    //     .status(500)
-    //     .json({ success: false, message: "Шилжүүлэх дүн алдаатай байна" });
-    // }
+    if (!payout || isNaN(payout) || payout <= 0) {
+      console.error("❌ Платеж алдаатай:", payout);
+      return res
+        .status(500)
+        .json({ success: false, message: "Шилжүүлэх дүн алдаатай байна" });
+    }
 
     console.log("🔑 Khan токен авч байна...");
     const khanToken = await generateCredential();
@@ -374,14 +374,12 @@ exports.callback = asyncHandler(async (req, res) => {
       company.bankCode === "050000" ? "domestic" : "interbank";
     console.log("🏦 Transfer type:", transferType);
     const parts = [
-      `Шилжүүлэг: ${company.name}`, // компанийн нэр байсаар байна
+      `Захиалга-`, // компанийн нэр байсаар байна
       new Date().toLocaleDateString("mn-MN"),
     ];
 
-    if (app.user?.first_name || app.user?.last_name) {
-      parts.push(
-        `Нэр: ${app.user.first_name || ""} ${app.user.last_name || ""}`.trim()
-      );
+    if (app.user?.last_name) {
+      parts.push(`Нэр: ${app.user.last_name || ""}`.trim());
     }
 
     if (app.user?.phone) {
@@ -397,7 +395,7 @@ exports.callback = asyncHandler(async (req, res) => {
       toAccount: company.bankNumber,
       toAccountName: company.bankOwner,
       toBank: company.bankCode || "050000",
-      amount: originalAmount,
+      amount: payout,
       description: parts.join(" "),
       toCurrency: "MNT",
       currency: "MNT",
