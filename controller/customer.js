@@ -52,17 +52,7 @@ exports.validatePhone = asyncHandler(async (req, res) => {
 exports.getOtpAgain = asyncHandler(async (req, res, next) => {
   try {
     console.log("📥 [getOtpAgain] Request body:", req.body);
-
     const { phone } = req.body;
-    if (!phone) {
-      return customResponse.error(res, "Утасны дугаараа оруулна уу");
-    }
-
-    // Хэрэглэгч байгаа эсэхийг шалгах
-    const user = await User.findOne({ phone });
-    if (!user) {
-      return customResponse.error(res, "Утас бүртгэлгүй байна");
-    }
 
     // Шинэ OTP үүсгэх
     const otp = generateOTP();
@@ -70,14 +60,14 @@ exports.getOtpAgain = asyncHandler(async (req, res, next) => {
     console.log("🔑 Generated OTP:", otp);
 
     // Хуучин OTP байгаа эсэхийг шалгаад шинэчлэх эсвэл шинээр үүсгэх
-    const existingOtp = await OTP.findOne({ customer: user._id.toString() });
+    const existingOtp = await OTP.findOne({ phone });
     if (existingOtp) {
-      await OTP.findOneAndUpdate({ customer: user._id.toString() }, { otp });
+      await OTP.findOneAndUpdate({ phone }, { otp });
       console.log("♻️ Existing OTP шинэчлэгдлээ");
     } else {
       await OTP.create({
         otp,
-        customer: user._id.toString(),
+        phone,
       });
       console.log("✅ Шинэ OTP бичигдлээ");
     }
