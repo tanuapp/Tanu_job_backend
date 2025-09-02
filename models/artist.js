@@ -42,10 +42,6 @@ const artistSchema = new Schema({
     type: Boolean,
     default: false,
   },
-  rank: {
-    type: Number,
-    default: 0,
-  },
   photo: String,
   first_name: String,
   last_name: String,
