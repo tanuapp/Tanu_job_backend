@@ -263,6 +263,80 @@ function mergeIntervals(intervals) {
   return merged;
 }
 
+exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
+  const { date, artist } = req.query;
+
+  console.log("▶️ Incoming request:", { date, artist });
+
+  if (!date || !artist) {
+    console.log("❌ Missing params");
+    return res.status(400).json({
+      success: false,
+      message: "date болон artist шаардлагатай",
+    });
+  }
+
+  const appointments = await Appointment.find({
+    date,
+    status: { $in: ["paid", "pending"] },
+  }).populate({
+    path: "schedule",
+    match: { artistId: artist },
+    populate: {
+      path: "serviceId", // Schedule → serviceId
+      model: "Service",
+    },
+  });
+
+  console.log("📦 Appointments found:", appointments.length);
+
+  const validAppointments = appointments.filter((a) => a.schedule != null);
+  console.log("✅ Valid appointments:", validAppointments.length);
+
+  const rawIntervals = validAppointments.map((a, i) => {
+    console.log(`\n🔹 Appointment #${i + 1} ->`, a._id);
+
+    const start = a.schedule.start;
+    let end = a.schedule.end;
+    console.log("⏱ Schedule start/end:", { start, end });
+
+    // serviceId массив дотор duration байна
+    const services = a.schedule.serviceId || [];
+    const totalDuration = services.reduce(
+      (sum, s) => sum + (s.duration || 0),
+      0
+    );
+    console.log("🧮 Total duration:", totalDuration);
+
+    if (totalDuration > 0 && start) {
+      const [h, m] = start.split(":").map(Number);
+      const startDate = new Date(2000, 0, 1, h, m);
+      const endDate = new Date(startDate.getTime() + totalDuration * 60000);
+      const computedEnd = `${endDate
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${endDate.getMinutes().toString().padStart(2, "0")}`;
+
+      console.log("🛠 Computed end:", computedEnd);
+
+      if (!end || computedEnd > end) {
+        console.log("🔄 Override end:", { old: end, new: computedEnd });
+        end = computedEnd;
+      }
+    }
+
+    console.log("✅ Final interval:", { start, end });
+    return { start, end };
+  });
+
+  console.log("\n📋 Raw intervals:", rawIntervals);
+
+  const merged = mergeIntervals(rawIntervals);
+  console.log("📊 Merged intervals:", merged);
+
+  return customResponse.success(res, merged);
+});
+
 exports.declineAppointment = asyncHandler(async (req, res, next) => {
   try {
     console.log("📥 Цуцлах хүсэлт орж ирлээ:", {
@@ -432,6 +506,86 @@ exports.create = asyncHandler(async (req, res, next) => {
     console.error("🔥 Error in create appointment:", error);
     return customResponse.error(res, error.message);
   }
+});
+
+exports.getAvailableTimes = asyncHandler(async (req, res, next) => {
+  const { date, service, artist } = req.body;
+
+  console.log("▶️ Incoming request body:", { date, service, artist });
+
+  if (!date || !service || !artist) {
+    return res.status(400).json({
+      success: false,
+      message: "Date, service, artist бүгд шаардлагатай.",
+    });
+  }
+
+  // Сонгосон огнооны эхлэл, төгсгөлийн цагийг өдөр бүхэлд нь хамруулж тохируулна
+  const dayStart = new Date(date);
+  dayStart.setHours(0, 0, 0, 0);
+
+  const dayEnd = new Date(date);
+  dayEnd.setHours(23, 59, 59, 999);
+
+  console.log("📅 Searching schedules on:", dayStart.toISOString());
+
+  // 🔥 Тухайн өдөрт амралтын өдрүүдийг шалгах
+  const dayOffs = await Dayoff.find({
+    date: { $gte: dayStart, $lte: dayEnd },
+  });
+  console.log("📆 Dayoffs found:", dayOffs.length);
+
+  const dayOffArtistIds = dayOffs.map((dayOff) => String(dayOff.artistId));
+  const dayOffSchedules = dayOffs.flatMap((dayOff) =>
+    dayOff.schedule.map((scheduleId) => String(scheduleId))
+  );
+
+  console.log("🚫 Artists on day off:", dayOffArtistIds);
+  console.log("🚫 Schedule IDs on day off:", dayOffSchedules);
+
+  // ✅ Тухайн өдөр artist-д тохирох schedule-г хайна
+  const schedules = await employeeSchedule
+    .find({
+      artistId: artist,
+      date: { $gte: dayStart, $lte: dayEnd },
+      serviceId: { $in: Array.isArray(service) ? service : [service] },
+    })
+    .populate("artistId")
+    .populate("serviceId");
+
+  console.log("✅ Found schedules:", schedules.length);
+
+  // 🔍 Тухайн өдөр төлөгдсөн захиалгуудыг хайж авах
+  const appointments = await Appointment.find({
+    date: { $gte: dayStart, $lte: dayEnd },
+    status: "paid",
+  });
+  console.log("📅 Appointments on date:", appointments.length);
+
+  if (!schedules || schedules.length === 0) {
+    return res.status(404).json({
+      success: false,
+      message: "Тухайн өдөрт тохирох хуваарь олдсонгүй.",
+    });
+  }
+
+  const availableSchedules = schedules.filter((schedule) => {
+    const isArtistDayOff = dayOffArtistIds.includes(
+      String(schedule.artistId._id)
+    );
+    const isScheduleDayOff = dayOffSchedules.includes(String(schedule._id));
+    const isBooked = appointments.some(
+      (appointment) => String(appointment.schedule) === String(schedule._id)
+    );
+    return !isArtistDayOff && !isScheduleDayOff && !isBooked;
+  });
+
+  console.log(
+    "✅ Available schedules after filtering:",
+    availableSchedules.length
+  );
+
+  customResponse.success(res, availableSchedules);
 });
 
 exports.updateAppointmentTime = asyncHandler(async (req, res) => {
