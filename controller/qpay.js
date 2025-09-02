@@ -342,23 +342,23 @@ exports.callback = asyncHandler(async (req, res) => {
     company.done++;
     await company.save();
 
-    // 💰 Шимтгэл тооцоолол
+    // // 💰 Шимтгэл тооцоолол
     const originalAmount = Number(record.price); // жишээ нь: 10
-    const commissionPercent = 1;
+    // const commissionPercent = 1;
 
-    const commission = +(originalAmount * (commissionPercent / 100)).toFixed(2); // 0.10
-    const payout = +(originalAmount - commission).toFixed(2); // 9.90
+    // const commission = +(originalAmount * (commissionPercent / 100)).toFixed(2); // 0.10
+    // const payout = +(originalAmount - commission).toFixed(2); // 9.90
 
-    console.log("💸 Total:", originalAmount);
-    console.log("💰 Commission:", commission);
-    console.log("📤 Payout:", payout);
+    // console.log("💸 Total:", originalAmount);
+    // console.log("💰 Commission:", commission);
+    // console.log("📤 Payout:", payout);
 
-    if (!payout || isNaN(payout) || payout <= 0) {
-      console.error("❌ Платеж алдаатай:", payout);
-      return res
-        .status(500)
-        .json({ success: false, message: "Шилжүүлэх дүн алдаатай байна" });
-    }
+    // if (!payout || isNaN(payout) || payout <= 0) {
+    //   console.error("❌ Платеж алдаатай:", payout);
+    //   return res
+    //     .status(500)
+    //     .json({ success: false, message: "Шилжүүлэх дүн алдаатай байна" });
+    // }
 
     console.log("🔑 Khan токен авч байна...");
     const khanToken = await generateCredential();
@@ -397,7 +397,7 @@ exports.callback = asyncHandler(async (req, res) => {
       toAccount: company.bankNumber,
       toAccountName: company.bankOwner,
       toBank: company.bankCode || "050000",
-      amount: payout,
+      amount: originalAmount,
       description: parts.join(" "),
       toCurrency: "MNT",
       currency: "MNT",
