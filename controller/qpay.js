@@ -276,7 +276,7 @@ exports.callback = asyncHandler(async (req, res) => {
       .select("status schedule user")
       .populate({
         path: "user",
-        select: "deviceToken",
+        select: "first_name last_name phone email deviceToken", // ✅ нэмэв
       })
       .populate({
         path: "schedule",
@@ -373,6 +373,24 @@ exports.callback = asyncHandler(async (req, res) => {
     const transferType =
       company.bankCode === "050000" ? "domestic" : "interbank";
     console.log("🏦 Transfer type:", transferType);
+    const parts = [
+      `Шилжүүлэг: ${company.name}`, // компанийн нэр байсаар байна
+      new Date().toLocaleDateString("mn-MN"),
+    ];
+
+    if (app.user?.first_name || app.user?.last_name) {
+      parts.push(
+        `Нэр: ${app.user.first_name || ""} ${app.user.last_name || ""}`.trim()
+      );
+    }
+
+    if (app.user?.phone) {
+      parts.push(`Утас: ${app.user.phone}`);
+    }
+
+    if (app.user?.email) {
+      parts.push(`Имэйл: ${app.user.email}`);
+    }
 
     const transferPayload = {
       fromAccount: process.env.corporateAccountNumber,
@@ -380,9 +398,7 @@ exports.callback = asyncHandler(async (req, res) => {
       toAccountName: company.bankOwner,
       toBank: company.bankCode || "050000",
       amount: payout,
-      description: `Шилжүүлэг: ${company.name} ${new Date().toLocaleDateString(
-        "mn-MN"
-      )}`,
+      description: parts.join(" "),
       toCurrency: "MNT",
       currency: "MNT",
       loginName: process.env.corporateEmail,

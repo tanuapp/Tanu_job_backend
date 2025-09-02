@@ -46,7 +46,7 @@ router.route("/set-pin").post(setPin);
 router.route("/register").post(register);
 router.route("/forgotPassword").post(forgotPassword);
 
-router.route("/").get(protect, getAll);
+router.route("/").get(getAll);
 
 router
   .route("/:id")
