@@ -50,6 +50,11 @@ const artistSchema = new Schema({
   first_name: String,
   last_name: String,
   nick_name: String,
+  rank: {
+    type: Number,
+    enum: [0, 1, 2, 3, 4, 5],
+    default: 0,
+  },
   firebase_token: {
     type: String,
     default: "",
