@@ -12,37 +12,45 @@ const {
 // 🟢 Ирэх (Clock In)
 exports.clockIn = asyncHandler(async (req, res, next) => {
   try {
-    console.log("📥 [ClockIn] Request body:", req.body);
-
     const artistId = req.userId;
     const { companyId, lat, lng } = req.body;
 
-    console.log("👤 Artist ID:", artistId);
-    console.log("🏢 Company ID:", companyId);
-    console.log("📍 Location:", { lat, lng });
-
-    // Компанийг шалгах
     const company = await Company.findById(companyId);
-    if (!company) {
-      console.log("❌ Компани олдсонгүй:", companyId);
-      return customResponse.error(res, "Компани олдсонгүй");
-    }
-    console.log("✅ Company found:", company.name);
+    if (!company) return customResponse.error(res, "Компани олдсонгүй");
 
-    // Байршлын шалгалт
     const distance = calculateDistance(
       lat,
       lng,
       parseFloat(company.latitude),
       parseFloat(company.longitude)
     );
-    console.log(`📏 Distance to company: ${distance.toFixed(2)}m`);
-
     if (distance > 100) {
-      console.log("❌ Хэт хол байна (>100м)");
       return customResponse.error(
         res,
         "Та компанийн байршлаас 100м дотор байх ёстой!"
+      );
+    }
+
+    // 🟢 Өнөөдрийн хамгийн сүүлийн логийг шалгах
+    const today = new Date();
+    const startOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      0,
+      0,
+      0
+    );
+    const lastLog = await TimeLog.findOne({
+      artistId,
+      companyId,
+      createdAt: { $gte: startOfDay },
+    }).sort({ createdAt: -1 });
+
+    if (lastLog && lastLog.type === "clockIn") {
+      return customResponse.error(
+        res,
+        "Та аль хэдийн ирсэн цаг бүртгэсэн байна!"
       );
     }
 
@@ -52,14 +60,11 @@ exports.clockIn = asyncHandler(async (req, res, next) => {
       type: "clockIn",
       location: { lat, lng },
     });
-    console.log("✅ TimeLog created (clockIn):", log);
 
     const summary = await updateDailySummary(artistId, companyId);
-    console.log("💾 DailyWorkSummary updated:", summary);
 
     return customResponse.success(res, log, "Ирсэн цаг амжилттай бүртгэгдлээ");
   } catch (error) {
-    console.error("❌ ClockIn error:", error);
     customResponse.error(res, error.message);
   }
 });
@@ -67,38 +72,43 @@ exports.clockIn = asyncHandler(async (req, res, next) => {
 // 🟢 Явах (Clock Out)
 exports.clockOut = asyncHandler(async (req, res, next) => {
   try {
-    console.log("📥 [ClockOut] Request body:", req.body);
-
     const artistId = req.userId;
     const { companyId, lat, lng } = req.body;
 
-    console.log("👤 Artist ID:", artistId);
-    console.log("🏢 Company ID:", companyId);
-    console.log("📍 Location:", { lat, lng });
-
-    // Компанийг шалгах
     const company = await Company.findById(companyId);
-    if (!company) {
-      console.log("❌ Компани олдсонгүй:", companyId);
-      return customResponse.error(res, "Компани олдсонгүй");
-    }
-    console.log("✅ Company found:", company.name);
+    if (!company) return customResponse.error(res, "Компани олдсонгүй");
 
-    // Байршлын шалгалт
     const distance = calculateDistance(
       lat,
       lng,
       parseFloat(company.latitude),
       parseFloat(company.longitude)
     );
-    console.log(`📏 Distance to company: ${distance.toFixed(2)}m`);
-
     if (distance > 100) {
-      console.log("❌ Хэт хол байна (>100м)");
       return customResponse.error(
         res,
         "Та компанийн байршлаас 100м дотор байх ёстой!"
       );
+    }
+
+    // 🟢 Өнөөдрийн хамгийн сүүлийн логийг шалгах
+    const today = new Date();
+    const startOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      0,
+      0,
+      0
+    );
+    const lastLog = await TimeLog.findOne({
+      artistId,
+      companyId,
+      createdAt: { $gte: startOfDay },
+    }).sort({ createdAt: -1 });
+
+    if (!lastLog || lastLog.type !== "clockIn") {
+      return customResponse.error(res, "Та эхлээд ирсэн цаг бүртгэх ёстой!");
     }
 
     const log = await TimeLog.create({
@@ -107,14 +117,11 @@ exports.clockOut = asyncHandler(async (req, res, next) => {
       type: "clockOut",
       location: { lat, lng },
     });
-    console.log("✅ TimeLog created (clockOut):", log);
 
     const summary = await updateDailySummary(artistId, companyId);
-    console.log("💾 DailyWorkSummary updated:", summary);
 
     return customResponse.success(res, log, "Явсан цаг амжилттай бүртгэгдлээ");
   } catch (error) {
-    console.error("❌ ClockOut error:", error);
     customResponse.error(res, error.message);
   }
 });

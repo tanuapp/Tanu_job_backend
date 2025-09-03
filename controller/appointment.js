@@ -16,7 +16,80 @@ const { generateCredential, send } = require("../utils/khan");
 const Company = require("../models/company");
 const sendFirebaseNotification = require("../utils/sendFIrebaseNotification");
 
-// POST /api/v1/appointment/slots
+exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
+  const { date, artist } = req.query;
+
+  console.log("▶️ Incoming request:", { date, artist });
+
+  if (!date || !artist) {
+    console.log("❌ Missing params");
+    return res.status(400).json({
+      success: false,
+      message: "date болон artist шаардлагатай",
+    });
+  }
+
+  const appointments = await Appointment.find({
+    date,
+    status: { $in: ["paid", "pending"] },
+  }).populate({
+    path: "schedule",
+    match: { artistId: artist },
+    populate: {
+      path: "serviceId", // Schedule → serviceId
+      model: "Service",
+    },
+  });
+
+  console.log("📦 Appointments found:", appointments.length);
+
+  const validAppointments = appointments.filter((a) => a.schedule != null);
+  console.log("✅ Valid appointments:", validAppointments.length);
+
+  const rawIntervals = validAppointments.map((a, i) => {
+    console.log(`\n🔹 Appointment #${i + 1} ->`, a._id);
+
+    const start = a.schedule.start;
+    let end = a.schedule.end;
+    console.log("⏱ Schedule start/end:", { start, end });
+
+    // serviceId массив дотор duration байна
+    const services = a.schedule.serviceId || [];
+    const totalDuration = services.reduce(
+      (sum, s) => sum + (s.duration || 0),
+      0
+    );
+    console.log("🧮 Total duration:", totalDuration);
+
+    if (totalDuration > 0 && start) {
+      const [h, m] = start.split(":").map(Number);
+      const startDate = new Date(2000, 0, 1, h, m);
+      const endDate = new Date(startDate.getTime() + totalDuration * 60000);
+      const computedEnd = `${endDate
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${endDate.getMinutes().toString().padStart(2, "0")}`;
+
+      console.log("🛠 Computed end:", computedEnd);
+
+      if (!end || computedEnd > end) {
+        console.log("🔄 Override end:", { old: end, new: computedEnd });
+        end = computedEnd;
+      }
+    }
+
+    console.log("✅ Final interval:", { start, end });
+    return { start, end };
+  });
+
+  console.log("\n📋 Raw intervals:", rawIntervals);
+
+  const merged = mergeIntervals(rawIntervals);
+  console.log("📊 Merged intervals:", merged);
+
+  return customResponse.success(res, merged);
+});
+
 // POST /api/v1/appointment/slots
 exports.getAvailableSlots = asyncHandler(async (req, res) => {
   try {
@@ -188,7 +261,6 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
 
         if (!overlap && !isPast) {
           validSlots.push({ start: startStr, end: endStr });
-          console.log(`✅ Added slot: ${startStr} → ${endStr}`);
         }
 
         current = new Date(current.getTime() + stepMinutes * 60000);

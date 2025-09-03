@@ -20,6 +20,7 @@ const {
   updateAppointmentSchedule,
   finishAppointment,
   getAvailableSlots,
+  getBookedTimesForArtist,
 } = require("../controller/appointment");
 
 const router = express.Router();
@@ -27,7 +28,7 @@ const router = express.Router();
 // Хэрэглэгчийн захиалгуудыг татах
 router.route("/artist").get(protect, getArtistAppointments);
 router.route("/company").get(protect, getCompanyAppointments);
-
+router.route("/booked").get(getBookedTimesForArtist);
 // Захиалгыг дуусгах
 router.route("/end/:id").post(endAppointment);
 router.route("/confirm/:id").post(confirmAppointment);
