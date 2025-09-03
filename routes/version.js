@@ -4,8 +4,8 @@ const router = express.Router();
 
 router.get("/", (req, res) => {
   res.json({
-    latest_version: "1.0.32",
-    version_code: 50,
+    latest_version: "1.0.34",
+    version_code: 52,
     force_update: false, // заавал шинэчлэх шаардлагатай эсэх
     message:
       "Бид аппыг улам сайжрууллаа!. Илүү хурдан, найдвартай болгохын тулд шинэчлэлт хийгээрэй!",
