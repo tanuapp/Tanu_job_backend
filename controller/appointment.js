@@ -246,7 +246,15 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
 
         // Past time skip
         const today = new Date();
+        today.setHours(0, 0, 0, 0); // ✅ зөвхөн өдрийн эхэн
         const selectedDate = new Date(date);
+
+        if (selectedDate < today) {
+          // 🔴 Сонгосон өдөр бүхэлдээ өнгөрсөн
+          console.log(`⚠️ Skipping past date: ${date}`);
+          continue; // энэ schedule-г алгас
+        }
+
         const slotDateTime = new Date(
           selectedDate.getFullYear(),
           selectedDate.getMonth(),
@@ -254,10 +262,14 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
           current.getHours(),
           current.getMinutes()
         );
+
         const isPast =
-          selectedDate.toDateString() === today.toDateString() &&
-          slotDateTime <= today;
-        if (isPast) console.log(`⚠️ Skipping past slot: ${startStr}`);
+          selectedDate.toDateString() === new Date().toDateString() &&
+          slotDateTime <= new Date();
+
+        if (isPast) {
+          console.log(`⚠️ Skipping past slot: ${startStr}`);
+        }
 
         if (!overlap && !isPast) {
           validSlots.push({ start: startStr, end: endStr });
