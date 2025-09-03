@@ -20,8 +20,6 @@ const {
   updateAppointmentSchedule,
   finishAppointment,
   getAvailableSlots,
-  getBookedTimesForArtist,
-  getAvailableTimes,
 } = require("../controller/appointment");
 
 const router = express.Router();
@@ -38,12 +36,8 @@ router.route("/finish/:id").post(finishAppointment);
 // Захиалгыг цуцлах
 router.route("/decline/:id").post(declineAppointment);
 
-// Захиалгатай (booked) цагуудыг авах
-router.route("/booked").get(getBookedTimesForArtist);
 router.route("/slots").post(getAvailableSlots);
 
-// Боломжит (available) цагуудыг авах
-router.route("/available").post(getAvailableTimes);
 router.route("/available/admin").post(getAvailableTimesAdmin);
 
 // Захиалгуудыг populate хийн харуулах
