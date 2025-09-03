@@ -716,56 +716,62 @@ exports.endAppointment = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error);
   }
 });
-exports.getArtistAppointments = asyncHandler(async (req, res, next) => {
+exports.getArtistAppointments = asyncHandler(async (req, res) => {
   try {
     const id = req.userId;
 
-    // 1. Fetch user document (Admin/Artist)
-    const artist = await Artist.findOne({ _id: id });
-
+    // 1. Fetch artist
+    const artist = await Artist.findById(id);
     if (!artist) {
-      console.error("❌ Artist not found for ID:", artist);
+      console.error("❌ Artist not found for ID:", id);
       return customResponse.error(res, "Хэрэглэгчийн мэдээлэл олдсонгүй");
     }
 
-    const company = await Company.findOne({ _id: artist.companyId });
-
+    // 2. Fetch company
+    const company = await Company.findById(artist.companyId);
     if (!company) {
-      console.error("❌ Company not found for ownerId:", ownerId);
+      console.error("❌ Company not found for companyId:", artist.companyId);
       return customResponse.error(res, "Компанийн мэдээлэл олдсонгүй");
     }
 
-    const artists = await Artist.find({ companyId: company._id });
-
-    // 5. Fetch appointments directly linked to this company with FULL populate
-    const appointments = await Appointment.find({ company: company._id })
+    // 3. Fetch only this artist's appointments
+    const appointments = await Appointment.find({
+      company: company._id,
+    })
       .populate([
         {
           path: "schedule",
+          match: { artistId: artist._id }, // 🎯 зөвхөн энэ артисттай холбоотой schedule
           populate: [
             { path: "serviceId", model: "Service" },
+            { path: "artistId", model: "Artist" }, // 🔥 нэмсэн
             { path: "companyId", model: "Company" },
           ],
         },
         { path: "user" },
         { path: "company" },
       ])
-      .lean(); // ⚡️ илүү хурдан plain JSON авахад
+      .lean();
 
-    console.log("✌️artist --->", artist);
+    // 4. ❗ Schedule == null болсон appointment-уудыг хасна
+    const filtered = appointments.filter((a) => a.schedule != null);
 
-    // 6. Return result
+    console.log(
+      `✅ ${filtered.length} appointments found for artist ${artist._id}`
+    );
+
     return res.status(200).json({
       success: true,
-      data: appointments,
+      data: filtered,
       company,
-      artist: artist,
+      artist,
     });
   } catch (error) {
-    console.error("❌ Step 7 - Error occurred:", error);
+    console.error("❌ getArtistAppointments error:", error);
     return customResponse.error(res, error.message || "Алдаа гарлаа");
   }
 });
+
 exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
   try {
     const User = req.userId;
