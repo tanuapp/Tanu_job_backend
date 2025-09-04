@@ -3,7 +3,6 @@ const asyncHandler = require("../middleware/asyncHandler");
 
 exports.createModel = asyncHandler(async (req, res, next) => {
   try {
-    console.log("File uploaded:", req.file);
     const data = {
       ...req.body,
       pdfFile: req.file ? req.file.filename : null, // If a file is uploaded, store its filename
@@ -12,7 +11,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
     const contract = await onlineContractModel.create(data);
     return res.status(200).json({ success: true, data: contract });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -29,9 +28,13 @@ exports.update = asyncHandler(async (req, res, next) => {
     }
 
     // Update the record and return the updated data
-    const contract = await onlineContractModel.findByIdAndUpdate(req.params.id, data, {
-      new: true,
-    });
+    const contract = await onlineContractModel.findByIdAndUpdate(
+      req.params.id,
+      data,
+      {
+        new: true,
+      }
+    );
 
     return res.status(200).json({ success: true, data: contract });
   } catch (error) {
@@ -63,12 +66,13 @@ exports.detail = asyncHandler(async (req, res, next) => {
 
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
-    console.log("ghf")
     // Fetch all online contracts and the total count
     const total = await onlineContractModel.countDocuments();
     const contracts = await onlineContractModel.find();
 
-    return res.status(200).json({ success: true, total: total, data: contracts });
+    return res
+      .status(200)
+      .json({ success: true, total: total, data: contracts });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

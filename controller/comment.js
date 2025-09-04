@@ -22,20 +22,14 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
 exports.createModel = asyncHandler(async (req, res, next) => {
   const { comment, companyId, user, artistId, rating } = req.body;
 
-  console.log("📥 POST Body:", { comment, companyId, user, artistId, rating });
-
   // 1. Comment хадгалах
   const savedComment = await Model.create({ comment, companyId, user, rating });
-  console.log("✅ Comment created:", savedComment._id);
 
   // 2. ArtistId болон Rating байвал рейтинг хадгална
   if (artistId && typeof rating !== "undefined") {
     const numericRating = Number(rating);
-    console.log("🎯 Validating rating:", numericRating);
 
     if (numericRating >= 1 && numericRating <= 5) {
-      console.log("🟢 Rating is valid (1–5)");
-
       // 2.1 Уг artist-д өгсөн бүх үнэлгээг авч дундаж гаргах
       const artistAllRatings = await ArtistRating.find({ artistId });
       const artistAvg =
@@ -44,8 +38,6 @@ exports.createModel = asyncHandler(async (req, res, next) => {
             artistAllRatings.length
           : numericRating;
 
-      console.log("📊 Artist average rating calculated:", artistAvg);
-
       // 2.2 Artist model дээр avgRating хадгалах
       const updatedArtist = await Artist.findByIdAndUpdate(
         artistId,
@@ -53,14 +45,8 @@ exports.createModel = asyncHandler(async (req, res, next) => {
         { new: true }
       );
 
-      console.log("✅ Artist avgRating updated:", {
-        artistId: updatedArtist._id,
-        avgRating: updatedArtist.avgRating,
-      });
-
       // 2.3 ArtistRating үүсгэх
       const companyIdFromArtist = updatedArtist.companyId;
-      console.log("🏢 Resolved companyId from artist:", companyIdFromArtist);
 
       try {
         const createdRating = await ArtistRating.create({
@@ -69,7 +55,6 @@ exports.createModel = asyncHandler(async (req, res, next) => {
           user,
           rating: numericRating,
         });
-        console.log("✅ ArtistRating created:", createdRating._id);
       } catch (err) {
         console.error("❌ ArtistRating.create error:", err);
       }

@@ -26,7 +26,7 @@ const generateCredential = async () => {
 
     return response.data.access_token;
   } catch (e) {
-    console.log("❌ Khan Token Error:", e.response?.data || e.message);
+    console.log("❌ Khan Token Error:");
     return null;
   }
 };

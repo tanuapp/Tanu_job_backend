@@ -15,7 +15,6 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
 });
 
 exports.createModel = asyncHandler(async (req, res, next) => {
-  console.log(req.body, "data");
   try {
     const result = await Model.create({
       ...req.body,
@@ -36,19 +35,21 @@ exports.deletePhoto = asyncHandler(async (req, res, next) => {
 
   const galleryDoc = await Model.findById(id);
   if (!galleryDoc) {
-    return res.status(404).json({ success: false, message: 'Gallery not found' });
+    return res
+      .status(404)
+      .json({ success: false, message: "Gallery not found" });
   }
 
   // Filter out the file to delete
-  const updatedGallery = galleryDoc.gallery.filter(file => file !== filename);
+  const updatedGallery = galleryDoc.gallery.filter((file) => file !== filename);
   galleryDoc.gallery = updatedGallery;
 
   await galleryDoc.save();
 
   // 🧹 optionally: remove from disk
-  const fs = require('fs');
-  const path = require('path');
-  const filePath = path.join(__dirname, '../public/uploads', filename);
+  const fs = require("fs");
+  const path = require("path");
+  const filePath = path.join(__dirname, "../public/uploads", filename);
   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
   customResponse.success(res, galleryDoc);

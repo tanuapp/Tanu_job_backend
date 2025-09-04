@@ -33,7 +33,6 @@ async function sendNotification(deviceTokens, alertMessage, sound = "default") {
     const response = await provider.send(notification, deviceTokens);
     const failedTokens = response.failed.map((failure) => failure.device);
 
-    console.log("Failed tokens:", failedTokens);
     return { success: true, failedTokens };
   } catch (error) {
     console.error("Failed to send APN notification:", error);

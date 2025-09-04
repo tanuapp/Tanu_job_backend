@@ -1,7 +1,6 @@
 const express = require("express");
 const upload = require("../middleware/fileUpload");
 const { protect } = require("../middleware/protect");
-const { authorize } = require("../middleware/protect");
 const {
   Login,
   create,
@@ -13,13 +12,12 @@ const {
   update,
   registerVerify,
   registerArtist,
-  checkArtistEmail,
   artistUpdateTheirOwnInformation,
   checkArtistPhone,
   clearFCM,
   forgotPin,
+  getPersonType,
 } = require("../controller/artist");
-const { getPersonType } = require("../controller/person");
 const router = express.Router();
 
 router.post("/fcm/clear", protect, clearFCM);
@@ -30,8 +28,6 @@ router.route("/getArtistServices/:id").get(getArtistServices);
 router.route("/login").post(Login);
 router.route("/register").post(upload.single("photo"), create);
 router.route("/").get(getAll);
-
-router.route("/checkArtistEmail").post(checkArtistEmail);
 
 router.route("/registerArtist").post(registerArtist);
 router.route("/type").get(protect, getPersonType);

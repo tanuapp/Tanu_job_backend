@@ -31,7 +31,6 @@ const appointmentRoutes = require("./routes/appointment.js");
 const scheduleRoutes = require("./routes/schedule.js");
 const employeeScheduleRoutes = require("./routes/employeeSchedule.js");
 const artistRoutes = require("./routes/artist.js");
-const personRoutes = require("./routes/person.js");
 const customerRoutes = require("./routes/customer.js");
 const qpayRoutes = require("./routes/qpay.js");
 const invoiceRoutes = require("./routes/invoice.js");
@@ -43,7 +42,6 @@ const journalRoute = require("./routes/journal.js");
 const rejectRoute = require("./routes/reject.js");
 const mongooseRoute = require("./routes/mongooseChange.js");
 const seriesRoute = require("./routes/series.js");
-const emailRoute = require("./routes/email.js");
 const notRoute = require("./routes/notification.js");
 const bgRoute = require("./routes/bgremove.js");
 const storyRoute = require("./routes/story.js");
@@ -113,20 +111,7 @@ app.options(cors());
 app.use(logger);
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));
-// FIREBASE
-// async function initializeFirebase() {
-//   try {
-//     admin.initializeApp({
-//       credential: admin.credential.cert(serviceAccount),
-//     });
 
-//     console.log("Firebase initialized successfully");
-//   } catch (err) {
-//     console.error("Error retrieving secret or initializing Firebase:", err);
-//   }
-// }
-
-// initializeFirebase();
 app.post(
   "/api/v1/upload",
   upload.single("upload"),
@@ -161,7 +146,6 @@ app.use("/api/v1/employee-schedule", employeeScheduleRoutes);
 app.use("/api/v1/customer", customerRoutes);
 app.use("/api/v1/qpay", qpayRoutes);
 app.use("/api/v1/artist", artistRoutes);
-app.use("/api/v1/person", personRoutes);
 app.use("/api/v1/invoice", invoiceRoutes);
 app.use("/api/v1/dayoff", dayoffRoutes);
 app.use("/api/v1/calendar", calendarRoutes);
@@ -171,7 +155,6 @@ app.use("/api/v1/reject", rejectRoute);
 app.use("/api/v1/notification", notRoute);
 app.use("/api/v1/attendance", attendanceRoute);
 app.use("/api/v1/mongoose", mongooseRoute);
-app.use("/api/v1/email", emailRoute);
 app.use("/api/v1/series", seriesRoute);
 app.use("/api/v1/bg", bgRoute);
 app.use("/api/v1/story", storyRoute);
@@ -202,30 +185,19 @@ app.post("/api/v1/upload-pdf", upload.single("pdfFile"), (req, res) => {
 app.use(errorHandler);
 
 io.on("connection", (socket) => {
-  console.log("A user connected");
-  socket.on("connect", () => {
-    console.log("User connected");
-  });
+  socket.on("connect", () => {});
   socket.on("join", (roomId) => {
     socket.join(roomId);
-    console.log(`📡 Socket ${socket.id} joined room ${roomId}`);
   });
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
-  });
+  socket.on("disconnect", () => {});
 
   socket.on("message", (data) => {
-    console.log("Message received:", data);
     socket.emit("message", "Hello from server");
   });
 });
 
 cron.schedule("0 */3 * * *", async () => {
-  // console.log("Running the background job every 3 hours...");
-
   try {
-    // const items = await YourModel.find();
-    // console.log(`Checked ${items.length} items in YourModel.`);
   } catch (error) {
     console.error("Error checking the model:", error);
   }
@@ -234,13 +206,9 @@ cron.schedule("0 */3 * * *", async () => {
 require("./controller/cron.js");
 
 // Express server running
-const server = httpServer.listen(
-  process.env.PORT,
-  console.log(`Express server is running on port ${process.env.PORT}`)
-);
+const server = httpServer.listen(process.env.PORT);
 
 process.on("unhandledRejection", (err, promise) => {
-  console.log(`Unhandled rejection error: ${err.message}`);
   server.close(() => {
     process.exit(1);
   });

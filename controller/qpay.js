@@ -16,7 +16,6 @@ exports.createqpay = asyncHandler(async (req, res) => {
     });
 
     if (!invoice) {
-      console.log("❌ Invoice not found");
       return res
         .status(404)
         .json({ success: false, message: "Invoice not found" });
@@ -98,9 +97,6 @@ exports.createqpay = asyncHandler(async (req, res) => {
         (sum, s) => sum + parseFloat(s.price || 0),
         0
       );
-
-      console.log("💵 Original total price:", totalPrice);
-
       // ✅ Хямдрал идэвхтэй эсэхийг шалгах
       const discountActive =
         company.discountStart &&
@@ -116,9 +112,6 @@ exports.createqpay = asyncHandler(async (req, res) => {
         );
         if (!isNaN(discountPercent) && discountPercent > 0) {
           discountedTotalPrice = totalPrice * (1 - discountPercent / 100);
-          console.log(
-            `🏷️ Discount active: ${discountPercent}%, discounted price: ${discountedTotalPrice}`
-          );
         }
       }
 
@@ -126,16 +119,10 @@ exports.createqpay = asyncHandler(async (req, res) => {
 
       if (appointment.status === "completed") {
         amount = parseFloat(invoice.amount);
-        console.log(
-          "✅ Appointment already completed. Using remaining amount:",
-          amount
-        );
       } else {
         amount = invoice.isAdvance
           ? Math.floor((discountedTotalPrice * advancePercent) / 100)
           : discountedTotalPrice;
-        console.log("💰 Final discounted total:", discountedTotalPrice);
-        console.log("💸 Calculated amount:", amount);
       }
     }
 
@@ -205,17 +192,13 @@ exports.createqpay = asyncHandler(async (req, res) => {
 });
 
 exports.callback = asyncHandler(async (req, res) => {
-  console.log("📥 [CALLBACK] QPay webhook ирлээ");
   const senderInvoiceId = req.params.id;
-  console.log("👉 senderInvoiceId:", senderInvoiceId);
 
   try {
     const io = req.app.get("io");
 
-    console.log("🔐 QPay токен авч байна...");
     const qpay_token = await qpay.makeRequest();
     const qpayAccessToken = qpay_token?.access_token;
-    console.log("✅ QPay токен:", qpayAccessToken);
 
     if (!qpayAccessToken) {
       return res
@@ -226,7 +209,6 @@ exports.callback = asyncHandler(async (req, res) => {
     const record = await invoiceModel.findOne({
       sender_invoice_id: senderInvoiceId,
     });
-    console.log("📄 Invoice record:", record);
 
     if (!record) {
       return res
@@ -242,7 +224,6 @@ exports.callback = asyncHandler(async (req, res) => {
       });
     }
 
-    console.log("💳 QPay төлбөр шалгаж байна...");
     const checkResponse = await axios.post(
       `${process.env.qpayUrl}payment/check`,
       {
@@ -256,7 +237,6 @@ exports.callback = asyncHandler(async (req, res) => {
         },
       }
     );
-    console.log("✅ QPay checkResponse:", checkResponse.data);
 
     const isPaid =
       checkResponse.data.count >= 1 &&
@@ -289,8 +269,6 @@ exports.callback = asyncHandler(async (req, res) => {
         },
       });
 
-    console.log("📅 Appointment object:", app);
-
     if (!app) {
       return res
         .status(404)
@@ -298,12 +276,10 @@ exports.callback = asyncHandler(async (req, res) => {
     }
 
     const originalStatus = app.status;
-    console.log("🔁 Current Status:", originalStatus);
 
     if (originalStatus === "completed") {
       app.status = "done";
       record.status = "done";
-      console.log("✅ Төлөв updated to done");
 
       if (app.user?.deviceToken) {
         console.log("📲 Push мэдэгдэл илгээж байна...");
@@ -333,9 +309,6 @@ exports.callback = asyncHandler(async (req, res) => {
     const service = serviceList[0]; // эхний service
     const company = service.companyId;
 
-    console.log("🏢 Company:", company);
-    console.log("🏢 Company:", company.bankOwner);
-
     service.done++;
     await service.save();
 
@@ -349,10 +322,6 @@ exports.callback = asyncHandler(async (req, res) => {
     const commission = +(originalAmount * (commissionPercent / 100)).toFixed(2); // 0.10
     const payout = +(originalAmount - commission).toFixed(2); // 9.90
 
-    console.log("💸 Total:", originalAmount);
-    console.log("💰 Commission:", commission);
-    console.log("📤 Payout:", payout);
-
     if (!payout || isNaN(payout) || payout <= 0) {
       console.error("❌ Платеж алдаатай:", payout);
       return res
@@ -360,9 +329,7 @@ exports.callback = asyncHandler(async (req, res) => {
         .json({ success: false, message: "Шилжүүлэх дүн алдаатай байна" });
     }
 
-    console.log("🔑 Khan токен авч байна...");
     const khanToken = await generateCredential();
-    console.log("✅ Khan токен:", khanToken);
 
     if (!khanToken) {
       return res
@@ -372,7 +339,6 @@ exports.callback = asyncHandler(async (req, res) => {
 
     const transferType =
       company.bankCode === "050000" ? "domestic" : "interbank";
-    console.log("🏦 Transfer type:", transferType);
     const parts = [
       `Захиалга-`, // компанийн нэр байсаар байна
     ];
@@ -414,8 +380,6 @@ exports.callback = asyncHandler(async (req, res) => {
         },
       }
     );
-
-    console.log("✅ Transfer Response:", transferResponse.data);
 
     io.emit("paymentDone");
 

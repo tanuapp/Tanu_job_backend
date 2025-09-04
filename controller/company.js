@@ -76,8 +76,6 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 
     const allUser = await Fav.find({ user: req.userId });
 
-    console.log(allUser);
-
     const savedCompanyIds = allUser.map((el) => el.company.toString());
 
     const savedState = categories.map((list) => ({
@@ -249,7 +247,6 @@ exports.getCompanyPopulate = asyncHandler(async (req, res, next) => {
 
 exports.createModel = asyncHandler(async (req, res, next) => {
   try {
-    console.log(req.body);
     const logo =
       req.files && req.files.logo ? req.files.logo[0].filename : "no-logo.png";
 
@@ -285,8 +282,6 @@ exports.createModel = asyncHandler(async (req, res, next) => {
 });
 
 exports.update = asyncHandler(async (req, res, next) => {
-  console.log(req.body, "datas222222222 irlee");
-
   try {
     const old = await Model.findById(req.params.id);
     if (!old) {

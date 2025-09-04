@@ -19,10 +19,7 @@ const sendFirebaseNotification = require("../utils/sendFIrebaseNotification");
 exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
   const { date, artist } = req.query;
 
-  console.log("▶️ Incoming request:", { date, artist });
-
   if (!date || !artist) {
-    console.log("❌ Missing params");
     return res.status(400).json({
       success: false,
       message: "date болон artist шаардлагатай",
@@ -41,17 +38,11 @@ exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
     },
   });
 
-  console.log("📦 Appointments found:", appointments.length);
-
   const validAppointments = appointments.filter((a) => a.schedule != null);
-  console.log("✅ Valid appointments:", validAppointments.length);
 
   const rawIntervals = validAppointments.map((a, i) => {
-    console.log(`\n🔹 Appointment #${i + 1} ->`, a._id);
-
     const start = a.schedule.start;
     let end = a.schedule.end;
-    console.log("⏱ Schedule start/end:", { start, end });
 
     // serviceId массив дотор duration байна
     const services = a.schedule.serviceId || [];
@@ -59,7 +50,6 @@ exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
       (sum, s) => sum + (s.duration || 0),
       0
     );
-    console.log("🧮 Total duration:", totalDuration);
 
     if (totalDuration > 0 && start) {
       const [h, m] = start.split(":").map(Number);
@@ -70,22 +60,16 @@ exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
         .toString()
         .padStart(2, "0")}:${endDate.getMinutes().toString().padStart(2, "0")}`;
 
-      console.log("🛠 Computed end:", computedEnd);
-
       if (!end || computedEnd > end) {
         console.log("🔄 Override end:", { old: end, new: computedEnd });
         end = computedEnd;
       }
     }
 
-    console.log("✅ Final interval:", { start, end });
     return { start, end };
   });
 
-  console.log("\n📋 Raw intervals:", rawIntervals);
-
   const merged = mergeIntervals(rawIntervals);
-  console.log("📊 Merged intervals:", merged);
 
   return customResponse.success(res, merged);
 });
@@ -94,7 +78,6 @@ exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
 exports.getAvailableSlots = asyncHandler(async (req, res) => {
   try {
     const { date, artist, services } = req.body;
-    console.log("▶️ [getAvailableSlots] called:", { date, artist, services });
 
     if (!date || !artist || !services || !services.length) {
       console.log("❌ Missing required params");
@@ -105,32 +88,21 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
     }
 
     // 1. Services-ийн нийт хугацаа
-    console.log("🔍 Step 1: Fetching services durations...");
     const Service = require("../models/service");
     const serviceDocs = await Service.find({ _id: { $in: services } });
-    console.log(
-      "📦 Found serviceDocs:",
-      serviceDocs.map((s) => ({ id: s._id, duration: s.duration }))
-    );
 
     const totalDuration = serviceDocs.reduce(
       (sum, s) => sum + (s.duration || 0),
       0
     );
-    console.log("🕒 TotalDuration (services sum):", totalDuration);
 
     // 2. Company.interval авах
-    console.log("🔍 Step 2: Fetching artist & company...");
     const artistDoc = await Artist.findById(artist).populate("companyId");
-    console.log("🎤 ArtistDoc:", artistDoc?._id);
     const company = artistDoc?.companyId;
-    console.log("🏢 CompanyDoc:", company?._id);
 
     const stepMinutes = company?.interval || 15;
-    console.log("➡️ StepMinutes (company.interval):", stepMinutes);
 
     // 3. Artist-ийн тухайн өдрийн schedule
-    console.log("🔍 Step 3: Fetching employeeSchedules...");
     const employeeSchedules = await employeeSchedule.find({
       artistId: artist,
       date: date,
@@ -139,10 +111,8 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
       console.log("❌ employeeSchedules хоосон");
       return customResponse.success(res, []);
     }
-    console.log("✅ Found work schedules:", employeeSchedules.length);
 
     // 4. Booked intervals
-    console.log("🔍 Step 4: Fetching appointments...");
     const appointments = await Appointment.find({
       date,
       status: { $in: ["paid", "pending"] },
@@ -152,12 +122,7 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
       populate: { path: "serviceId", model: "Service" },
     });
 
-    console.log("📦 Appointments found:", appointments.length);
     const validAppointments = appointments.filter((a) => a.schedule != null);
-    console.log(
-      "✅ Valid appointments (with schedule):",
-      validAppointments.length
-    );
 
     let bookedIntervals = validAppointments.map((a) => {
       let start = a.schedule.start;
@@ -193,24 +158,17 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
       return { start, end };
     });
 
-    console.log("⛔️ Booked intervals(raw):", bookedIntervals);
-
     // merge
-    console.log("🔍 Step 5: Merging intervals...");
     bookedIntervals = mergeIntervals(bookedIntervals);
-    console.log("📊 Booked intervals(merged):", bookedIntervals);
 
     // 5. Dayoff merge
-    console.log("🔍 Step 6: Fetching dayOffs...");
     const dayOffs = await Dayoff.find({ date });
-    console.log("📆 DayOffs found:", dayOffs.length);
     for (const d of dayOffs) {
       console.log("🚫 DayOff interval:", { start: d.start, end: d.end });
       bookedIntervals.push({ start: d.start, end: d.end });
     }
 
     // 6. Slot generation
-    console.log("🔍 Step 7: Generating slots...");
     const validSlots = [];
     for (const sch of employeeSchedules) {
       console.log("🗓 Processing schedule:", sch._id, {
@@ -232,8 +190,6 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
         const endStr = `${String(slotEnd.getHours()).padStart(2, "0")}:${String(
           slotEnd.getMinutes()
         ).padStart(2, "0")}`;
-
-        console.log(`⏳ Checking slot: ${startStr} → ${endStr}`);
 
         // Overlap check
         const overlap = bookedIntervals.some((b) => {
@@ -349,15 +305,10 @@ function mergeIntervals(intervals) {
 
 exports.declineAppointment = asyncHandler(async (req, res, next) => {
   try {
-    console.log("📥 Цуцлах хүсэлт орж ирлээ:", {
-      appointmentId: req.params.id,
-    });
-
     // 1. Захиалгыг ID-аар хайна
     const decline = await Appointment.findById(req.params.id).populate(
       "schedule"
     );
-    console.log("🔍 Олдсон захиалга:", decline);
 
     if (!decline) {
       console.log("⚠️ Захиалга олдсонгүй:", req.params.id);
@@ -367,7 +318,6 @@ exports.declineAppointment = asyncHandler(async (req, res, next) => {
     // 3. Статусыг declined болгоно
     decline.status = "declined";
     await decline.save();
-    console.log("✅ Захиалгын статус declined болголоо:", decline._id);
 
     // 4. Schedule-тай холбоотой логик
     if (decline.schedule) {
@@ -434,15 +384,11 @@ exports.getAllPopulated = asyncHandler(async (req, res) => {
 exports.create = asyncHandler(async (req, res, next) => {
   try {
     const io = req.app.get("io");
-    console.log("📥 [CREATE] Appointment POST ирсэн");
-    console.log("🧾 Request Body:", req.body);
-    console.log("🔑 User ID from token:", req.userId);
 
     const { schedule, isOption } = req.body;
 
     // Schedule шалгах
     const sch = await Schedule.findById(schedule);
-    console.log("🗓️ Fetched Schedule:", sch);
 
     // Захиалга үүсгэх өгөгдөл
     const appointmentData = {
@@ -450,7 +396,6 @@ exports.create = asyncHandler(async (req, res, next) => {
       user: req.userId,
       company: sch?.companyId ? sch.companyId : null,
     };
-    console.log("🛠️ Appointment Data to Create:", appointmentData);
 
     // Хувийн захиалгууд байгаа эсэхийг шалгах
     const existingAppointments = await Model.find({
@@ -458,7 +403,6 @@ exports.create = asyncHandler(async (req, res, next) => {
       schedule: req.body.schedule,
       status: "paid",
     });
-    console.log("🔍 Existing Paid Appointments:", existingAppointments);
 
     const mgl = existingAppointments.filter(
       (item) => item.option != null && item.option != undefined
@@ -483,14 +427,8 @@ exports.create = asyncHandler(async (req, res, next) => {
         "newPendingAppointment",
         appointment
       );
-      console.log(
-        "📢 Socket sent: newPendingAppointment ->",
-        sch.companyId.toString()
-      );
 
       const company = await Company.findById(sch.companyId);
-      console.log("🏢 Company found:", company?.name);
-      console.log("📲 FCM Token:", company?.fcmToken);
 
       if (company?.fcmToken) {
         await sendFirebaseNotification({
@@ -521,11 +459,6 @@ exports.create = asyncHandler(async (req, res, next) => {
 exports.updateAppointmentTime = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { name, schedule, extraInfo } = req.body; // ⬅ extraInfo-г авна
-
-  console.log("🔔 [updateAppointmentTime] Called with ID:", id);
-  console.log("📝 Request name:", name);
-  console.log("📝 Request schedule data:", schedule);
-  console.log("📝 Request extraInfo:", extraInfo);
 
   if (!schedule || !schedule.start || !schedule.end || !schedule.artistId) {
     return customResponse.error(
@@ -693,9 +626,6 @@ exports.updateAppointmentSchedule = asyncHandler(async (req, res) => {
 exports.getAvailableTimesAdmin = asyncHandler(async (req, res, next) => {
   const { date, artist } = req.body;
 
-  console.log("[DEBUG] getAvailableTimesAdmin started");
-  console.log("[DEBUG] Request params:", { date, artist });
-
   if (!date || !artist) {
     console.error("[ERROR] Missing date or artist parameter");
     return res.status(400).json({
@@ -721,22 +651,14 @@ exports.getAvailableTimesAdmin = asyncHandler(async (req, res, next) => {
     // schedule нь байгаа appointment-уудыг шүүх
     const validAppointments = appointments.filter((a) => a.schedule != null);
 
-    console.log(
-      `[DEBUG] Valid appointments with schedule: ${validAppointments.length}`
-    );
-
     // Start, end цагуудыг гаргаж байна
     const rawIntervals = validAppointments.map((a) => ({
       start: a.schedule.start,
       end: a.schedule.end,
     }));
 
-    console.log("[DEBUG] Raw intervals:", rawIntervals);
-
     // Давхардсан цагийн интервалуудыг нэгтгэх
     const merged = mergeIntervals(rawIntervals);
-
-    console.log("[DEBUG] Merged intervals:", merged);
 
     // Амжилттай хариу өгөх
     return customResponse.success(res, merged);
@@ -839,10 +761,6 @@ exports.getArtistAppointments = asyncHandler(async (req, res) => {
 
     // 4. ❗ Schedule == null болсон appointment-уудыг хасна
     const filtered = appointments.filter((a) => a.schedule != null);
-
-    console.log(
-      `✅ ${filtered.length} appointments found for artist ${artist._id}`
-    );
 
     return res.status(200).json({
       success: true,

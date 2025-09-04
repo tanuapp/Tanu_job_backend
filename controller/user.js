@@ -191,7 +191,6 @@ exports.registerVerify = asyncHandler(async (req, res) => {
 
 exports.forgotPassword = asyncHandler(async (req, res) => {
   const { phone } = req.body;
-  console.log("✌️phone --->", phone);
 
   const user = await User.findOne({ phone });
   if (!user) {
@@ -346,8 +345,6 @@ exports.getAdmin = asyncHandler(async (req, res) => {
 
 exports.create = asyncHandler(async (req, res, next) => {
   try {
-    console.log(req.body);
-    console.log("create is here");
     const existingUser = await User.findOne({ phone: req.body.phone });
 
     if (existingUser) {
@@ -413,8 +410,6 @@ exports.Login = asyncHandler(async (req, res, next) => {
 exports.updateUserFCM = asyncHandler(async (req, res, next) => {
   try {
     const { token, isAndroid } = req.body;
-
-    console.log(req.userId);
 
     const userFind = await User.findById(req.userId);
 
@@ -501,8 +496,6 @@ exports.checkPersonPhone = asyncHandler(async (req, res, next) => {
   }
 });
 exports.AdminLogin = asyncHandler(async (req, res, next) => {
-  console.log("AdminLogin called:", req.body);
-
   try {
     const { phone, pin } = req.body;
 
@@ -519,10 +512,8 @@ exports.AdminLogin = asyncHandler(async (req, res, next) => {
     // ✅ Хэрвээ хэрэглэгчийн pin байхгүй бол автоматаар үүсгэж илгээх
     if (!user.pin) {
       const generatedPin = generateOTP(4);
-      console.log("Generated pin:", generatedPin);
 
       const hashedPin = await user.hashPin(generatedPin);
-      console.log("Hashed pin:", hashedPin);
 
       // pin-г давхар hash хийхгүйгээр шууд хадгалах
       await User.updateOne({ _id: user._id }, { pin: hashedPin });
@@ -540,8 +531,6 @@ exports.AdminLogin = asyncHandler(async (req, res, next) => {
 
     // ✅ Pin байгаа бол шалгана
     const isPinValid = await user.checkPin(pin);
-    console.log("Checking pin:", pin, "against hashed:", user.pin);
-    console.log("isPinValid:", isPinValid);
 
     if (!isPinValid) {
       return customResponse.error(res, "Таны оруулсан нууц код буруу байна!");
@@ -577,7 +566,6 @@ exports.deleteModel = async function deleteUser(req, res, next) {
 
 exports.forgotPin = asyncHandler(async (req, res) => {
   const { phone } = req.body;
-  console.log("✌️phone --->art", phone);
 
   try {
     const user = await User.findOne({ phone }).select("+pin");
@@ -595,7 +583,6 @@ exports.forgotPin = asyncHandler(async (req, res) => {
     await user.save(); // pre("save") автоматаар hash хийнэ
 
     await sendMessage(phone, `Таны шинэ нууц код: ${otp}`);
-    console.log("✌️otp --->", otp);
 
     return res.status(200).json({
       success: true,

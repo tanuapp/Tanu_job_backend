@@ -16,11 +16,6 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
   try {
     const { schedule, date } = req.body;
 
-    console.log("📥 createPayment called");
-    console.log("📅 Request body:", { schedule, date });
-    console.log("🔐 Token:", req.token);
-    console.log("👤 User ID:", req.userId);
-
     // Check for existing appointment
     const existing = await Appointment.findOne({
       schedule,
@@ -29,7 +24,6 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
     });
 
     if (existing) {
-      console.log("⚠️ Existing appointment found:", existing._id);
       return res.status(400).json({
         success: false,
         message: "Тухайн цагт захиалга аль хэдийн үүссэн байна.",
@@ -49,17 +43,13 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         },
       });
 
-    console.log("📋 ScheduleDoc:", scheduleDoc);
-
     const services = scheduleDoc.serviceId;
     if (!Array.isArray(services) || services.length === 0) {
-      console.log("❌ Үйлчилгээ олдсонгүй");
       return customResponse.error(res, "Үйлчилгээ олдсонгүй");
     }
 
     const company = services[0].companyId;
     if (!company) {
-      console.log("❌ Компани олдсонгүй");
       return customResponse.error(res, "Компани олдсонгүй");
     }
 
@@ -67,7 +57,6 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       (sum, s) => sum + parseFloat(s.price || 0),
       0
     );
-    console.log("💵 Original total price:", totalPrice);
 
     // ✅ Хямдрал идэвхтэй эсэхийг шалгах
     let discountedTotalPrice = 0;
@@ -89,9 +78,6 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         );
         if (!isNaN(discountPercent) && discountPercent > 0) {
           serviceFinalPrice = price * (1 - discountPercent / 100);
-          console.log(
-            `🏷️ Service ${service.service_name}: Discount ${discountPercent}%, discounted price: ${serviceFinalPrice}`
-          );
         }
       }
 
@@ -102,19 +88,8 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
     const advanceAmount = Math.floor(
       (discountedTotalPrice * advancePercent) / 100
     );
-    console.log("📅 Now:", new Date());
-    console.log("📅 Discount start:", company.discountStart);
-    console.log("📅 Discount end:", company.discountEnd);
-    console.log("📅 discountedTotalPrice", discountedTotalPrice);
-
-    console.log("💰 Advance percent:", advancePercent);
-    console.log("💸 Advance amount:", advanceAmount);
 
     if (advanceAmount === 0) {
-      console.log(
-        "📣 Урьдчилгаа төлбөр 0 — Баталгаажуулалт руу шилжүүлж байна..."
-      );
-
       const app = await Appointment.create({
         schedule,
         user: req.userId || null,
@@ -134,9 +109,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
           user: req.userId,
           company: company._id,
         });
-        console.log("💾 Company saved to favourites");
       } else {
-        console.log("ℹ️ Company already in favourites");
       }
 
       // 📌 User info
@@ -164,7 +137,6 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
           ...notifPayloadCompany,
           token: company.firebase_token,
         });
-        console.log("📲 Firebase notification sent to company:", notifResult);
 
         await Notification.create({
           title: notifPayloadCompany.title,
@@ -185,19 +157,10 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       };
 
       if (scheduleDoc.artistId?.firebase_token) {
-        console.log(
-          "✌️ Artist firebase_token --->",
-          scheduleDoc.artistId.firebase_token
-        );
-
         const notifResultArtist = await sendFirebaseNotification({
           ...notifPayloadArtist,
           token: scheduleDoc.artistId.firebase_token,
         });
-        console.log(
-          "📲 Firebase notification sent to artist:",
-          notifResultArtist
-        );
 
         await Notification.create({
           title: notifPayloadArtist.title,
@@ -217,7 +180,6 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
           serviceName: services.map((s) => s.service_name).join(", "),
           date,
         });
-        console.log("📢 Socket emitted to:", company._id.toString());
       } else {
         console.log("⚠️ io object is undefined");
       }
@@ -277,7 +239,6 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         ...notifPayloadCompany,
         token: company.firebase_token,
       });
-      console.log("📲 Firebase notification sent to company:", notifResult);
 
       // ✅ Notification DB-д хадгалах
       await Notification.create({
@@ -299,20 +260,10 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
     };
 
     if (scheduleDoc.artistId?.firebase_token) {
-      console.log(
-        "✌️ Artist firebase_token --->",
-        scheduleDoc.artistId.firebase_token
-      );
-
       const notifResultArtist = await sendFirebaseNotification({
         ...notifPayloadArtist,
         token: scheduleDoc.artistId.firebase_token,
       });
-
-      console.log(
-        "📲 Firebase notification sent to artist:",
-        notifResultArtist
-      );
 
       // ✅ Notification DB-д хадгалах
       await Notification.create({

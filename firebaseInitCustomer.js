@@ -10,10 +10,7 @@ const initFirebaseCustomer = () => {
     });
 
     global.fireadminCustomer = customerApp;
-
-    console.log("✅ Firebase Admin (Customer) initialized successfully");
   } catch (error) {
-    console.error("🔥 Firebase Admin (Customer) init failed:", error.message);
     process.exit(1);
   }
 };
