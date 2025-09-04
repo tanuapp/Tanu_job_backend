@@ -8,9 +8,7 @@ const sendFirebaseNotification = require("../utils/sendFIrebaseNotification");
 cron.schedule("* * * * *", async () => {
   const now = moment().tz("Asia/Ulaanbaatar");
   const in5min = now.clone().add(5, "minutes");
-  const expiryTime = 3 * 60 * 1000; 
- 
-  console.log("🟡 CRON ажиллаж байна:", now.format("YYYY-MM-DD HH:mm:ss"));
+  const expiryTime = 3 * 60 * 1000;
 
   /** ✅ 1. Push notification 5 мин дараа болох appointment-д **/
   try {
@@ -25,11 +23,8 @@ cron.schedule("* * * * *", async () => {
         populate: { path: "artistId serviceId" },
       });
 
-    console.log(`🔔 Push шалгалт - ${appointments.length} appointment`);
-
     for (const a of appointments) {
       if (!a.schedule || !a.user) {
-        console.log("⚠️ Schedule/User алга, алгаслаа:", a._id);
         continue;
       }
 
@@ -58,18 +53,12 @@ cron.schedule("* * * * *", async () => {
 
           try {
             await sendFirebaseNotification(notif);
-            console.log(`✅ Push илгээгдлээ: ${user.first_name}`);
             a.notified = true;
             await a.save();
-            console.log(`💾 Notified хадгаллаа: ${a._id}`);
-          } catch (err) {
-            console.error("❌ Push алдаа:", err.message);
-          }
+          } catch (err) {}
         } else {
-          console.log(`🚫 Firebase token байхгүй: ${user.first_name}`);
         }
       } else {
-        console.log(`⏭ Push цаг биш (${diffMinutes} мин) - ${a._id}`);
       }
     }
   } catch (err) {
@@ -85,7 +74,6 @@ cron.schedule("* * * * *", async () => {
 
     for (const a of todayAppointments) {
       if (!a.schedule) {
-        console.log("⚠️ Schedule байхгүй, алгаслаа:", a._id);
         continue;
       }
 
@@ -97,9 +85,7 @@ cron.schedule("* * * * *", async () => {
       if (now.isAfter(endTime)) {
         a.status = "done";
         await a.save();
-        console.log(`✅ DONE болголоо: ${a._id}`);
       } else {
-        console.log(`⏭ Дуусаагүй (${a.schedule.end}), алгаслаа: ${a._id}`);
       }
     }
   } catch (err) {
@@ -113,14 +99,9 @@ cron.schedule("* * * * *", async () => {
       createdAt: { $lt: new Date(Date.now() - expiryTime) },
     });
 
-    console.log(
-      `📦 Invoice expiry шалгалт - ${expiredInvoices.length} invoice`
-    );
-
     for (const invoice of expiredInvoices) {
       invoice.status = "expired";
       await invoice.save();
-      console.log(`🔴 Invoice expired: ${invoice._id}`);
     }
   } catch (error) {
     console.error("❌ Invoice шалгах алдаа:", error.message);

@@ -32,7 +32,6 @@ const artistSchema = new Schema({
     min: 1,
     max: 5,
   },
-
   idNumber: String,
   pin: {
     type: String,
@@ -63,29 +62,35 @@ const artistSchema = new Schema({
   },
 });
 
+/// 🔑 Pre-save hook (pin байвал hash хийдэг)
 artistSchema.pre("save", async function (next) {
-  if (!this.pin) {
-    return next(); // Skip hashing if pin is not set
+  if (!this.isModified("pin")) {
+    return next(); // зөвхөн pin өөрчлөгдсөн үед hash хий
   }
   const salt = await bcrypt.genSalt(10);
   this.pin = await bcrypt.hash(this.pin, salt);
   next();
 });
 
-artistSchema.methods.checkPassword = async function (pin) {
-  return await bcrypt.compare(pin, this.pin);
+/// 🔑 Pin hash хийх тусдаа method
+artistSchema.methods.hashPin = async function (pin) {
+  const salt = await bcrypt.genSalt(10);
+  return await bcrypt.hash(pin, salt);
 };
 
-artistSchema.methods.getJsonWebToken = function () {
-  let token = jwt.sign(
-    { Id: this._id, phone: this.phone },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: process.env.JWT_EXPIREDIN,
-    }
-  );
-  return token;
+/// 🔑 Pin шалгах
+artistSchema.methods.checkPin = async function (enteredPin) {
+  return await bcrypt.compare(enteredPin, this.pin);
 };
+
+/// 🔑 JWT авах
+artistSchema.methods.getJsonWebToken = function () {
+  return jwt.sign({ Id: this._id, phone: this.phone }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIREDIN,
+  });
+};
+
+/// 🔑 findOneAndUpdate үед pin өөрчлөгдвөл hash хийнэ
 artistSchema.pre("findOneAndUpdate", async function (next) {
   if (!this._update.pin) {
     return next();

@@ -471,7 +471,7 @@ exports.getPersonServices = asyncHandler(async (req, res, next) => {
 
 exports.getPersonType = asyncHandler(async (req, res, next) => {
   try {
-    const person = await Person.findById(req.userId);
+    const person = await User.findById(req.userId);
     const artist = await Artist.findById(req.userId);
 
     console.log("Company ID from token:", req.companyId);

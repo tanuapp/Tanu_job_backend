@@ -375,7 +375,6 @@ exports.callback = asyncHandler(async (req, res) => {
     console.log("🏦 Transfer type:", transferType);
     const parts = [
       `Захиалга-`, // компанийн нэр байсаар байна
-      new Date().toLocaleDateString("mn-MN"),
     ];
 
     if (app.user?.last_name) {

@@ -331,14 +331,6 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       isAdvance: true,
     });
 
-    console.log("📄 Invoice created:", inv._id);
-
-    // QPay рүү илгээх
-    console.log("🌐 Sending to QPay:", {
-      url: `http://localhost:9090/api/v1/qpay/${inv._id}`,
-      token: req.token,
-    });
-
     const duk = await axios.post(
       `http://localhost:9090/api/v1/qpay/${inv._id}`,
       {},
@@ -348,8 +340,6 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         },
       }
     );
-
-    console.log("✅ QPay success:", duk.data);
 
     return res.status(200).json({
       success: true,

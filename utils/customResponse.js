@@ -1,7 +1,8 @@
-function errorResponse(res, data) {
-  return res.status(500).json({
+function errorResponse(res, message, extra = {}) {
+  return res.status(400).json({
     success: false,
-    message: data,
+    message,
+    ...extra, // ✅ conflict гэх мэт нэмэлт өгөгдөл front руу дамжина
   });
 }
 

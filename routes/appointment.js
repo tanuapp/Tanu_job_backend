@@ -21,6 +21,7 @@ const {
   finishAppointment,
   getAvailableSlots,
   getBookedTimesForArtist,
+  createAppointmentWithSchedule,
 } = require("../controller/appointment");
 
 const router = express.Router();
@@ -55,5 +56,6 @@ router.route("/:id").put(protect, update).delete(protect, deleteModel).get(get);
 router.route("/update/:id").post(protect, updateStatus); // ✅ зөв синтакс + POST method
 router.route("/check/:id").get(checkAppointment); // 🆕 нэмэгдсэн route
 router.route("/cash/:id").put(markCashPaid);
+router.post("/create/manual", createAppointmentWithSchedule);
 
 module.exports = router;

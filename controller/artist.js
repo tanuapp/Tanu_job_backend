@@ -124,15 +124,30 @@ exports.create = asyncHandler(async (req, res) => {
 exports.checkArtistPhone = asyncHandler(async (req, res, next) => {
   try {
     const body = req.body;
-    console.log(body);
+    const existingUser = await Artist.findOne({ phone: body.phone }).select(
+      "+pin"
+    ); // ✅ pin-г заавал оруулж авна
 
-    const existingUser = await Artist.findOne({ phone: body.phone });
     if (!existingUser) {
       return res.status(400).json({
         success: false,
-        message: "Утас бүртгэлгүй байна ",
+        message: "Утас бүртгэлгүй байна",
       });
     }
+
+    // ✅ Зөвхөн байхгүй үед л үүсгэнэ
+    if (!existingUser.pin) {
+      const newPin = generateOTP(4);
+      existingUser.pin = newPin;
+      await existingUser.save(); // pre("save") автоматаар hash хийнэ
+      await sendMessage(body.phone, `Таны шинэ нууц код: ${newPin}`);
+
+      return res.status(200).json({
+        success: true,
+        message: "Нууц код үүсэж таны дугаарт илгээгдлээ.",
+      });
+    }
+
     return res.status(200).json({
       success: true,
       message: "Амжилттай",
@@ -141,6 +156,7 @@ exports.checkArtistPhone = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+
 exports.checkArtistEmail = asyncHandler(async (req, res, next) => {
   try {
     const body = req.body;
@@ -239,30 +255,32 @@ exports.Login = asyncHandler(async (req, res, next) => {
       );
     }
 
-    // Check user status
-    if (user.status === false) {
-      return customResponse.error(
-        res,
-        "Байгууллагаас таныг зөвшөөрөөгүй байна!"
-      );
+    if (!user.pin) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Энэ дугаар дээр нууц код үүсээгүй байна. 'Нууц код сэргээх' үйлдлийг ашиглана уу.",
+      });
     }
 
-    // Verify password/pin
-    const isPasswordValid = await user.checkPassword(pin);
-    console.log(isPasswordValid);
-    if (!isPasswordValid) {
-      return customResponse.error(
-        res,
-        "Утасны дугаар эсвэл нууц үг буруу байна!"
-      );
+    // ✅ Pin байгаа бол шалгана
+    const isPinValid = await user.checkPin(pin);
+    console.log("Checking pin:", pin, "against hashed:", user.pin);
+    console.log("isPinValid:", isPinValid);
+
+    if (!isPinValid) {
+      return customResponse.error(res, "Таны оруулсан нууц код буруу байна!");
     }
 
-    console.log("end irjin");
-
-    // Generate token
     const token = user.getJsonWebToken();
-    return customResponse.success(res, user, token);
+
+    return res.status(200).json({
+      success: true,
+      token,
+      data: user,
+    });
   } catch (error) {
+    console.error("AdminLogin error:", error);
     return customResponse.error(res, error.message);
   }
 });
@@ -573,4 +591,39 @@ exports.clearFCM = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+
+exports.forgotPin = asyncHandler(async (req, res) => {
+  const { phone } = req.body;
+  console.log("✌️phone --->art", phone);
+
+  try {
+    const user = await Artist.findOne({ phone }).select("+pin");
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Хэрэглэгч олдсонгүй." });
+    }
+
+    // Шинэ OTP
+    const otp = generateOTP(4);
+
+    // 🔑 Hash хийхгүй, шууд plain онооно
+    user.pin = otp;
+    await user.save(); // pre("save") автоматаар hash хийнэ
+
+    await sendMessage(phone, `Таны шинэ нууц код: ${otp}`);
+    console.log("✌️otp --->", otp);
+
+    return res.status(200).json({
+      success: true,
+      message: "Шинэ нууц код таны утас руу амжилттай илгээгдлээ.",
+    });
+  } catch (error) {
+    console.error("forgotPin error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Алдаа гарлаа. Дахин оролдоно уу." });
+  }
+});
+
 // Энд дуусаж байгаа шүүү

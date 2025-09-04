@@ -191,6 +191,7 @@ exports.registerVerify = asyncHandler(async (req, res) => {
 
 exports.forgotPassword = asyncHandler(async (req, res) => {
   const { phone } = req.body;
+  console.log("✌️phone --->", phone);
 
   const user = await User.findOne({ phone });
   if (!user) {
@@ -573,3 +574,37 @@ exports.deleteModel = async function deleteUser(req, res, next) {
     customResponse.server(res, error.message);
   }
 };
+
+exports.forgotPin = asyncHandler(async (req, res) => {
+  const { phone } = req.body;
+  console.log("✌️phone --->art", phone);
+
+  try {
+    const user = await User.findOne({ phone }).select("+pin");
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Хэрэглэгч олдсонгүй." });
+    }
+
+    // Шинэ OTP
+    const otp = generateOTP(4);
+
+    // 🔑 Hash хийхгүй, шууд plain онооно
+    user.pin = otp;
+    await user.save(); // pre("save") автоматаар hash хийнэ
+
+    await sendMessage(phone, `Таны шинэ нууц код: ${otp}`);
+    console.log("✌️otp --->", otp);
+
+    return res.status(200).json({
+      success: true,
+      message: "Шинэ нууц код таны утас руу амжилттай илгээгдлээ.",
+    });
+  } catch (error) {
+    console.error("forgotPin error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Алдаа гарлаа. Дахин оролдоно уу." });
+  }
+});

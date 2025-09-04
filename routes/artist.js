@@ -17,10 +17,13 @@ const {
   artistUpdateTheirOwnInformation,
   checkArtistPhone,
   clearFCM,
+  forgotPin,
 } = require("../controller/artist");
 const { getPersonType } = require("../controller/person");
 const router = express.Router();
+
 router.post("/fcm/clear", protect, clearFCM);
+router.route("/forgot-pin").post(forgotPin);
 
 router.route("/getArtistServices/:id").get(getArtistServices);
 

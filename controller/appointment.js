@@ -1125,3 +1125,138 @@ exports.finishAppointment = asyncHandler(async (req, res) => {
 });
 
 // Энд дуусаж байгаа шүүү
+exports.createAppointmentWithSchedule = asyncHandler(async (req, res) => {
+  try {
+    const {
+      date,
+      artistId,
+      serviceId = [],
+      companyId,
+      name,
+      extraInfo,
+      start,
+      end,
+    } = req.body;
+
+    if (!date || !artistId || !serviceId.length || !start || !end) {
+      return customResponse.error(
+        res,
+        "date, artistId, serviceId, start, end бүгд шаардлагатай"
+      );
+    }
+
+    // 1. Өмнөх захиалгууд авах
+    const existingAppointments = await Appointment.find({
+      date,
+      status: { $in: ["paid", "pending"] },
+    }).populate({
+      path: "schedule",
+      match: { artistId },
+    });
+
+    // 2. Давхцал шалгах
+    const conflicts = existingAppointments.filter((a, i) => {
+      const [sH, sM] = a.schedule.start.split(":").map(Number);
+      const [eH, eM] = a.schedule.end.split(":").map(Number);
+      const aStart = sH * 60 + sM;
+      const aEnd = eH * 60 + eM;
+
+      const [nSH, nSM] = start.split(":").map(Number);
+      const [nEH, nEM] = end.split(":").map(Number);
+      const newStart = nSH * 60 + nSM;
+      const newEnd = nEH * 60 + nEM;
+
+      const isOverlap = newStart < aEnd && newEnd > aStart;
+
+      return isOverlap;
+    });
+
+    // 3. Хэрэв давхцаж байвал conflict + зөвлөгөө буцаана
+    if (conflicts.length > 0) {
+      // 🔹 үйлчилгээний нийт үргэлжлэх хугацаа
+      const Service = require("../models/service");
+      const serviceDocs = await Service.find({ _id: { $in: serviceId } });
+      const totalDuration = serviceDocs.reduce(
+        (sum, s) => sum + (s.duration || 0),
+        0
+      );
+
+      // 🔹 хамгийн сүүлд давхцсан захиалгын төгсгөлөөс зөвлөгөө санал болгоно
+      const lastConflict = conflicts[conflicts.length - 1];
+      let suggestion = null;
+
+      if (lastConflict?.schedule?.end) {
+        const [h, m] = lastConflict.schedule.end.split(":").map(Number);
+        const startDate = new Date(2000, 0, 1, h, m);
+        const endDate = new Date(startDate.getTime() + totalDuration * 60000);
+
+        // тухайн өдрийн ажиллах цагийн хүрээ
+        const empSchedule = await require("../models/employeeSchedule").findOne(
+          {
+            artistId,
+            date,
+          }
+        );
+
+        if (empSchedule) {
+          const workEnd = new Date(`2000-01-01T${empSchedule.end}:00`);
+          if (endDate <= workEnd) {
+            suggestion = {
+              start: lastConflict.schedule.end,
+              end: `${endDate.getHours().toString().padStart(2, "0")}:${endDate
+                .getMinutes()
+                .toString()
+                .padStart(2, "0")}`,
+            };
+          }
+        }
+      }
+
+      return customResponse.error(
+        res,
+        "Энэ цаг аль хэдийн захиалагдсан байна",
+        {
+          newAppointment: { start, end, name, user: req.userId || null },
+          conflict: conflicts.map((a) => ({
+            id: a._id,
+            start: a.schedule.start,
+            end: a.schedule.end,
+            name: a.name,
+          })),
+          suggestion, // зөвлөгөө эсвэл null
+        }
+      );
+    }
+
+    // 4. Schedule үүсгэх
+    const schedule = await Schedule.create({
+      start,
+      end,
+      artistId,
+      companyId,
+      date,
+      serviceId,
+    });
+
+    // 5. Appointment үүсгэх
+    const appointment = await Appointment.create({
+      schedule: schedule._id,
+      date,
+      isManual: true,
+      status: "paid",
+      name,
+      extraInfo,
+      user: req.userId || null,
+      company: companyId,
+    });
+
+    return customResponse.success(res, {
+      message: "Захиалга амжилттай үүсэв",
+      appointment,
+      schedule,
+    });
+  } catch (error) {
+    console.error("🔥 createAppointmentWithSchedule error:", error);
+    return customResponse.error(res, error.message);
+  }
+});
