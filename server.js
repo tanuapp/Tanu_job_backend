@@ -13,7 +13,6 @@ const asyncHandler = require("./middleware/asyncHandler");
 
 const { createServer } = require("http");
 const { Server } = require("socket.io");
-
 const errorHandler = require("./middleware/error.js");
 
 // Routes
@@ -86,6 +85,8 @@ const upload = multer({
 // Server configuration for socket
 const app = express();
 app.enable("trust proxy");
+app.set("trust proxy", 1);
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
