@@ -375,3 +375,23 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+
+// ... бусад код дээр нь
+
+exports.getActiveCompanies = asyncHandler(async (req, res) => {
+  try {
+    // зөвхөн status=0 болон status=1
+    const companies = await Model.find({ status: { $in: [0, 1] } })
+      .populate("category")
+      .populate("onlineContract");
+
+    res.status(200).json({
+      success: true,
+      count: companies.length,
+      data: companies,
+    });
+  } catch (error) {
+    console.error("❌ getActiveCompanies error:", error);
+    customResponse.error(res, error.message);
+  }
+});

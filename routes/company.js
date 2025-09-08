@@ -14,11 +14,13 @@ const {
   addContract,
   updateUserFCM,
   clearFCM,
+  getActiveCompanies,
 } = require("../controller/company");
 const router = express.Router();
 
 // const isActive = false;s
 router.route("/contract").post(upload.single("file"), addContract);
+router.get("/active", getActiveCompanies);
 router
   .route("/")
   .post(

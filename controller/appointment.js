@@ -211,6 +211,7 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
           continue; // энэ schedule-г алгас
         }
 
+        // Past time skip
         const slotDateTime = new Date(
           selectedDate.getFullYear(),
           selectedDate.getMonth(),
@@ -218,6 +219,13 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
           current.getHours(),
           current.getMinutes()
         );
+
+        const now = new Date();
+        if (slotDateTime <= now) {
+          console.log(`⚠️ Skipping past slot: ${startStr}`);
+          current = new Date(current.getTime() + stepMinutes * 60000);
+          continue;
+        }
 
         const isPast =
           selectedDate.toDateString() === new Date().toDateString() &&

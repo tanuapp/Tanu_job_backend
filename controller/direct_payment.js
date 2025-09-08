@@ -5,12 +5,10 @@ const Favourite = require("../models/favourite");
 const asyncHandler = require("../middleware/asyncHandler");
 const axios = require("axios"); // if CommonJS
 const customResponse = require("../utils/customResponse");
-const path = require("path");
 const sendFirebaseNotification = require("../utils/sendFIrebaseNotification");
 const Notification = require("../models/notification");
 
 const Customer = require("../models/customer");
-const QRCode = require("qrcode");
 
 exports.createPayment = asyncHandler(async (req, res, next) => {
   try {
@@ -63,7 +61,6 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
 
     services.forEach((service) => {
       const price = parseFloat(service.price || 0);
-
       let serviceFinalPrice = price;
 
       const discountActive =
@@ -73,9 +70,8 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         new Date() <= new Date(service.discountEnd);
 
       if (discountActive && service.discount) {
-        const discountPercent = parseFloat(
-          service.discount.replace(/[^0-9]/g, "")
-        );
+        const discountStr = String(service.discount); // ✅ type-safe
+        const discountPercent = parseFloat(discountStr.replace(/[^0-9]/g, ""));
         if (!isNaN(discountPercent) && discountPercent > 0) {
           serviceFinalPrice = price * (1 - discountPercent / 100);
         }
