@@ -1,6 +1,8 @@
 const express = require("express");
 const upload = require("../middleware/fileUpload");
-const { protect } = require("../middleware/protect");
+const { protect, authorize } = require("../middleware/protect");
+const { loginLimiter, otpLimiter } = require("../middleware/rateLimit");
+
 const {
   Login,
   create,
@@ -18,31 +20,41 @@ const {
   forgotPin,
   getPersonType,
 } = require("../controller/artist");
+
 const router = express.Router();
 
-router.post("/fcm/clear", protect, clearFCM);
-router.route("/forgot-pin").post(forgotPin);
-
-router.route("/getArtistServices/:id").get(getArtistServices);
-
-router.route("/login").post(Login);
-router.route("/register").post(upload.single("photo"), create);
-router.route("/").get(getAll);
-
-router.route("/registerArtist").post(registerArtist);
-router.route("/type").get(protect, getPersonType);
+/**
+ * 📌 Public routes
+ */
+router.route("/forgot-pin").post(otpLimiter, forgotPin);
+router.route("/login").post(loginLimiter, Login);
+router.route("/registerArtist").post(otpLimiter, registerArtist);
 router.route("/register-verify").post(registerVerify);
-router.route("/fcm").post(protect, updateArtistFCM);
 router.route("/checkArtistPhone").post(checkArtistPhone);
 
-router.route("/").post(upload.single("photo"), create).get(getAll);
+router.route("/getArtistServices/:id").get(getArtistServices);
+router.route("/").get(getAll);
+router.route("/:id").get(get);
+
+/**
+ * 📌 Protected routes
+ */
+router.route("/fcm").post(protect, updateArtistFCM);
+router.post("/fcm/clear", protect, clearFCM);
+router.route("/type").get(protect, getPersonType);
+
 router
   .route("/updateOwn/:id")
-  .put(upload.single("photo"), artistUpdateTheirOwnInformation);
+  .put(protect, upload.single("photo"), artistUpdateTheirOwnInformation);
+
 router
   .route("/:id")
-  .put(upload.single("photo"), update)
-  .delete(deleteArtist)
-  .get(get);
+  .put(protect, upload.single("photo"), update)
+  .delete(protect, deleteArtist);
+
+/**
+ * 📌 Admin / Owner only routes
+ */
+router.route("/register").post(protect, upload.single("photo"), create);
 
 module.exports = router;

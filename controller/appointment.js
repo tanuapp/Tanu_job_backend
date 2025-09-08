@@ -1057,6 +1057,7 @@ exports.createAppointmentWithSchedule = asyncHandler(async (req, res) => {
     } = req.body;
 
     if (!date || !artistId || !serviceId.length || !start || !end) {
+      console.warn("⚠️ Missing required fields");
       return customResponse.error(
         res,
         "date, artistId, serviceId, start, end бүгд шаардлагатай"
@@ -1074,6 +1075,7 @@ exports.createAppointmentWithSchedule = asyncHandler(async (req, res) => {
 
     // 2. Давхцал шалгах
     const conflicts = existingAppointments.filter((a, i) => {
+      if (!a.schedule) return false;
       const [sH, sM] = a.schedule.start.split(":").map(Number);
       const [eH, eM] = a.schedule.end.split(":").map(Number);
       const aStart = sH * 60 + sM;
@@ -1085,13 +1087,23 @@ exports.createAppointmentWithSchedule = asyncHandler(async (req, res) => {
       const newEnd = nEH * 60 + nEM;
 
       const isOverlap = newStart < aEnd && newEnd > aStart;
-
+      if (isOverlap) {
+        console.warn("⚠️ Conflict found:", {
+          conflictAppointment: a._id,
+          existing: { start: a.schedule.start, end: a.schedule.end },
+          requested: { start, end },
+        });
+      }
       return isOverlap;
     });
 
     // 3. Хэрэв давхцаж байвал conflict + зөвлөгөө буцаана
     if (conflicts.length > 0) {
-      // 🔹 үйлчилгээний нийт үргэлжлэх хугацаа
+      console.log(
+        "❌ [CONFLICTS DETECTED]:",
+        conflicts.map((c) => c._id)
+      );
+
       const Service = require("../models/service");
       const serviceDocs = await Service.find({ _id: { $in: serviceId } });
       const totalDuration = serviceDocs.reduce(
@@ -1099,7 +1111,8 @@ exports.createAppointmentWithSchedule = asyncHandler(async (req, res) => {
         0
       );
 
-      // 🔹 хамгийн сүүлд давхцсан захиалгын төгсгөлөөс зөвлөгөө санал болгоно
+      console.log("🕑 [TOTAL SERVICE DURATION]:", totalDuration, "minutes");
+
       const lastConflict = conflicts[conflicts.length - 1];
       let suggestion = null;
 
@@ -1108,7 +1121,6 @@ exports.createAppointmentWithSchedule = asyncHandler(async (req, res) => {
         const startDate = new Date(2000, 0, 1, h, m);
         const endDate = new Date(startDate.getTime() + totalDuration * 60000);
 
-        // тухайн өдрийн ажиллах цагийн хүрээ
         const empSchedule = await require("../models/employeeSchedule").findOne(
           {
             artistId,
@@ -1141,7 +1153,7 @@ exports.createAppointmentWithSchedule = asyncHandler(async (req, res) => {
             end: a.schedule.end,
             name: a.name,
           })),
-          suggestion, // зөвлөгөө эсвэл null
+          suggestion,
         }
       );
     }
