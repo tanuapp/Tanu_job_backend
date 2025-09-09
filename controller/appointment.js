@@ -78,10 +78,8 @@ exports.getBookedTimesForArtist = asyncHandler(async (req, res) => {
 exports.getAvailableSlots = asyncHandler(async (req, res) => {
   try {
     const { date, artist, services } = req.body;
-    console.log("📥 Request body:", { date, artist, services });
 
     if (!date || !artist || !services || !services.length) {
-      console.log("❌ Missing required params");
       return customResponse.error(
         res,
         "date, artist, services бүгд шаардлагатай"
@@ -91,32 +89,24 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
     // 1. Services-ийн нийт хугацаа
     const Service = require("../models/service");
     const serviceDocs = await Service.find({ _id: { $in: services } });
-    console.log("🔎 Service docs:", serviceDocs);
 
     const totalDuration = serviceDocs.reduce(
       (sum, s) => sum + (s.duration || 0),
       0
     );
-    console.log("🕑 Total service duration (minutes):", totalDuration);
 
     // 2. Company.interval авах
     const artistDoc = await Artist.findById(artist).populate("companyId");
     const company = artistDoc?.companyId;
     const stepMinutes = company?.interval || 15;
-    console.log("👤 Artist company + interval:", {
-      artistDoc,
-      stepMinutes,
-    });
 
     // 3. Artist-ийн тухайн өдрийн schedule
     const employeeSchedules = await employeeSchedule.find({
       artistId: artist,
       date,
     });
-    console.log("📅 Employee schedules:", employeeSchedules);
 
     if (!employeeSchedules.length) {
-      console.log("❌ employeeSchedules хоосон");
       return customResponse.success(res, []);
     }
 
@@ -129,10 +119,8 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
       match: { artistId: artist },
       populate: { path: "serviceId", model: "Service" },
     });
-    console.log("📦 Appointments found:", appointments.length);
 
     const validAppointments = appointments.filter((a) => a.schedule != null);
-    console.log("✅ Valid appointments:", validAppointments.length);
 
     let bookedIntervals = validAppointments.map((a) => {
       let start = a.schedule.start;
@@ -142,9 +130,6 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
       const durationSum = services.reduce(
         (sum, s) => sum + (s.duration || 0),
         0
-      );
-      console.log(
-        `📝 Appointment ${a._id} start=${start}, end=${end}, durationSum=${durationSum}`
       );
 
       if (durationSum > 0 && start) {
@@ -158,51 +143,33 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
           "0"
         )}:${String(computedEndDate.getMinutes()).padStart(2, "0")}`;
         if (!end || computedEnd > end) {
-          console.log(`🔄 Overriding end from ${end} → ${computedEnd}`);
           end = computedEnd;
         }
       }
       return { start, end };
     });
 
-    console.log("⏱ Raw booked intervals:", bookedIntervals);
-
     // merge
     bookedIntervals = mergeIntervals(bookedIntervals);
-    console.log("📊 Merged booked intervals:", bookedIntervals);
 
     // 5. Dayoff merge
     const dayOffs = await Dayoff.find({ date });
     for (const d of dayOffs) {
-      console.log("🚫 DayOff interval:", { start: d.start, end: d.end });
       bookedIntervals.push({ start: d.start, end: d.end });
     }
-
-    console.log("📊 After adding dayoffs:", bookedIntervals);
 
     // 6. Slot generation
     const validSlots = [];
     const selectedDate = new Date(date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    console.log("🕓 Date check:", {
-      selectedDate: selectedDate.toString(),
-      today: today.toString(),
-    });
 
-    // 🔴 Хэрэв бүхэл өдөр өнгөрсөн бол шууд хоосон буцаана
+    // Хэрэв бүхэл өдөр өнгөрсөн бол хоосон буцаана
     if (selectedDate < today) {
-      console.log(`⚠️ Whole day is in the past: ${date}`);
       return customResponse.success(res, []);
     }
 
     for (const sch of employeeSchedules) {
-      console.log("🗓 Processing schedule:", {
-        id: sch._id,
-        start: sch.start,
-        end: sch.end,
-      });
-
       const startTime = new Date(
         2000,
         0,
@@ -210,10 +177,6 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
         ...sch.start.split(":").map(Number)
       );
       const endTime = new Date(2000, 0, 1, ...sch.end.split(":").map(Number));
-      console.log("⏱ Schedule time objects:", {
-        startTime: startTime.toString(),
-        endTime: endTime.toString(),
-      });
 
       let current = new Date(startTime);
 
@@ -228,8 +191,6 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
           slotEnd.getMinutes()
         ).padStart(2, "0")}`;
 
-        console.log("🔍 Checking slot:", { startStr, endStr });
-
         // Overlap check
         const overlap = bookedIntervals.some((b) => {
           const [bh, bm] = b.start.split(":").map(Number);
@@ -237,11 +198,7 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
           const bStart = new Date(2000, 0, 1, bh, bm);
           const bEnd = new Date(2000, 0, 1, eh, em);
 
-          const isOverlap = current < bEnd && slotEnd > bStart;
-          if (isOverlap) {
-            console.log(`🚫 Overlaps with interval: ${b.start} → ${b.end}`);
-          }
-          return isOverlap;
+          return current < bEnd && slotEnd > bStart;
         });
 
         // Past slot check (if today)
@@ -257,31 +214,16 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
           selectedDate.toDateString() === now.toDateString() &&
           slotDateTime <= now;
 
-        console.log("⏳ Slot time check:", {
-          slotDateTime: slotDateTime.toString(),
-          now: now.toString(),
-          isPast,
-          overlap,
-        });
-
         if (!overlap && !isPast) {
-          console.log("✅ Valid slot:", { startStr, endStr });
           validSlots.push({ start: startStr, end: endStr });
-        } else {
-          console.log("⏭ Skipped slot:", {
-            startStr,
-            reason: isPast ? "past" : "overlap",
-          });
         }
 
         current = new Date(current.getTime() + stepMinutes * 60000);
       }
     }
 
-    console.log("📆 Total valid slots:", validSlots.length, validSlots);
     return customResponse.success(res, validSlots);
   } catch (error) {
-    console.error("🔥 Error in getAvailableSlots:", error);
     return customResponse.error(res, error.message);
   }
 });
