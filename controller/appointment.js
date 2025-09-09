@@ -99,7 +99,6 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
     // 2. Company.interval авах
     const artistDoc = await Artist.findById(artist).populate("companyId");
     const company = artistDoc?.companyId;
-
     const stepMinutes = company?.interval || 15;
 
     // 3. Artist-ийн тухайн өдрийн schedule
@@ -170,6 +169,10 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
 
     // 6. Slot generation
     const validSlots = [];
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     for (const sch of employeeSchedules) {
       console.log("🗓 Processing schedule:", sch._id, {
         start: sch.start,
@@ -180,6 +183,13 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
       const endTime = new Date(`2000-01-01T${sch.end}:00`);
 
       let current = new Date(startTime);
+
+      // 🔴 Хэрэв бүхэл өдөр өнгөрсөн бол шууд continue
+      if (selectedDate < today) {
+        console.log(`⚠️ Skipping past date: ${date}`);
+        continue;
+      }
+
       while (new Date(current.getTime() + totalDuration * 60000) <= endTime) {
         const slotEnd = new Date(current.getTime() + totalDuration * 60000);
 
@@ -200,18 +210,7 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
           return isOverlap;
         });
 
-        // Past time skip
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // ✅ зөвхөн өдрийн эхэн
-        const selectedDate = new Date(date);
-
-        if (selectedDate < today) {
-          // 🔴 Сонгосон өдөр бүхэлдээ өнгөрсөн
-          console.log(`⚠️ Skipping past date: ${date}`);
-          continue; // энэ schedule-г алгас
-        }
-
-        // Past time skip
+        // Past slot skip (зөвхөн өнөөдөр сонгосон үед)
         const slotDateTime = new Date(
           selectedDate.getFullYear(),
           selectedDate.getMonth(),
@@ -219,23 +218,18 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
           current.getHours(),
           current.getMinutes()
         );
-
         const now = new Date();
-        if (slotDateTime <= now) {
+
+        if (
+          selectedDate.toDateString() === now.toDateString() &&
+          slotDateTime <= now
+        ) {
           console.log(`⚠️ Skipping past slot: ${startStr}`);
           current = new Date(current.getTime() + stepMinutes * 60000);
           continue;
         }
 
-        const isPast =
-          selectedDate.toDateString() === new Date().toDateString() &&
-          slotDateTime <= new Date();
-
-        if (isPast) {
-          console.log(`⚠️ Skipping past slot: ${startStr}`);
-        }
-
-        if (!overlap && !isPast) {
+        if (!overlap) {
           validSlots.push({ start: startStr, end: endStr });
         }
 
