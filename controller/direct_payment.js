@@ -112,6 +112,11 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       const fullUser = await Customer.findById(app.user);
       const userName = `${fullUser?.last_name || ""}`.trim() || "Захиалга";
       const userPhone = fullUser?.phone || "";
+      const artistName = scheduleDoc.artistId?.first_name
+        ? `${scheduleDoc.artistId.first_name} ${
+            scheduleDoc.artistId.last_name || ""
+          }`
+        : "Мастер";
 
       // 📌 Company notification payload
       const notifPayloadCompany = {
@@ -126,6 +131,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
           time: scheduleDoc.start || "00:00",
           service: services.map((s) => s.service_name).join(", "),
           photo: fullUser?.photo || "", // 🟢 энд хийчихвэл хадгалагдана
+          artist: artistName,
         },
       };
 
@@ -215,6 +221,11 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
     const fullUser = await Customer.findById(app.user);
     const userName = `${fullUser?.last_name || ""}`.trim() || "Үл мэдэгдэх";
     const userPhone = fullUser?.phone || "N/A";
+    const artistName = scheduleDoc.artistId?.first_name
+      ? `${scheduleDoc.artistId.first_name} ${
+          scheduleDoc.artistId.last_name || ""
+        }`
+      : "Мастер";
 
     // 📌 Company notification payload
     const notifPayloadCompany = {
@@ -229,6 +240,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         time: scheduleDoc.start || "00:00",
         service: services.map((s) => s.service_name).join(", "),
         photo: fullUser?.photo || "", // 🟢 энд хийчихвэл хадгалагдана
+        artist: artistName,
       },
     };
 
