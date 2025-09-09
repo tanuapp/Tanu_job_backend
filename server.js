@@ -1,6 +1,4 @@
 process.env.TZ = "Asia/Ulaanbaatar";
-console.log("⏱ TZ set to:", process.env.TZ);
-
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");

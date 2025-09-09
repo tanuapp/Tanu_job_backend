@@ -6,6 +6,7 @@ const User = require("../models/customer");
 const customResponse = require("../utils/customResponse");
 const Model = require("../models/notification");
 const sendFirebaseNotification = require("./../utils/sendFIrebaseNotification");
+const Company = require("../models/company");
 
 exports.send = asyncHandler(async (req, res, next) => {
   try {
@@ -49,20 +50,6 @@ exports.sendMass = asyncHandler(async (req, res, next) => {
   }
 });
 
-exports.getAllModel = asyncHandler(async (req, res, next) => {
-  try {
-    const allUser = await Model.find();
-    const total = await Model.countDocuments();
-    res.status(200).json({
-      success: true,
-      count: total,
-      data: allUser,
-    });
-  } catch (error) {
-    customResponse.server(res, error.message);
-  }
-});
-
 exports.sendFirebase = asyncHandler(async (req, res) => {
   try {
     const user = await User.findOne({
@@ -91,5 +78,54 @@ exports.sendFirebase = asyncHandler(async (req, res) => {
     }
   } catch (error) {
     customResponse.error(res, error.message);
+  }
+});
+
+exports.deleteOne = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log("✌️id --->", id);
+    const deleted = await Model.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return customResponse.error(res, "Мэдэгдэл олдсонгүй", 404);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Мэдэгдэл устгагдлаа",
+    });
+  } catch (err) {
+    customResponse.server(res, err.message);
+  }
+});
+
+exports.getAllModel = asyncHandler(async (req, res, next) => {
+  try {
+    const { companyId } = req.query;
+    let filter = {};
+
+    if (companyId) {
+      filter.companyId = companyId;
+    }
+
+    // 🔎 OwnerId-аар компанийн жагсаалтыг олно
+    const companies = await Company.find({ companyOwner: companyId }).select(
+      "_id"
+    );
+    const companyIds = companies.map((c) => c._id);
+
+    filter.companyId = { $in: companyIds };
+
+    const items = await Model.find(filter).sort({ createdAt: -1 });
+    const total = await Model.countDocuments(filter);
+
+    res.status(200).json({
+      success: true,
+      count: total,
+      data: items,
+    });
+  } catch (error) {
+    customResponse.server(res, error.message);
   }
 });
