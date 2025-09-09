@@ -789,11 +789,6 @@ exports.getCompanyAppointments = asyncHandler(async (req, res, next) => {
     // 1. Fetch user document (Admin/Artist)
     const user = await AdminAppointment.findById(User).populate("userRole");
 
-    if (!user) {
-      console.error("❌ User not found for ID:", User);
-      return customResponse.error(res, "Хэрэглэгчийн мэдээлэл олдсонгүй");
-    }
-
     // 2. Determine ownerId: if userRole has user, use it; else use user._id
     const ownerId =
       user.userRole && user.userRole.user ? user.userRole.user : user._id;

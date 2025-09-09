@@ -84,7 +84,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
     const advanceAmount = Math.floor(
       (discountedTotalPrice * advancePercent) / 100
     );
-
+    // uridchilgaa baihgui uyd
     if (advanceAmount === 0) {
       const app = await Appointment.create({
         schedule,
@@ -125,6 +125,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
           date,
           time: scheduleDoc.start || "00:00",
           service: services.map((s) => s.service_name).join(", "),
+          photo: fullUser?.photo || "", // 🟢 энд хийчихвэл хадгалагдана
         },
       };
 
@@ -140,7 +141,6 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
           data: notifPayloadCompany.data,
           companyId: company._id,
           appointmentId: app._id,
-          photo: fullUser?.photo || "",
         });
       }
 
@@ -166,7 +166,6 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
           companyId: company._id,
           artistId: scheduleDoc.artistId._id,
           appointmentId: app._id,
-          photo: fullUser?.photo || "",
         });
       }
 
@@ -229,6 +228,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         date,
         time: scheduleDoc.start || "00:00",
         service: services.map((s) => s.service_name).join(", "),
+        photo: fullUser?.photo || "", // 🟢 энд хийчихвэл хадгалагдана
       },
     };
 
@@ -245,7 +245,6 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         data: notifPayloadCompany.data,
         companyId: company._id,
         appointmentId: app._id,
-        photo: fullUser?.photo || "",
       });
     }
 
@@ -272,7 +271,6 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         companyId: company._id,
         artistId: scheduleDoc.artistId._id,
         appointmentId: app._id,
-        photo: fullUser?.photo || "",
       });
     }
 
