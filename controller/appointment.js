@@ -80,7 +80,6 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
     const { date, artist, services } = req.body;
 
     if (!date || !artist || !services || !services.length) {
-      console.log("❌ Missing required params");
       return customResponse.error(
         res,
         "date, artist, services бүгд шаардлагатай"
@@ -90,7 +89,6 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
     // 1. Services-ийн нийт хугацаа
     const Service = require("../models/service");
     const serviceDocs = await Service.find({ _id: { $in: services } });
-
     const totalDuration = serviceDocs.reduce(
       (sum, s) => sum + (s.duration || 0),
       0
@@ -104,10 +102,9 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
     // 3. Artist-ийн тухайн өдрийн schedule
     const employeeSchedules = await employeeSchedule.find({
       artistId: artist,
-      date: date,
+      date,
     });
     if (!employeeSchedules.length) {
-      console.log("❌ employeeSchedules хоосон");
       return customResponse.success(res, []);
     }
 
@@ -132,9 +129,6 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
         (sum, s) => sum + (s.duration || 0),
         0
       );
-      console.log(
-        `📝 Appointment ${a._id} start=${start}, end=${end}, durationSum=${durationSum}`
-      );
 
       if (durationSum > 0 && start) {
         const [h, m] = start.split(":").map(Number);
@@ -142,15 +136,11 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
         const computedEndDate = new Date(
           startDate.getTime() + durationSum * 60000
         );
-        const computedEnd = `${computedEndDate
-          .getHours()
-          .toString()
-          .padStart(2, "0")}:${computedEndDate
-          .getMinutes()
-          .toString()
-          .padStart(2, "0")}`;
+        const computedEnd = `${String(computedEndDate.getHours()).padStart(
+          2,
+          "0"
+        )}:${String(computedEndDate.getMinutes()).padStart(2, "0")}`;
         if (!end || computedEnd > end) {
-          console.log(`🔄 Overriding end from ${end} → ${computedEnd}`);
           end = computedEnd;
         }
       }
@@ -163,7 +153,6 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
     // 5. Dayoff merge
     const dayOffs = await Dayoff.find({ date });
     for (const d of dayOffs) {
-      console.log("🚫 DayOff interval:", { start: d.start, end: d.end });
       bookedIntervals.push({ start: d.start, end: d.end });
     }
 
@@ -173,22 +162,16 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    for (const sch of employeeSchedules) {
-      console.log("🗓 Processing schedule:", sch._id, {
-        start: sch.start,
-        end: sch.end,
-      });
+    // 🔴 Хэрэв бүхэл өдөр өнгөрсөн бол шууд хоосон буцаана
+    if (selectedDate < today) {
+      return customResponse.success(res, []);
+    }
 
+    for (const sch of employeeSchedules) {
       const startTime = new Date(`2000-01-01T${sch.start}:00`);
       const endTime = new Date(`2000-01-01T${sch.end}:00`);
 
       let current = new Date(startTime);
-
-      // 🔴 Хэрэв бүхэл өдөр өнгөрсөн бол шууд continue
-      if (selectedDate < today) {
-        console.log(`⚠️ Skipping past date: ${date}`);
-        continue;
-      }
 
       while (new Date(current.getTime() + totalDuration * 60000) <= endTime) {
         const slotEnd = new Date(current.getTime() + totalDuration * 60000);
@@ -205,12 +188,10 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
         const overlap = bookedIntervals.some((b) => {
           const bStart = new Date(`2000-01-01T${b.start}:00`);
           const bEnd = new Date(`2000-01-01T${b.end}:00`);
-          const isOverlap = current < bEnd && slotEnd > bStart;
-          if (isOverlap) console.log(`🚫 Overlaps with: ${b.start} → ${b.end}`);
-          return isOverlap;
+          return current < bEnd && slotEnd > bStart;
         });
 
-        // Past slot skip (зөвхөн өнөөдөр сонгосон үед)
+        // Past slot check (if today)
         const slotDateTime = new Date(
           selectedDate.getFullYear(),
           selectedDate.getMonth(),
@@ -219,17 +200,11 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
           current.getMinutes()
         );
         const now = new Date();
-
-        if (
+        const isPast =
           selectedDate.toDateString() === now.toDateString() &&
-          slotDateTime <= now
-        ) {
-          console.log(`⚠️ Skipping past slot: ${startStr}`);
-          current = new Date(current.getTime() + stepMinutes * 60000);
-          continue;
-        }
+          slotDateTime <= now;
 
-        if (!overlap) {
+        if (!overlap && !isPast) {
           validSlots.push({ start: startStr, end: endStr });
         }
 
@@ -237,10 +212,8 @@ exports.getAvailableSlots = asyncHandler(async (req, res) => {
       }
     }
 
-    console.log("📆 Total valid slots:", validSlots.length);
     return customResponse.success(res, validSlots);
   } catch (error) {
-    console.error("🔥 Error in getAvailableSlots:", error);
     return customResponse.error(res, error.message);
   }
 });
