@@ -41,7 +41,7 @@ router.route("/:id").get(get);
  */
 router.route("/fcm").post(protect, updateArtistFCM);
 router.post("/fcm/clear", protect, clearFCM);
-router.route("/type").get(protect, getPersonType);
+router.route("/type").get(getPersonType);
 
 router
   .route("/updateOwn/:id")

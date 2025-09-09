@@ -140,6 +140,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
           data: notifPayloadCompany.data,
           companyId: company._id,
           appointmentId: app._id,
+          photo: fullUser?.photo || "",
         });
       }
 
@@ -165,6 +166,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
           companyId: company._id,
           artistId: scheduleDoc.artistId._id,
           appointmentId: app._id,
+          photo: fullUser?.photo || "",
         });
       }
 
@@ -243,6 +245,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         data: notifPayloadCompany.data,
         companyId: company._id,
         appointmentId: app._id,
+        photo: fullUser?.photo || "",
       });
     }
 
@@ -269,6 +272,7 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
         companyId: company._id,
         artistId: scheduleDoc.artistId._id,
         appointmentId: app._id,
+        photo: fullUser?.photo || "",
       });
     }
 
