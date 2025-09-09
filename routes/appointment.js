@@ -27,8 +27,8 @@ const {
 const router = express.Router();
 
 // Хэрэглэгчийн захиалгуудыг татах
-router.route("/artist").get(getArtistAppointments);
-router.route("/company").get(getCompanyAppointments);
+router.route("/artist").get(protect, getArtistAppointments);
+router.route("/company").get(protect, getCompanyAppointments);
 router.route("/booked").get(getBookedTimesForArtist);
 // Захиалгыг дуусгах
 router.route("/end/:id").post(endAppointment);
