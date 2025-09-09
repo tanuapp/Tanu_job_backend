@@ -112,11 +112,15 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
       const fullUser = await Customer.findById(app.user);
       const userName = `${fullUser?.last_name || ""}`.trim() || "Захиалга";
       const userPhone = fullUser?.phone || "";
-      const artistName = scheduleDoc.artistId?.first_name
-        ? `${scheduleDoc.artistId.first_name} ${
-            scheduleDoc.artistId.last_name || ""
-          }`
-        : "Мастер";
+      // 📌 Artist info: эхний үсэг + овог бүтнээр
+      let artistName = "Мастер";
+      if (scheduleDoc.artistId?.first_name || scheduleDoc.artistId?.last_name) {
+        const first = scheduleDoc.artistId.first_name
+          ? scheduleDoc.artistId.first_name.charAt(0) + "."
+          : "";
+        const last = scheduleDoc.artistId.last_name || "";
+        artistName = `${first}${last}`.trim(); // Жишээ: Б.Энхболд
+      }
 
       // 📌 Company notification payload
       const notifPayloadCompany = {
@@ -221,11 +225,15 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
     const fullUser = await Customer.findById(app.user);
     const userName = `${fullUser?.last_name || ""}`.trim() || "Үл мэдэгдэх";
     const userPhone = fullUser?.phone || "N/A";
-    const artistName = scheduleDoc.artistId?.first_name
-      ? `${scheduleDoc.artistId.first_name} ${
-          scheduleDoc.artistId.last_name || ""
-        }`
-      : "Мастер";
+    // 📌 Artist info: эхний үсэг + овог бүтнээр
+    let artistName = "Мастер";
+    if (scheduleDoc.artistId?.first_name || scheduleDoc.artistId?.last_name) {
+      const first = scheduleDoc.artistId.first_name
+        ? scheduleDoc.artistId.first_name.charAt(0) + "."
+        : "";
+      const last = scheduleDoc.artistId.last_name || "";
+      artistName = `${first}${last}`.trim(); // Жишээ: Б.Энхболд
+    }
 
     // 📌 Company notification payload
     const notifPayloadCompany = {
