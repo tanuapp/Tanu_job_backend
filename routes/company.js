@@ -1,7 +1,10 @@
 const express = require("express");
 const upload = require("../middleware/fileUpload");
+const { protect } = require("../middleware/protect");
+const { authorize } = require("../middleware/protect");
 const {
   createModel,
+  get,
   getAll,
   update,
   getBranchesByCode,
@@ -29,15 +32,15 @@ router
     createModel
   )
   .get(getAll);
-router.post("/fcm/clear", clearFCM);
+router.post("/fcm/clear", protect, clearFCM);
 router.post("/branch-code", generateBranchCode);
 router.get("/branch-code/:branchCode", getBranchesByCode);
-router.route("/fcm").post(updateUserFCM);
+router.route("/fcm").post(protect, updateUserFCM);
 
 router
   .route("/:id")
   .put(
-    // isActive &&
+    // isActive && protect,
     // isActive && authorize("admin"),
     upload.fields([
       { name: "logo", maxCount: 1 },
