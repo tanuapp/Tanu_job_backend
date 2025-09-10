@@ -4,8 +4,8 @@ const router = express.Router();
 
 router.get("/", (req, res) => {
   res.json({
-    latest_version: "1.0.34",
-    version_code: 52,
+    latest_version: "1.0.35",
+    version_code: 53,
     force_update: false, // заавал шинэчлэх шаардлагатай эсэх
     message:
       "Бид аппыг улам сайжрууллаа!. Илүү хурдан, найдвартай болгохын тулд шинэчлэлт хийгээрэй!",
@@ -13,8 +13,8 @@ router.get("/", (req, res) => {
 });
 router.get("/business", (req, res) => {
   res.json({
-    latest_version: "1.0.34",
-    version_code: 18,
+    latest_version: "1.0.36",
+    version_code: 20,
     force_update: false, // заавал шинэчлэх шаардлагатай эсэх
     message:
       "Бид аппыг улам сайжрууллаа!. Илүү хурдан, найдвартай болгохын тулд шинэчлэлт хийгээрэй!",
