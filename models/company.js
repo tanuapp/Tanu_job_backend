@@ -36,7 +36,10 @@ const companySchema = new mongoose.Schema({
       // required: true,
     },
   ],
-
+  mainBranch: {
+    type: Boolean,
+    default: false, // анхдагч нь false
+  },
   onlineContract: {
     type: Schema.Types.ObjectId,
     ref: "onlineContract",
@@ -50,7 +53,11 @@ const companySchema = new mongoose.Schema({
     default: 0,
   },
   agent: String,
-  branchCode: { type: String, sparse: true },
+  branchCode: {
+    type: String,
+    sparse: true, // зөвхөн утгатай мөрүүдэд unique шалгалт хийнэ
+    default: null, // анхдагч төлөвт хоосон
+  },
   phone: { type: String },
   orderCancelHour: { type: Number, default: 2 },
   advancePayment: { type: Number, default: 10 },
@@ -162,5 +169,5 @@ companySchema.pre("save", async function (next) {
     next();
   }
 });
- 
+
 module.exports = mongoose.model("Company", companySchema);

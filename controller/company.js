@@ -6,7 +6,7 @@ const Dayoff = require("../models/dayoff");
 const Contract = require("../models/onlineContract");
 const Service = require("../models/service");
 const Appointment = require("../models/appointment");
-const Schedule = require("../models/schedule");
+const Company = require("../models/company");
 const Fav = require("../models/favourite");
 const customResponse = require("../utils/customResponse");
 const User = require("../models/user"); // ← энэ мөрийг нэм
@@ -14,7 +14,7 @@ const generateBranchCode = require("../middleware/branchCodeGenerator"); // Bran
 
 exports.generateBranchCode = async (req, res) => {
   try {
-    const { companyId } = req.body; // 🟢 frontend-ээс ирсэн companyId
+    const { companyId } = req.body;
 
     if (!companyId) {
       return res.status(400).json({
@@ -23,48 +23,49 @@ exports.generateBranchCode = async (req, res) => {
       });
     }
 
-    const code = await generateBranchCode();
-
-    // тухайн компанид код оноох
-    const company = await Company.findByIdAndUpdate(
-      companyId,
-      { branchCode: code },
-      { new: true }
-    );
-
-    if (!company) {
+    const companyData = await Company.findById(companyId);
+    if (!companyData) {
       return res.status(404).json({
         success: false,
         message: "Компанийн ID олдсонгүй",
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      code,
-      company,
-    });
-  } catch (error) {
-    console.error("❌ Branch code generate error:", error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Дотоод серверийн алдаа",
-    });
-  }
-};
+    // Шинэ салбар код үүсгэнэ
+    const code = await generateBranchCode();
 
-// Салбаруудаа шүүх
-exports.getBranchesByCode = async (req, res) => {
-  try {
-    const { branchCode } = req.params;
-    const companies = await Company.find({ branchCode });
+    // Хэрэв компанид өмнө нь branchCode байгаагүй бол → энэ үндсэн салбар
+    const isMain = !companyData.branchCode;
+
+    companyData.branchCode = code;
+    companyData.mainBranch = isMain;
+    await companyData.save();
 
     res.status(200).json({
       success: true,
-      data: companies,
+      code,
+      mainBranch: isMain,
+      company: companyData,
     });
   } catch (error) {
-    customResponse.error(res, error.message);
+    console.error("❌ Branch code generate error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getBranchesByCode = async (req, res) => {
+  try {
+    const { branchCode } = req.params;
+    const branches = await Company.find({
+      branchCode,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: branches,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

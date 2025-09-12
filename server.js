@@ -55,6 +55,7 @@ const onlineContractRender = require("./routes/contractRender.js");
 const danAuthRoute = require("./routes/dan.js");
 const blackListRoute = require("./routes/blackList.js");
 const attendanceRoute = require("./routes/timelog.js");
+const freelancerRoute = require("./routes/freelancer.js");
 // Multer setup
 const multer = require("multer");
 const initFirebase = require("./firebaseInit.js");
@@ -122,7 +123,7 @@ app.post(
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const fileUrl = `https://booking.tanuweb.cloud/uploads/${req.file.filename}`;
+    const fileUrl = `https://api.tanusoft.mn/uploads/${req.file.filename}`;
     res.setHeader("Content-Type", "application/json");
     return res.status(200).send(
       JSON.stringify({
@@ -169,6 +170,7 @@ app.use("/api/v1/contract", onlineContractRouter);
 app.use("/api/v1/contract-render", onlineContractRender);
 app.use("/api/v1/dan", danAuthRoute);
 app.use("/api/v1/blacklist", blackListRoute);
+app.use("/api/v1/freelancer", freelancerRoute);
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
 // File upload

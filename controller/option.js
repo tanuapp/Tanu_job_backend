@@ -120,7 +120,7 @@ exports.createPackageQpay = asyncHandler(async (req, res) => {
         phone: `${req.body.phone || ""}`,
       },
       invoice_description: `${pkg.name}_${companyId}`,
-      callback_url: `https://booking.tanuweb.cloud/api/v1/option/qpay/callback/${sender_invoice_no}`,
+      callback_url: `https://api.tanusoft.mn/api/v1/option/qpay/callback/${sender_invoice_no}`,
 
       lines: [
         {

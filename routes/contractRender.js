@@ -73,7 +73,7 @@ router.post(
       await fs.mkdir(path.dirname(filePath), { recursive: true });
       await fs.writeFile(filePath, pdfBuffer);
 
-      const publicUrl = `https://booking.tanuweb.cloud/uploads/${filename}`;
+      const publicUrl = `https://api.tanusoft.mn/uploads/${filename}`;
       console.log("✅ [PDF RENDER] Амжилттай! Public URL:", publicUrl);
 
       return res.status(200).json({
