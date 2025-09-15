@@ -106,13 +106,17 @@ exports.registerWithPhone = asyncHandler(async (req, res) => {
 exports.registerVerify = asyncHandler(async (req, res) => {
   const { phone, otp } = req.body;
 
-  const userOtp = await UserOtp.findOne({ phone });
+  // OTP бичлэгээс хамгийн сүүлийг авна
+  const userOtp = await UserOtp.findOne({ phone }).sort({ createdAt: -1 });
+
   if (!userOtp) {
+    console.log("❌ [OTP] Олдсонгүй");
     return res.status(400).json({ success: false, message: "OTP олдсонгүй" });
   }
 
   // хугацаа дууссан эсэх
   if (userOtp.expireAt < new Date()) {
+    console.log("⏰ [OTP] Хугацаа дууссан:", userOtp.expireAt);
     await UserOtp.deleteOne({ phone });
     return res
       .status(400)
@@ -123,8 +127,10 @@ exports.registerVerify = asyncHandler(async (req, res) => {
   if (String(userOtp.otp).trim() !== String(otp).trim()) {
     userOtp.failCount += 1;
     await userOtp.save();
+    console.log("⚠️ [OTP] Fail count:", userOtp.failCount);
 
     if (userOtp.failCount >= 3) {
+      console.log("🚫 [OTP] 3 удаа буруу → устгаж байна");
       await UserOtp.deleteOne({ phone });
       return res.status(400).json({
         success: false,
@@ -138,7 +144,7 @@ exports.registerVerify = asyncHandler(async (req, res) => {
     });
   }
 
-  // ✅ Зөв OTP → User үүсгэнэ
+  // ✅ User үүсгэнэ
   const user = await User.create({
     phone: userOtp.phone,
     password: userOtp.password,
@@ -162,19 +168,26 @@ exports.registerVerify = asyncHandler(async (req, res) => {
 
   // ✅ Agent-д холбох
   if (userOtp.agent) {
+    console.log("🧑‍💼 [AGENT] OTP contains agent:", userOtp.agent);
     const agent = await Agent.findOne({ agent: userOtp.agent });
+    console.log("🔍 [AGENT] Query result:", agent);
+
     if (agent) {
       if (!agent.totalcompany) {
         agent.totalcompany = [];
       }
       agent.totalcompany.push(company._id);
       await agent.save();
+      console.log("📌 [AGENT] Updated totalcompany:", agent.totalcompany);
+    } else {
+      console.log("⚠️ [AGENT] Олдсонгүй");
     }
   }
 
+  // ✅ Token
   const token = user.getJsonWebToken();
 
-  await UserOtp.deleteOne({ phone }); // OTP-г устгана
+  await UserOtp.deleteOne({ phone });
 
   return res.status(200).json({
     success: true,
