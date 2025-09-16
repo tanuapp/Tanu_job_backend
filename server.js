@@ -9,7 +9,6 @@ const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
 const cron = require("node-cron");
 const path = require("path");
-var serviceAccount = require("./tanu-app-928a8-firebase-adminsdk-mrr1i-28babc6869.json");
 const asyncHandler = require("./middleware/asyncHandler");
 
 const { createServer } = require("http");

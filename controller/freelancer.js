@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const sendMessage = require("../utils/callpro");
 
 const customResponse = require("../utils/customResponse");
-const OTP = require("../models/otp");
+const OTP = require("../models/freelancerOTP");
 
 function generateOTP(length = 4) {
   let otp = "";
@@ -18,47 +18,29 @@ function generateOTP(length = 4) {
   return otp;
 }
 
-const validatePhone = async (phone) => {
-  const user = await Freelancer.findOne({ phone }).select("+pin");
-  return user ? true : false;
-};
-
 // Exports
 exports.validatePhone = asyncHandler(async (req, res) => {
   const { phone } = req.body;
+  console.log("✌️phone --->", phone);
+  if (!phone) return customResponse.error(res, "Утасны дугаараа оруулна уу");
 
-  if (!phone) {
-    return customResponse.error(res, "Утасны дугаараа оруулна уу");
-  }
-
-  const userExists = await validatePhone(phone);
-
-  if (!userExists) {
-    return customResponse.error(res, "Утас бүртгэлгүй байна");
-  }
+  const user = await Freelancer.findOne({ phone }).select("+pin");
+  if (!user) return customResponse.error(res, "Утас бүртгэлгүй байна");
 
   return res.status(200).json({ success: true });
 });
 
-exports.getOtpAgain = asyncHandler(async (req, res, next) => {
+exports.getOtpAgain = asyncHandler(async (req, res) => {
   try {
     const { phone } = req.body;
-
-    // Шинэ OTP үүсгэх
     const otp = generateOTP();
 
-    // Хуучин OTP байгаа эсэхийг шалгаад шинэчлэх эсвэл шинээр үүсгэх
-    const existingOtp = await OTP.findOne({ phone });
-    if (existingOtp) {
-      await OTP.findOneAndUpdate({ phone }, { otp });
-    } else {
-      await OTP.create({
-        otp,
-        phone,
-      });
-    }
+    await OTP.findOneAndUpdate(
+      { phone, type: "freelancer" },
+      { otp },
+      { upsert: true }
+    );
 
-    // SMS илгээх
     await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
 
     res.status(200).json({
@@ -177,37 +159,30 @@ exports.registerWithPhone = asyncHandler(async (req, res) => {
   try {
     const { phone } = req.body;
 
-    // 1. Хуучин бүртгэлтэй, баталгаажсан хэрэглэгч байна уу?
     const existingUser = await Freelancer.findOne({ phone, status: true });
-
     if (existingUser) {
-      const errorResponse = {
+      return res.status(400).json({
         success: false,
         message: "Утасны дугаар бүртгэлтэй байна",
-      };
-      return res.status(400).json(errorResponse);
+      });
     }
 
-    // 2. OTP үүсгэх
     const otp = generateOTP();
 
-    const existingOtp = await OTP.findOne({ phone });
-    if (existingOtp) {
-      await OTP.updateOne({ phone }, { otp, data: req.body });
-    } else {
-      await OTP.create({ phone, otp, data: req.body });
-    }
+    await OTP.findOneAndUpdate(
+      { phone, type: "freelancer" },
+      { otp, data: req.body, type: "freelancer" },
+      { upsert: true }
+    );
 
-    // 3. SMS илгээх
     await sendMessage(phone, `Таны нэг удаагийн нууц үг: ${otp}`);
 
-    // 4. Хариу илгээх
     return res.status(200).json({
       success: true,
       message: "OTP илгээгдлээ",
     });
   } catch (error) {
-    console.error("🔥 Error occurred in registerWithPhone:", error.message);
+    console.error("🔥 registerWithPhone error:", error);
     return res.status(500).json({
       success: false,
       message: error.message || "Дотоод серверийн алдаа",
@@ -248,8 +223,10 @@ exports.register = asyncHandler(async (req, res, next) => {
 exports.verifyOtp = asyncHandler(async (req, res) => {
   try {
     const { phone, otp } = req.body;
+    console.log("✌️otp --->", otp);
+    console.log("✌️phone --->", phone);
 
-    const userOtp = await OTP.findOne({ phone });
+    const userOtp = await OTP.findOne({ phone, type: "freelancer" });
     if (!userOtp || userOtp.otp !== otp) {
       return res.status(400).json({
         success: false,
@@ -257,27 +234,28 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
       });
     }
 
-    const existingUser = await Freelancer.findOne({ phone });
-    if (existingUser) {
-      await OTP.deleteOne({ phone });
+    let user = await Freelancer.findOne({ phone });
+    console.log("✌️user --->", user);
+    if (user) {
+      await OTP.deleteOne({ phone, type: "freelancer" });
       return res.status(200).json({
         success: true,
         message: "Баталгаажсан байна",
-        token: existingUser.getJsonWebToken(),
-        data: existingUser,
+        token: user.getJsonWebToken(),
+        data: user,
       });
     }
 
-    // ✅ OTP дээр хадгалсан өгөгдлөөр бүрэн хэрэглэгч үүсгэнэ
-    const newUser = await Freelancer.create(userOtp.data);
-
-    await OTP.deleteOne({ phone });
+    // OTP дээр хадгалсан мэдээллээр хэрэглэгч үүсгэнэ
+    user = await Freelancer.create(userOtp.data);
+    console.log("✌️user --->", user);
+    await OTP.deleteOne({ phone, type: "freelancer" });
 
     return res.status(200).json({
       success: true,
       message: "OTP амжилттай баталгаажсан. Хэрэглэгч бүртгэгдлээ.",
-      token: newUser.getJsonWebToken(),
-      data: newUser,
+      token: user.getJsonWebToken(),
+      data: user,
     });
   } catch (error) {
     customResponse.error(res, error.message);
@@ -377,35 +355,47 @@ exports.loginWithPhone = asyncHandler(async (req, res, next) => {
   try {
     const { phone, pin } = req.body;
 
-    // Validate input
-    if (!phone || !pin) {
-      return res.status(200).json({
-        success: false,
-        message: "Утасны дугаар болон PIN кодоо оруулна уу",
-      });
+    if (!phone) {
+      return customResponse.error(res, "Утасны дугаараа оруулна уу!");
     }
 
-    // Find user or artist by phone
+    // 📌 Хэрэглэгч хайна
     const user = await Freelancer.findOne({ phone }).select("+pin");
-
-    // await Freelancer.findOneAndUpdate(
-    //   { phone },
-    //   {
-    //     pin: "2211",
-    //   }
-    // );
 
     if (!user) {
       return customResponse.error(res, "Утасны дугаар бүртгэлгүй байна");
     }
 
-    // Authenticate user
+    // 📌 Хэрвээ хэрэглэгчийн pin байхгүй бол → автоматаар үүсгээд SMS илгээнэ
+    if (!user.pin) {
+      const generatedPin = generateOTP(4);
+      const hashedPin = await user.hashPin(generatedPin);
+
+      await Freelancer.updateOne({ _id: user._id }, { pin: hashedPin });
+
+      await sendMessage(
+        phone,
+        `Таны нэвтрэх нэг удаагийн нууц код: ${generatedPin}`
+      );
+
+      return res.status(200).json({
+        success: false,
+        message:
+          "Таны нууц код үүсэж бүртгэлтэй дугаарт илгээгдлээ. Дахин оролдоно уу.",
+      });
+    }
+
+    // 📌 Pin байгаа тохиолдолд шалгана
+    if (!pin) {
+      return customResponse.error(res, "PIN кодоо оруулна уу!");
+    }
 
     const isMatch = await user.checkPassword(pin);
     if (!isMatch) {
-      return customResponse.error(res, "Нууц үг буруу байна!");
+      return customResponse.error(res, "Таны оруулсан нууц код буруу байна!");
     }
 
+    // 📌 JWT үүсгэж буцаана
     const token = user.getJsonWebToken();
     return res.status(200).json({
       success: true,
@@ -414,7 +404,7 @@ exports.loginWithPhone = asyncHandler(async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    console.log(error);
+    console.error("loginWithPhone error:", error);
     return customResponse.error(res, error.message);
   }
 });

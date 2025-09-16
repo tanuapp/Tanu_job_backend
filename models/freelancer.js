@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs"); // 🔑 bcrypt import
+const jwt = require("jsonwebtoken");
 const { Schema } = mongoose;
 const freelancerSchema = new Schema(
   {
