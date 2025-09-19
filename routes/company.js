@@ -4,7 +4,7 @@ const { protect } = require("../middleware/protect");
 const { authorize } = require("../middleware/protect");
 const {
   createModel,
-  get,
+  joinBranch,
   getAll,
   update,
   getBranchesByCode,
@@ -36,6 +36,7 @@ router.post("/fcm/clear", protect, clearFCM);
 router.post("/branch-code", generateBranchCode);
 router.get("/branch-code/:branchCode", getBranchesByCode);
 router.route("/fcm").post(protect, updateUserFCM);
+router.post("/join-branch", joinBranch);
 
 router
   .route("/:id")

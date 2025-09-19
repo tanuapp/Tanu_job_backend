@@ -21,7 +21,6 @@ function generateOTP(length = 4) {
 // Exports
 exports.validatePhone = asyncHandler(async (req, res) => {
   const { phone } = req.body;
-  console.log("✌️phone --->", phone);
   if (!phone) return customResponse.error(res, "Утасны дугаараа оруулна уу");
 
   const user = await Freelancer.findOne({ phone }).select("+pin");
@@ -223,8 +222,6 @@ exports.register = asyncHandler(async (req, res, next) => {
 exports.verifyOtp = asyncHandler(async (req, res) => {
   try {
     const { phone, otp } = req.body;
-    console.log("✌️otp --->", otp);
-    console.log("✌️phone --->", phone);
 
     const userOtp = await OTP.findOne({ phone, type: "freelancer" });
     if (!userOtp || userOtp.otp !== otp) {
@@ -235,7 +232,6 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
     }
 
     let user = await Freelancer.findOne({ phone });
-    console.log("✌️user --->", user);
     if (user) {
       await OTP.deleteOne({ phone, type: "freelancer" });
       return res.status(200).json({
@@ -248,7 +244,7 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
 
     // OTP дээр хадгалсан мэдээллээр хэрэглэгч үүсгэнэ
     user = await Freelancer.create(userOtp.data);
-    console.log("✌️user --->", user);
+
     await OTP.deleteOne({ phone, type: "freelancer" });
 
     return res.status(200).json({
@@ -288,13 +284,6 @@ exports.setPin = asyncHandler(async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await Freelancer.findById(decoded.Id);
-
-    if (!user || !user.status) {
-      return res.status(403).json({
-        success: false,
-        message: "Хэрэглэгч баталгаажаагүй байна",
-      });
-    }
 
     user.pin = pin;
     await user.save();
@@ -390,7 +379,7 @@ exports.loginWithPhone = asyncHandler(async (req, res, next) => {
       return customResponse.error(res, "PIN кодоо оруулна уу!");
     }
 
-    const isMatch = await user.checkPassword(pin);
+    const isMatch = await user.checkPin(pin);
     if (!isMatch) {
       return customResponse.error(res, "Таны оруулсан нууц код буруу байна!");
     }

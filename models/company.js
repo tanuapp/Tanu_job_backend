@@ -65,7 +65,10 @@ const companySchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  timetable: [],
+  discount: {
+    type: Boolean,
+    default: false,
+  },
   numberOfArtist: {
     type: Number,
     default: 0,
@@ -77,7 +80,6 @@ const companySchema = new mongoose.Schema({
   contract: { type: String },
   companyOwner: { type: Schema.Types.ObjectId, ref: "User" },
   logo: { type: String },
-  sliderImages: [String],
   companyNumber: { type: String, unique: true },
   package: { type: Schema.Types.ObjectId, ref: "Option" },
   isPackage: { type: Boolean, default: false },

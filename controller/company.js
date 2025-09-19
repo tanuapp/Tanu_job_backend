@@ -69,6 +69,61 @@ exports.getBranchesByCode = async (req, res) => {
   }
 };
 
+// controller/company.js
+exports.joinBranch = async (req, res) => {
+  try {
+    const { companyId, branchCode } = req.body;
+
+    if (!companyId || !branchCode) {
+      return res.status(400).json({
+        success: false,
+        message: "companyId болон branchCode шаардлагатай",
+      });
+    }
+
+    // Кодын формат шалгах (2 үсэг + 4 тоо)
+    const regex = /^[A-Za-z]{2}[0-9]{4}$/;
+    if (!regex.test(branchCode)) {
+      return res.status(400).json({
+        success: false,
+        message: "Код буруу байна! Жишээ: AB1234",
+      });
+    }
+
+    // тухайн кодтой салбаруудыг хайна
+    const branch = await Company.findOne({ branchCode });
+    if (!branch) {
+      return res.status(404).json({
+        success: false,
+        message: "Салбар олдсонгүй",
+      });
+    }
+
+    // тухайн компанид код тохируулна
+    const companyData = await Company.findById(companyId);
+    if (!companyData) {
+      return res.status(404).json({
+        success: false,
+        message: "Компанийн ID олдсонгүй",
+      });
+    }
+
+    companyData.branchCode = branchCode;
+    companyData.mainBranch = false; // энэ нь дэд салбар болж бүртгэгдэнэ
+    companyData.discount = true; // 🔹 салбарт холбогдсон бол discount true болгоно
+    await companyData.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Салбарт амжилттай холбогдлоо",
+      company: companyData,
+    });
+  } catch (error) {
+    console.error("❌ Join branch error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 exports.getAll = asyncHandler(async (req, res, next) => {
   try {
     const categories = await Model.find()

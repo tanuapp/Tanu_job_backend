@@ -388,6 +388,7 @@ exports.create = asyncHandler(async (req, res, next) => {
 exports.Login = asyncHandler(async (req, res, next) => {
   try {
     const { phone, password } = req.body;
+    console.log("✌️req.body --->", req.body);
     const pop = Number(phone);
 
     const user = await User.findOne({ phone: pop })
