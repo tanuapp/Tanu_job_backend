@@ -15,10 +15,7 @@ const {
 } = require("../controller/service");
 const router = express.Router();
 
-router
-  .route("/")
-  .post(protect, authorize("user admin"), upload.single("photo"), create)
-  .get(getAll);
+router.route("/").post(protect, upload.single("photo"), create).get(getAll);
 
 router.post("/filterByIds", getServicesByIds);
 router.route("/company/:id").get(getcompany);

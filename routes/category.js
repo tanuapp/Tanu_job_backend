@@ -8,9 +8,10 @@ const {
   getAll,
   update,
   deleteModel,
+  getByPlatform,
 } = require("../controller/category");
 const router = express.Router();
-
+router.get("/platform/:platform", getByPlatform);
 router
   .route("/")
   .post(protect, authorize("admin"), upload.single("file"), create)

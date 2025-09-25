@@ -202,8 +202,6 @@ exports.getDiscountedServices = asyncHandler(async (req, res, next) => {
       };
     });
 
-    console.log("servicesWithRemaining", servicesWithRemaining);
-
     return res.status(200).json({
       success: true,
       count: servicesWithRemaining.length,

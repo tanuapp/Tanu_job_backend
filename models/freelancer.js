@@ -16,6 +16,26 @@ const freelancerSchema = new Schema(
       min: 1,
       max: 5,
     },
+    description: { type: String },
+    banks: {
+      type: String,
+      enum: [
+        "Хаан банк",
+        "Голомт Банк",
+        "ХасБанк",
+        "Төрийн банк",
+        "Капитрон банк",
+        "Ариг банк",
+      ],
+    },
+    bankNumber: { type: String },
+    bankOwner: { type: String },
+    fb: { type: String },
+    instagram: { type: String },
+    serviceId: {
+      type: [Schema.Types.ObjectId],
+      ref: "Service",
+    },
     email: {
       type: String,
       sparse: true,
@@ -43,6 +63,8 @@ const freelancerSchema = new Schema(
       type: { type: String, enum: ["Point"], default: "Point" },
       coordinates: { type: [Number], index: "2dsphere" },
     },
+    latitude: { type: String },
+    longitude: { type: String },
     createdAt: {
       type: Date,
       default: Date.now,

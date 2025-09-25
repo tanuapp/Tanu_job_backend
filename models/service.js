@@ -21,6 +21,12 @@ const serviceSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Category",
   },
+  platforms: {
+    type: [String],
+    enum: ["business", "job"], // аль платформд харагдах
+    default: ["business"], // default-оор business гэж хадгална
+    index: true,
+  },
   discount: {
     type: Number,
     default: 0,

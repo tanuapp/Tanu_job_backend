@@ -12,9 +12,15 @@ const categorySchema = new mongoose.Schema({
     ref: "Category",
     default: null,
   },
+  platforms: {
+    type: [String],
+    enum: ["business", "job"], // аль платформд харагдах
+    default: ["business"], // default-оор business гэж хадгална
+    index: true,
+  },
   status: {
     type: Boolean,
-    default: false,
+    default: true,
   },
   createdAt: {
     type: Date,
