@@ -455,6 +455,28 @@ exports.get = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+// controller
+exports.getServicesForFreelancer = asyncHandler(async (req, res) => {
+  try {
+    const freelancer = await Freelancer.findById(req.params.id).populate(
+      "serviceId"
+    ); // Service model-оос бүх талбарууд авна
+
+    if (!freelancer) {
+      return res.status(404).json({
+        success: false,
+        message: "Freelancer олдсонгүй",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: freelancer.serviceId, // services array буцаана
+    });
+  } catch (error) {
+    customResponse.error(res, error.message);
+  }
+});
 
 exports.deleteModel = asyncHandler(async (req, res, next) => {
   try {

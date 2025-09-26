@@ -124,6 +124,32 @@ exports.getCommentsByCompanyId = asyncHandler(async (req, res) => {
       .populate("user")
       .sort({ createdAt: -1 });
 
+    res.status(200).json({
+      success: true,
+      count: comments.length,
+      data: comments,
+    });
+  } catch (error) {
+    console.error("❌ getCommentsByCompanyId error:", error);
+    customResponse.error(res, error.message);
+  }
+});
+exports.getCommentsByFreelancerId = asyncHandler(async (req, res) => {
+  try {
+    const freelancerId = req.params.id; // 🟢 Үүнийг ингэж ЗАС
+
+    if (!mongoose.Types.ObjectId.isValid(freelancerId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid freelancerId" });
+    }
+
+    const objectId = new mongoose.Types.ObjectId(freelancerId);
+
+    const comments = await Model.find({ freelancerId: objectId })
+      .populate("user")
+      .sort({ createdAt: -1 });
+
     console.log("✅ comments:", comments);
     console.log("📦 Total comments:", comments.length);
 

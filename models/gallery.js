@@ -9,6 +9,11 @@ const gallerySchema = new mongoose.Schema({
     ref: "Company",
     required: true,
   },
+  freelancerId: {
+    type: Schema.Types.ObjectId,
+    ref: "Freelancer",
+  },
+
   createdAt: {
     type: Date,
     default: Date.now,
@@ -16,4 +21,3 @@ const gallerySchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model("Gallery", gallerySchema);
- 

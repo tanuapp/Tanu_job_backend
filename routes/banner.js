@@ -7,10 +7,12 @@ const {
   getAllModel,
   getModel,
   updateModel,
+  getBannerByFreelancer,
 } = require("../controller/banner");
 const router = express.Router();
 
 router.route("/").post(upload.single("photo"), createModel).get(getAllModel);
+router.route("/freelancer").get(getBannerByFreelancer);
 router
   .route("/:id")
   .put(upload.single("photo"), updateModel)

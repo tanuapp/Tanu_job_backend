@@ -4,8 +4,9 @@ const upload = require("../middleware/fileUpload");
 const {
   createModel,
   getAllModel,
-  deletePhoto ,
+  deletePhoto,
   updateModel,
+  getFreelancerModel,
 } = require("../controller/gallery");
 const router = express.Router();
 
@@ -19,4 +20,5 @@ router
   .put(upload.fields([{ name: "gallery", maxCount: 20 }]), updateModel)
   .get(getAllModel);
 router.delete("/:id/:filename", deletePhoto);
+router.get("/freelancer/:id", getFreelancerModel);
 module.exports = router;

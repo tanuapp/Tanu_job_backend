@@ -13,6 +13,17 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+exports.getFreelancerModel = asyncHandler(async (req, res, next) => {
+  try {
+    const allUser = await Model.find({
+      freelancerId: req.params.id,
+    });
+
+    customResponse.success(res, allUser);
+  } catch (error) {
+    customResponse.error(res, error.message);
+  }
+});
 
 exports.createModel = asyncHandler(async (req, res, next) => {
   try {

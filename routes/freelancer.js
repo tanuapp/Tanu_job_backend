@@ -20,13 +20,15 @@ const {
   forgotPassword,
   verifyOtp,
   setPin,
+  getServicesForFreelancer,
 } = require("../controller/freelancer");
 
 const router = express.Router();
-
 /**
  * 📌 Public routes (authentication шаардлагагүй)
  */
+router.get("/getServices/:id", getServicesForFreelancer);
+
 router.route("/validate/phone").post(validatePhone);
 router.route("/verify-otp").post(verifyOtp);
 router.route("/register").post(register);

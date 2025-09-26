@@ -19,6 +19,10 @@ const commentSchema = new mongoose.Schema({
     type: Schema.Types.ObjectId,
     ref: "Company",
   },
+  freelancerId: {
+    type: Schema.Types.ObjectId,
+    ref: "Freelancer",
+  },
   status: {
     type: Boolean,
     default: false,

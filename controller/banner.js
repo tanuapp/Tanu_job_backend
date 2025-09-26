@@ -6,12 +6,12 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
   try {
     const query = {};
 
-    // ✅ companyId query байгаа эсэхийг шалгаж шүүх
+    // ✅ companyId query filter
     if (req.query.companyId) {
       query.companyId = req.query.companyId;
     }
 
-    const allBanners = await Model.find(query);
+    const allBanners = await Model.find(query).sort({ createdAt: -1 });
 
     customResponse.success(res, allBanners);
   } catch (error) {
@@ -50,6 +50,18 @@ exports.getModel = asyncHandler(async (req, res, next) => {
     const result = await Model.findById(req.params.id);
 
     customResponse.success(res, result);
+  } catch (error) {
+    customResponse.error(res, error.message);
+  }
+});
+exports.getBannerByFreelancer = asyncHandler(async (req, res, next) => {
+  try {
+    const { freelancerId } = req.query;
+
+    // freelancerId-аар шүүх
+    const banners = await Model.find({ freelancerId });
+
+    customResponse.success(res, banners);
   } catch (error) {
     customResponse.error(res, error.message);
   }

@@ -9,7 +9,7 @@ const freelancerSchema = new Schema(
       required: [true, "Утасны дугаар заавал бичнэ үү!"],
       maxlength: [8, "Утасны дугаар хамгийн ихдээ 8 оронтой байна!"],
     },
-    skills: [String],
+    photo: String,
     avgRating: {
       type: Number,
       default: 5,
@@ -57,7 +57,6 @@ const freelancerSchema = new Schema(
       enum: [0, 1, 2, 3, 4, 5],
       default: 0,
     },
-    company: { type: Schema.Types.ObjectId, ref: "Company" },
     online: { type: Boolean, default: false },
     location: {
       type: { type: String, enum: ["Point"], default: "Point" },

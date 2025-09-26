@@ -55,6 +55,7 @@ const danAuthRoute = require("./routes/dan.js");
 const blackListRoute = require("./routes/blackList.js");
 const attendanceRoute = require("./routes/timelog.js");
 const freelancerRoute = require("./routes/freelancer.js");
+const orderRoute = require("./routes/order.js");
 // Multer setup
 const multer = require("multer");
 const initFirebase = require("./firebaseInit.js");
@@ -170,6 +171,7 @@ app.use("/api/v1/contract-render", onlineContractRender);
 app.use("/api/v1/dan", danAuthRoute);
 app.use("/api/v1/blacklist", blackListRoute);
 app.use("/api/v1/freelancer", freelancerRoute);
+app.use("/api/v1/order", orderRoute);
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
 // File upload
