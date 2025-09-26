@@ -1,5 +1,6 @@
 const Freelancer = require("../models/freelancer");
 const Appointment = require("../models/appointment");
+const Wallet = require("../models/wallet");
 const asyncHandler = require("../middleware/asyncHandler");
 const jwt = require("jsonwebtoken");
 const sendMessage = require("../utils/callpro");
@@ -211,6 +212,29 @@ exports.register = asyncHandler(async (req, res, next) => {
     const user = await Freelancer.create(inputData);
     const token = user.getJsonWebToken();
 
+    // 💰 Automatically create wallet for new freelancer
+    try {
+      const existingWallet = await Wallet.findOne({ freelancerId: user._id });
+      
+      if (!existingWallet) {
+        await Wallet.create({
+          freelancerId: user._id,
+          balance: 0,
+          currency: "MNT",
+          status: "active",
+          transactions: [],
+          totalEarnings: 0,
+          totalWithdrawals: 0,
+          isActive: true,
+        });
+        
+        console.log(`✅ Wallet автоматаар үүсгэгдлээ: ${user._id}`);
+      }
+    } catch (walletError) {
+      console.error("❌ Wallet үүсгэхэд алдаа гарлаа:", walletError.message);
+      // Wallet үүсгэхэд алдаа гарсан ч freelancer үүсгэх үйлдлийг зогсоохгүй
+    }
+
     customResponse.success(res, "Амжилттай хүсэлт илгээлээ");
   } catch (error) {
     console.log(error);
@@ -244,6 +268,29 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
 
     // OTP дээр хадгалсан мэдээллээр хэрэглэгч үүсгэнэ
     user = await Freelancer.create(userOtp.data);
+
+    // 💰 Automatically create wallet for new freelancer
+    try {
+      const existingWallet = await Wallet.findOne({ freelancerId: user._id });
+      
+      if (!existingWallet) {
+        await Wallet.create({
+          freelancerId: user._id,
+          balance: 0,
+          currency: "MNT",
+          status: "active",
+          transactions: [],
+          totalEarnings: 0,
+          totalWithdrawals: 0,
+          isActive: true,
+        });
+        
+        console.log(`✅ Wallet автоматаар үүсгэгдлээ: ${user._id}`);
+      }
+    } catch (walletError) {
+      console.error("❌ Wallet үүсгэхэд алдаа гарлаа:", walletError.message);
+      // Wallet үүсгэхэд алдаа гарсан ч freelancer үүсгэх үйлдлийг зогсоохгүй
+    }
 
     await OTP.deleteOne({ phone, type: "freelancer" });
 

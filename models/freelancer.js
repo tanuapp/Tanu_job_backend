@@ -17,24 +17,15 @@ const freelancerSchema = new Schema(
       max: 5,
     },
     description: { type: String },
-    banks: {
-      type: String,
-      enum: [
-        "Хаан банк",
-        "Голомт Банк",
-        "ХасБанк",
-        "Төрийн банк",
-        "Капитрон банк",
-        "Ариг банк",
-      ],
-    },
-    bankNumber: { type: String },
-    bankOwner: { type: String },
     fb: { type: String },
     instagram: { type: String },
     serviceId: {
       type: [Schema.Types.ObjectId],
       ref: "Service",
+    },
+    categoryId: {
+      type: [Schema.Types.ObjectId],
+      ref: "Category",
     },
     email: {
       type: String,
@@ -57,6 +48,10 @@ const freelancerSchema = new Schema(
       enum: [0, 1, 2, 3, 4, 5],
       default: 0,
     },
+<<<<<<< HEAD
+=======
+
+>>>>>>> eb2b558d9e2de8046e97e067983bd4ee957f2e45
     online: { type: Boolean, default: false },
     location: {
       type: { type: String, enum: ["Point"], default: "Point" },
@@ -109,5 +104,6 @@ freelancerSchema.pre("findOneAndUpdate", async function (next) {
   this._update.pin = await bcrypt.hash(this._update.pin, salt);
   next();
 });
+
 
 module.exports = mongoose.model("Freelancer", freelancerSchema);
