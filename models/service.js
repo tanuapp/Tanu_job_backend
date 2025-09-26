@@ -12,6 +12,10 @@ const serviceSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Company",
   },
+  freelancerId: {
+    type: Schema.Types.ObjectId,
+    ref: "Freelancer",
+  },
   artistId: {
     type: [Schema.Types.ObjectId],
     ref: "Artist",

@@ -4,7 +4,7 @@
   "description": "Amazone bookstore rest api",
   "main": "server.js",
   "scripts": {
-    "start": "nodemon server.js"
+    "dev": "nodemon server.js"
   },
   "author": "",
   "license": "ISC",
