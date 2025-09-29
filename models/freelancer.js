@@ -48,10 +48,6 @@ const freelancerSchema = new Schema(
       enum: [0, 1, 2, 3, 4, 5],
       default: 0,
     },
-<<<<<<< HEAD
-=======
-
->>>>>>> eb2b558d9e2de8046e97e067983bd4ee957f2e45
     online: { type: Boolean, default: false },
     location: {
       type: { type: String, enum: ["Point"], default: "Point" },
