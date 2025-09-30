@@ -55,7 +55,10 @@ const danAuthRoute = require("./routes/dan.js");
 const blackListRoute = require("./routes/blackList.js");
 const attendanceRoute = require("./routes/timelog.js");
 const freelancerRoute = require("./routes/freelancer.js");
+<<<<<<< HEAD
 const orderRoute = require("./routes/order.js");
+=======
+>>>>>>> dfb231b858b0854a332c1e78790a9840318dbc5e
 const walletRoute = require("./routes/wallet.js");
 // Multer setup
 const multer = require("multer");
@@ -172,7 +175,10 @@ app.use("/api/v1/contract-render", onlineContractRender);
 app.use("/api/v1/dan", danAuthRoute);
 app.use("/api/v1/blacklist", blackListRoute);
 app.use("/api/v1/freelancer", freelancerRoute);
+<<<<<<< HEAD
 app.use("/api/v1/order", orderRoute);
+=======
+>>>>>>> dfb231b858b0854a332c1e78790a9840318dbc5e
 app.use("/api/v1/wallet", walletRoute);
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
