@@ -8,15 +8,20 @@ const {
   declineOrder,
   updateStatus,
   getMyOrders,
+  getAllModel,
+  getNearbyFreelancers,
 } = require("../controller/order");
 
 const router = express.Router();
 
-router.post("/", protect, createOrder);
+// POST = create, GET = all orders
+
 router.post("/:orderId/assign", protect, assignProvider);
 router.post("/:orderId/accept", protect, acceptOrder);
 router.post("/:orderId/decline", protect, declineOrder);
 router.patch("/:orderId/status", protect, updateStatus);
 router.get("/me", protect, getMyOrders);
+router.get("/nearby", getNearbyFreelancers);
+router.route("/").post(protect, createOrder).get(getAllModel);
 
 module.exports = router;

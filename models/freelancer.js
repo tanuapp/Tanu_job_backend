@@ -48,10 +48,15 @@ const freelancerSchema = new Schema(
       enum: [0, 1, 2, 3, 4, 5],
       default: 0,
     },
+
     online: { type: Boolean, default: false },
     location: {
       type: { type: String, enum: ["Point"], default: "Point" },
       coordinates: { type: [Number], index: "2dsphere" },
+    },
+    firebase_token: {
+      type: String,
+      default: "",
     },
     latitude: { type: String },
     longitude: { type: String },
@@ -100,6 +105,5 @@ freelancerSchema.pre("findOneAndUpdate", async function (next) {
   this._update.pin = await bcrypt.hash(this._update.pin, salt);
   next();
 });
-
 
 module.exports = mongoose.model("Freelancer", freelancerSchema);

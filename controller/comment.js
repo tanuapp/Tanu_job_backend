@@ -150,9 +150,6 @@ exports.getCommentsByFreelancerId = asyncHandler(async (req, res) => {
       .populate("user")
       .sort({ createdAt: -1 });
 
-    console.log("✅ comments:", comments);
-    console.log("📦 Total comments:", comments.length);
-
     res.status(200).json({
       success: true,
       count: comments.length,
