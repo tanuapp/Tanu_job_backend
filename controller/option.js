@@ -28,7 +28,7 @@ exports.createModel = asyncHandler(async (req, res, next) => {
   } catch (error) {
     customResponse.error(res, error.message);
   }
-});
+});   
 
 exports.updateModel = asyncHandler(async (req, res, next) => {
   try {
@@ -40,7 +40,7 @@ exports.updateModel = asyncHandler(async (req, res, next) => {
   } catch (error) {
     customResponse.error(res, error.message);
   }
-});
+}); 
 exports.getModel = asyncHandler(async (req, res, next) => {
   try {
     const result = await Model.findById(req.params.id);
