@@ -213,12 +213,4 @@ cron.schedule("0 */3 * * *", async () => {
 require("./controller/cron.js");
 
 // Express server running
-const server = httpServer.listen(process.env.PORT);
-
-process.on("unhandledRejection", (err, promise) => {
-  server.close(() => {
-    process.exit(1);
-  });
-});
-
-module.exports = admin;
+module.exports = app;
