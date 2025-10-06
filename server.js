@@ -55,32 +55,25 @@ const danAuthRoute = require("./routes/dan.js");
 const blackListRoute = require("./routes/blackList.js");
 const attendanceRoute = require("./routes/timelog.js");
 const freelancerRoute = require("./routes/freelancer.js");
+
 // Multer setup
 const multer = require("multer");
 const initFirebase = require("./firebaseInit.js");
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "public/uploads/");
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${file.originalname}`;
-    cb(null, uniqueName);
-  },
+  destination: (req, file, cb) => cb(null, "public/uploads/"),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype === "application/pdf") {
-    cb(null, true);
-  } else {
-    cb(new Error("Only PDF files are allowed"), false);
-  }
+  if (file.mimetype === "application/pdf") cb(null, true);
+  else cb(new Error("Only PDF files are allowed"), false);
 };
 
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 300 * 1024 * 1024 }, // 300MB max
+  limits: { fileSize: 300 * 1024 * 1024 },
 });
 
 // --- Express app ---
@@ -99,9 +92,7 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-// ✅ зөв (path зааж өгөх)
 app.options("*", cors());
-
 app.use(logger);
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));
@@ -110,11 +101,8 @@ app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));
 app.post(
   "/api/v1/upload",
   upload.single("upload"),
-  asyncHandler((req, res, next) => {
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
-
+  asyncHandler((req, res) => {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
     const fileUrl = `https://api.tanusoft.mn/uploads/${req.file.filename}`;
     res.status(200).json({ link: fileUrl });
   })
@@ -176,8 +164,5 @@ cron.schedule("0 */3 * * *", async () => {
 
 require("./controller/cron.js");
 
-// --- Firebase export ---
-const functions = require("firebase-functions");
-
-// ✅ Firebase Functions Express экспорт
-exports.api = functions.https.onRequest(app);
+// ✅ Export for Vercel
+module.exports = app;
