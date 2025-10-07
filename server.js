@@ -55,55 +55,36 @@ const danAuthRoute = require("./routes/dan.js");
 const blackListRoute = require("./routes/blackList.js");
 const attendanceRoute = require("./routes/timelog.js");
 const freelancerRoute = require("./routes/freelancer.js");
-const orderRoute = require("./routes/order.js");
-const walletRoute = require("./routes/wallet.js");
+
 // Multer setup
 const multer = require("multer");
 const initFirebase = require("./firebaseInit.js");
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "public/uploads/");
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${file.originalname}`;
-    cb(null, uniqueName);
-  },
+  destination: (req, file, cb) => cb(null, "public/uploads/"),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype === "application/pdf") {
-    cb(null, true);
-  } else {
-    cb(new Error("Only PDF files are allowed"), false);
-  }
+  if (file.mimetype === "application/pdf") cb(null, true);
+  else cb(new Error("Only PDF files are allowed"), false);
 };
 
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 300 * 1024 * 1024 }, // Set max file size limit (300MB)
+  limits: { fileSize: 300 * 1024 * 1024 },
 });
 
-// Server configuration for socket
+// --- Express app ---
 const app = express();
 app.enable("trust proxy");
 app.set("trust proxy", 1);
 
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-  },
-});
-
-// DB connection
+// --- Init ---
 connectDB();
 initFirebase();
-app.set("io", io);
 
-// CORS
 app.use(
   cors({
     origin: "*",
@@ -111,28 +92,23 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-app.options(cors());
+app.options("*", cors());
 app.use(logger);
 app.use(bodyParser.json({ limit: "300mb" }));
 app.use(bodyParser.urlencoded({ limit: "300mb", extended: true }));
 
+// --- Upload route ---
 app.post(
   "/api/v1/upload",
   upload.single("upload"),
-  asyncHandler((req, res, next) => {
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
-
+  asyncHandler((req, res) => {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
     const fileUrl = `https://api.tanusoft.mn/uploads/${req.file.filename}`;
-    res.setHeader("Content-Type", "application/json");
-    return res.status(200).send(
-      JSON.stringify({
-        link: fileUrl,
-      })
-    );
+    res.status(200).json({ link: fileUrl });
   })
 );
+
+// --- Routes ---
 app.use("/api/v1/version", versionRoute);
 app.use("/api/v1/option", optionRouter);
 app.use("/api/v1/category", categoryRoutes);
@@ -172,53 +148,21 @@ app.use("/api/v1/contract-render", onlineContractRender);
 app.use("/api/v1/dan", danAuthRoute);
 app.use("/api/v1/blacklist", blackListRoute);
 app.use("/api/v1/freelancer", freelancerRoute);
-app.use("/api/v1/order", orderRoute);
-app.use("/api/v1/wallet", walletRoute);
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
-// File upload
-app.post("/api/v1/upload-pdf", upload.single("pdfFile"), (req, res) => {
-  try {
-    res.status(200).json({
-      message: "File uploaded successfully",
-      file: req.file,
-    });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-// Global error handler
+// --- Global error handler ---
 app.use(errorHandler);
 
-io.on("connection", (socket) => {
-  socket.on("connect", () => {});
-  socket.on("join", (roomId) => {
-    socket.join(roomId);
-  });
-  socket.on("disconnect", () => {});
-
-  socket.on("message", (data) => {
-    socket.emit("message", "Hello from server");
-  });
-});
-
+// --- Cron jobs ---
 cron.schedule("0 */3 * * *", async () => {
   try {
+    console.log("Running cron job every 3 hours...");
   } catch (error) {
-    console.error("Error checking the model:", error);
+    console.error("Error in cron:", error);
   }
 });
 
 require("./controller/cron.js");
 
-// Express server running
-const server = httpServer.listen(process.env.PORT);
-
-process.on("unhandledRejection", (err, promise) => {
-  server.close(() => {
-    process.exit(1);
-  });
-});
-
-module.exports = admin;
+// ✅ Export for Vercel
+module.exports = app;
