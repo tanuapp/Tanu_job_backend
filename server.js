@@ -55,6 +55,7 @@ const danAuthRoute = require("./routes/dan.js");
 const blackListRoute = require("./routes/blackList.js");
 const attendanceRoute = require("./routes/timelog.js");
 const freelancerRoute = require("./routes/freelancer.js");
+const orderRoute = require("./routes/order.js");
 
 // Multer setup
 const multer = require("multer");
@@ -148,6 +149,7 @@ app.use("/api/v1/contract-render", onlineContractRender);
 app.use("/api/v1/dan", danAuthRoute);
 app.use("/api/v1/blacklist", blackListRoute);
 app.use("/api/v1/freelancer", freelancerRoute);
+app.use("/api/v1/order", orderRoute);
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
 // --- Global error handler ---
@@ -164,5 +166,6 @@ cron.schedule("0 */3 * * *", async () => {
 
 require("./controller/cron.js");
 
-// ✅ Export for Vercel
+app.listen(process.env.PORT, () => console.log(`Server is running on port ${process.env.PORT}`));
+
 module.exports = app;
