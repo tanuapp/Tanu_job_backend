@@ -12,7 +12,7 @@ const {
   getNearbyFreelancers,
 } = require("../controller/order");
 
-const router = express.Router();
+const router    = express.Router();
 
 // POST = create, GET = all orders
 
