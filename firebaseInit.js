@@ -1,5 +1,5 @@
 const admin = require("firebase-admin");
-const serviceAccountwp = require("./firebase key.json");
+const serviceAccountwp = require("./key firebase.json");
 
 const initFirebase = async () => {
   try {
