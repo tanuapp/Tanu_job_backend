@@ -428,3 +428,25 @@ exports.getAllModel = asyncHandler(async (req, res, next) => {
     customResponse.error(res, error.message);
   }
 });
+
+exports.getOrderByIds = asyncHandler(async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+
+    const orders = await Order.find({
+      _id: { $in: orderId },
+    })
+
+    orders.forEach((o) => {});
+
+    return res.status(200).json({
+      success: true,
+      count: orders.length,
+      data: orders,
+    });
+  } catch (error) {
+    console.error("❌ [getOrderByIds] Error:", error.message);
+    customResponse.error(res, error.message);
+  }
+});
