@@ -10,7 +10,7 @@ const {
   getMyOrders,
   getAllModel,
   getNearbyFreelancers,
-  sendCallNotification,
+  getOrderByIds,
 } = require("../controller/order");
 
 const router = express.Router();
@@ -21,6 +21,7 @@ router.post("/:orderId/assign", protect, assignProvider);
 router.post("/:orderId/accept", protect, acceptOrder);
 router.post("/:orderId/decline", protect, declineOrder);
 router.patch("/:orderId/status", protect, updateStatus);
+router.get("/:orderId/", getOrderByIds);
 router.get("/me", protect, getMyOrders);
 router.get("/nearby", getNearbyFreelancers);
 router.post("/call/:id", protect, sendCallNotification);
