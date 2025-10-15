@@ -15,6 +15,61 @@ const DISPATCH_EXPIRES_MS = 60 * 1000; // ← та хэлсэн 60сек
 // in-memory таймерууд (prod-д BullMQ-р солино)
 const dispatchTimers = new Map(); // orderId -> timeoutId
 
+exports.sendCallNotification = asyncHandler(async (req, res) => {
+  console.log("bn --->");
+
+  try {
+    const { id } = req.params; // order ID
+    console.log("✌️id --->", id);
+
+    // 🧠 Order-г бүх холбоотой мэдээлэлтэй авах
+    const order = await Order.findById(id)
+      .populate("freelancer")
+      .populate("user")
+      .populate("service");
+
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    }
+
+    const freelancer = order.freelancer;
+    const user = order.user;
+
+    if (!freelancer?.firebase_token) {
+      return res.status(400).json({
+        success: false,
+        message: "Freelancer has no Firebase token",
+      });
+    }
+
+    const token = freelancer.firebase_token;
+    console.log("✌️token --->", token);
+    const callerName = user?.nick_name || user?.name || "Customer";
+
+    const title = "📞 Incoming Call";
+    const body = `${callerName} is calling you...`;
+
+    const data = {
+      type: "incoming_call",
+      callId: order._id.toString(),
+      callerName,
+    };
+
+    const result = await sendFirebaseNotification({ title, body, data, token });
+    console.log("✌️result --->", result);
+
+    if (result.success) {
+      return res.json({ success: true, message: "Call notification sent." });
+    } else {
+      throw new Error(result.error || "Failed to send notification");
+    }
+  } catch (err) {
+    console.error("❌ sendCallNotification error:", err.message);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
 exports.getNearbyFreelancers = asyncHandler(async (req, res) => {
   console.log("===== 📍 GET /freelancer/nearby эхэллээ =====");
 
@@ -63,20 +118,11 @@ exports.getNearbyFreelancers = asyncHandler(async (req, res) => {
 });
 
 exports.createOrder = asyncHandler(async (req, res) => {
-  console.log("===== 📦 CREATE ORDER эхэллээ =====");
-  console.log("👉 req.userId:", req.userId);
-  console.log("👉 req.body:", req.body);
-
   let { serviceId, freelancerId, address, lat, lng, price } = req.body;
 
   if (!Array.isArray(serviceId)) serviceId = [serviceId].filter(Boolean);
-  console.log("👉 Final serviceId array:", serviceId);
 
   const services = await Service.find({ _id: { $in: serviceId } });
-  console.log(
-    "👉 Олдсон services:",
-    services.map((s) => s._id)
-  );
 
   if (!services.length) {
     return res.status(404).json({
@@ -94,12 +140,9 @@ exports.createOrder = asyncHandler(async (req, res) => {
     price: Number(price) || 0,
     status: freelancerId ? "assigned" : "dispatching",
   });
-  console.log("✅ Order created:", order._id);
 
   // 🔹 Шууд оноох (freelancerId ирсэн)
   if (freelancerId && mongoose.Types.ObjectId.isValid(freelancerId)) {
-    console.log("👉 Direct assign to freelancer:", freelancerId);
-
     order.freelancer = freelancerId;
     order.status = "assigned";
     await order.save();
@@ -165,7 +208,6 @@ exports.createOrder = asyncHandler(async (req, res) => {
       });
     }
 
-    console.log("===== ✅ CREATE ORDER дууслаа (direct assign) =====");
     return res.status(201).json({ success: true, data: order });
   }
 
@@ -185,8 +227,6 @@ exports.createOrder = asyncHandler(async (req, res) => {
     { $limit: DISPATCH_LIMIT },
     { $project: { _id: 1, dist: 1 } },
   ]);
-
-  console.log("👉 Candidates found:", candidates.length);
 
   if (!candidates.length) {
     const user = await Customer.findById(req.userId);
@@ -279,7 +319,6 @@ exports.createOrder = asyncHandler(async (req, res) => {
 
   dispatchTimers.set(String(order._id), t);
 
-  console.log("===== ✅ CREATE ORDER дууслаа (broadcast) =====");
   return res.status(201).json({ success: true, data: order });
 });
 
@@ -304,9 +343,6 @@ exports.assignProvider = asyncHandler(async (req, res) => {
 });
 exports.acceptOrder = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
-  console.log("===== 🟢 ACCEPT ORDER эхэллээ =====");
-  console.log("👉 orderId:", orderId);
-  console.log("👉 freelancerId:", req.userId);
 
   try {
     // зөвхөн хэн ч аваагүй үед “анх авсан”-ыг тэмдэглэнэ
@@ -336,23 +372,18 @@ exports.acceptOrder = asyncHandler(async (req, res) => {
       });
     }
 
-    console.log("✅ Захиалга амжилттай update хийгдлээ:", updated._id);
-
     // ⏱ in-memory таймер байвал цуцална
     const t = dispatchTimers.get(String(orderId));
     if (t) {
       clearTimeout(t);
       dispatchTimers.delete(String(orderId));
-      console.log("🛑 Dispatch таймер цуцлагдлаа:", orderId);
     }
 
     // Хэрэглэгчид: “accepted”
     const user = await Customer.findById(updated.user);
-    console.log("👉 Target customer:", user?._id, user?.firebase_token);
 
     const userToken = user?.firebase_token;
     if (userToken) {
-      console.log("📩 Sending FCM to customer:", userToken);
       await sendFirebaseNotification({
         token: userToken,
         title: "Захиалга баталгаажлаа",
@@ -364,12 +395,9 @@ exports.acceptOrder = asyncHandler(async (req, res) => {
           freelancerId: req.userId,
         },
       });
-      console.log("✅ Notification sent to customer:", user._id);
     } else {
-      console.log("⚠️ Customer-д firebase_token алга:", user?._id);
     }
 
-    console.log("===== ✅ ACCEPT ORDER дууслаа =====");
     return res.status(200).json({ success: true, data: updated });
   } catch (err) {
     console.error("❌ ACCEPT ORDER алдаа:", err.message);

@@ -10,9 +10,10 @@ const {
   getMyOrders,
   getAllModel,
   getNearbyFreelancers,
+  sendCallNotification,
 } = require("../controller/order");
 
-const router    = express.Router();
+const router = express.Router();
 
 // POST = create, GET = all orders
 
@@ -22,6 +23,7 @@ router.post("/:orderId/decline", protect, declineOrder);
 router.patch("/:orderId/status", protect, updateStatus);
 router.get("/me", protect, getMyOrders);
 router.get("/nearby", getNearbyFreelancers);
+router.post("/call/:id", protect, sendCallNotification);
 router.route("/").post(protect, createOrder).get(getAllModel);
 
 module.exports = router;

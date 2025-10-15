@@ -1,19 +1,18 @@
+// firebaseInit.js
 const admin = require("firebase-admin");
-const serviceAccountwp = require("./tanu-app-928a8-firebase-adminsdk-mrr1i-e2eabf1724.json");
+const serviceAccount = require("./tanu-app-928a8-firebase-adminsdk-mrr1i-a3b5b66120.json");
 
-const initFirebase = async () => {
-  try {
+const initFirebase = () => {
+  if (!admin.apps.length) {
     admin.initializeApp({
-      credential: admin.credential.cert(serviceAccountwp),
+      credential: admin.credential.cert(serviceAccount),
     });
-
-    global.fireadmin = admin;
-
-    console.log("Firebase Admin initialized successfully");
-  } catch (error) {
-    console.error("Firebase Admin initialization failed:", error.message);
-    process.exit(1);
+    console.log("✅ Firebase initialized successfully");
+  } else {
+    console.log("⚙️ Firebase already initialized");
   }
+
+  global.fireadmin = admin;
 };
 
 module.exports = initFirebase;

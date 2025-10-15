@@ -6,9 +6,7 @@ const sendMessage = require("../utils/callpro");
 
 const customResponse = require("../utils/customResponse");
 const OTP = require("../models/otp");
-const Artist = require("../models/artist");
-const Company = require("../models/company");
-const customer = require("../models/customer");
+const Order = require("../models/order");
 
 function generateOTP(length = 4) {
   let otp = "";
@@ -90,29 +88,50 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 
 exports.getCustomerAppointments = asyncHandler(async (req, res) => {
   try {
-    // 1️⃣ Appointment хайж татах + schedule → service → company, artist-ийг populate хийх
-    const allAppointments = await Appointment.find({
-      user: req.userId,
-      status: { $in: ["paid", "done", "completed", "pending"] },
-    })
-      .populate({
-        path: "schedule",
-        populate: [
-          { path: "serviceId" },
-          { path: "artistId" },
-          { path: "companyId" }, // Schedule → company
-        ],
-      })
-      .populate("company"); // Appointment → company
+    const userId = req.userId;
+    const { platform } = req.query; // ?platform=job | business
 
-    // 3️⃣ Эцсийн үр дүнг буцаах
+    let data = [];
+
+    if (platform === "job") {
+      // 🧠 JOB PLATFORM (freelancer orders)
+      data = await Order.find({
+        user: userId,
+        status: { $in: ["pending", "paid", "accepted", "done", "completed"] },
+      })
+        .populate("freelancer") // connect freelancer info
+        .populate("service") // array of services
+        .sort({ createdAt: -1 });
+    } else {
+      // 🏢 BUSINESS PLATFORM (salon/company appointments)
+      data = await Appointment.find({
+        user: userId,
+        status: { $in: ["pending", "paid", "advance", "done", "completed"] },
+      })
+        .populate({
+          path: "schedule",
+          populate: [
+            { path: "serviceId" },
+            { path: "artistId" },
+            { path: "companyId" },
+          ],
+        })
+        .populate("company")
+        .sort({ createdAt: -1 });
+    }
+
     res.status(200).json({
       success: true,
-      data: allAppointments,
+      platform: platform || "business",
+      count: data.length,
+      data,
     });
   } catch (error) {
-    console.error("❌ [ERROR] getCustomerAppointments:", error.message);
-    customResponse.error(res, error.message);
+    console.error("❌ [ERROR] getCustomerAppointments:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 });
 
