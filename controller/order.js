@@ -15,61 +15,103 @@ const DISPATCH_EXPIRES_MS = 60 * 1000; // ← та хэлсэн 60сек
 // in-memory таймерууд (prod-д BullMQ-р солино)
 const dispatchTimers = new Map(); // orderId -> timeoutId
 
-exports.sendCallNotification = asyncHandler(async (req, res) => {
-  console.log("bn --->");
-
+exports.sendCallToCustomer = asyncHandler(async (req, res) => {
   try {
-    const { id } = req.params; // order ID
-    console.log("✌️id --->", id);
+    const { id } = req.params;
 
-    // 🧠 Order-г бүх холбоотой мэдээлэлтэй авах
     const order = await Order.findById(id)
       .populate("freelancer")
-      .populate("user")
-      .populate("service");
+      .populate("user");
 
-    if (!order) {
+    if (!order)
       return res
         .status(404)
         .json({ success: false, message: "Order not found" });
-    }
 
     const freelancer = order.freelancer;
+    console.log("✌️freelancer --->", freelancer);
     const user = order.user;
 
-    if (!freelancer?.firebase_token) {
-      return res.status(400).json({
-        success: false,
-        message: "Freelancer has no Firebase token",
-      });
-    }
+    if (!freelancer?.firebase_token)
+      return res
+        .status(400)
+        .json({ success: false, message: "Freelancer has no Firebase token" });
 
     const token = freelancer.firebase_token;
     console.log("✌️token --->", token);
     const callerName = user?.nick_name || user?.name || "Customer";
 
+    const data = {
+      type: "incoming_call",
+      callId: order._id.toString(),
+      callerName,
+      callerType: "customer", // ✅ 'from' биш 'callerType'
+    };
+
     const title = "📞 Incoming Call";
     const body = `${callerName} is calling you...`;
+    console.log("✌️body --->", body);
+
+    const result = await sendFirebaseNotification({ title, body, data, token });
+    if (!result.success)
+      throw new Error(result.error || "Failed to send notification");
+
+    res.json({ success: true, message: "Customer→Freelancer call sent." });
+  } catch (err) {
+    console.error("❌ sendCallToFreelancer error:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 🧩 2. Фрилэнсер → Хэрэглэгч рүү дуудлага
+exports.sendCallToFreelancer = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const order = await Order.findById(id)
+      .populate("freelancer")
+      .populate("user");
+
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+
+    const freelancer = order.freelancer;
+    const user = order.user;
+    console.log("✌️user --->", user);
+
+    if (!user?.firebase_token)
+      return res
+        .status(400)
+        .json({ success: false, message: "Customer has no Firebase token" });
+
+    const token = user.firebase_token;
+    console.log("✌️token --->", token);
+    const callerName = freelancer?.nick_name || "Freelancer";
 
     const data = {
       type: "incoming_call",
       callId: order._id.toString(),
       callerName,
+      callerType: "freelancer", // ✅ 'from' биш 'callerType'
     };
 
-    const result = await sendFirebaseNotification({ title, body, data, token });
-    console.log("✌️result --->", result);
+    const title = "📞 Incoming Call";
+    const body = `${callerName} is calling you...`;
+    console.log("✌️body --->", body);
 
-    if (result.success) {
-      return res.json({ success: true, message: "Call notification sent." });
-    } else {
+    const result = await sendFirebaseNotification({ title, body, data, token });
+    if (!result.success)
       throw new Error(result.error || "Failed to send notification");
-    }
+
+    res.json({ success: true, message: "Freelancer→Customer call sent." });
   } catch (err) {
-    console.error("❌ sendCallNotification error:", err.message);
-    return res.status(500).json({ success: false, error: err.message });
+    console.error("❌ sendCallToCustomer error:", err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
+
 exports.getNearbyFreelancers = asyncHandler(async (req, res) => {
   console.log("===== 📍 GET /freelancer/nearby эхэллээ =====");
 
@@ -461,10 +503,9 @@ exports.getOrderByIds = asyncHandler(async (req, res) => {
   try {
     const { orderId } = req.params;
 
-
     const orders = await Order.find({
       _id: { $in: orderId },
-    })
+    });
 
     orders.forEach((o) => {});
 
