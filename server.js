@@ -34,7 +34,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 300 * 1024 * 1024 }, // 300MB
+  limits: { fileSize: 300 * 1024 * 1024 },
 });
 
 // --- Core system initialization ---
@@ -88,7 +88,9 @@ app.post(
   upload.single("upload"),
   asyncHandler((req, res) => {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-    const fileUrl = `https://api.tanusoft.mn/uploads/${req.file.filename}`;
+    const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${
+      req.file.filename
+    }`;
     res.status(200).json({ link: fileUrl });
   })
 );
@@ -139,7 +141,7 @@ app.use("/api/v1/freelancer", require("./routes/freelancer"));
 app.use("/api/v1/order", require("./routes/order"));
 app.use("/api/v1/wallet", require("./routes/wallet"));
 
-// --- Static uploads folder (works on non-serverless env only) ---
+// --- Static uploads folder (for local only) ---
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
 // --- Default route for testing ---
@@ -152,7 +154,7 @@ app.get("/", (req, res) => {
 // --- Error handler ---
 app.use(errorHandler);
 
-// --- Skip cron for Vercel (use Vercel Scheduled Jobs instead) ---
+// --- Cron job (disabled on Vercel) ---
 if (process.env.VERCEL !== "1") {
   cron.schedule("0 */3 * * *", async () => {
     try {
@@ -164,5 +166,13 @@ if (process.env.VERCEL !== "1") {
   require("./controller/cron");
 }
 
-// --- Export for Vercel ---
+// --- Start locally, export for Vercel ---
+if (process.env.VERCEL !== "1") {
+  const PORT = process.env.PORT || 9000;
+  app.listen(PORT, async () => {
+    await initCore();
+    console.log(`✅ Server running locally on port ${PORT}`);
+  });
+}
+
 module.exports = app;
