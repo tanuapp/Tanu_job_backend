@@ -151,4 +151,19 @@ app.listen(process.env.PORT, async () => {
   console.log(`✅ Server running on port ${process.env.PORT}`);
 });
 
+// --- Init Core Systems ---
+let initialized = false;
+async function initCore() {
+  if (initialized) return;
+  initialized = true;
+  await connectDB();
+  await new Promise((resolve) =>
+    ntpClient.getNetworkTime("pool.ntp.org", 123, () => resolve())
+  );
+  initFirebase();
+  console.log("✅ Core systems initialized");
+}
+initCore();
+
+// Export Express for Vercel
 module.exports = app;
