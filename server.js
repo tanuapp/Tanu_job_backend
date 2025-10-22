@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const path = require("path");
 const cron = require("node-cron");
+const ntpClient = require("ntp-client");
 
 // --- Middleware & Utils ---
 const logger = require("./middleware/logger");
@@ -12,7 +13,7 @@ const errorHandler = require("./middleware/error");
 const asyncHandler = require("./middleware/asyncHandler");
 const connectDB = require("./db");
 const initFirebase = require("./firebaseInit");
-const ntpClient = require("ntp-client");
+
 dotenv.config({ path: ".env" });
 
 // --- Express app ---
@@ -58,12 +59,19 @@ async function syncClock() {
   });
 }
 
-async function initCoreSystems() {
+// --- Initialize Core Systems Once ---
+let initialized = false;
+async function initCore() {
+  if (initialized) return;
+  initialized = true;
+
   await connectDB();
   await syncClock();
   initFirebase();
-  console.log("🚀 All core systems initialized successfully");
+
+  console.log("✅ Core systems initialized");
 }
+initCore();
 
 // --- Middleware ---
 app.use(
@@ -80,12 +88,14 @@ app.post(
   upload.single("upload"),
   asyncHandler((req, res) => {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-    const fileUrl = `https://api.tanusoft.mn/uploads/${req.file.filename}`;
+    const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${
+      req.file.filename
+    }`;
     res.status(200).json({ link: fileUrl });
   })
 );
 
-// --- API routes ---
+// --- API Routes ---
 app.use("/api/v1/version", require("./routes/version"));
 app.use("/api/v1/option", require("./routes/option"));
 app.use("/api/v1/category", require("./routes/category"));
@@ -130,25 +140,39 @@ app.use("/api/v1/blacklist", require("./routes/blackList"));
 app.use("/api/v1/freelancer", require("./routes/freelancer"));
 app.use("/api/v1/order", require("./routes/order"));
 app.use("/api/v1/wallet", require("./routes/wallet"));
+
+// --- Static uploads folder (for local only) ---
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+
+// --- Default route for testing ---
+app.get("/", (req, res) => {
+  res
+    .status(200)
+    .json({ success: true, message: "Tanu Job API is running ✅" });
+});
 
 // --- Error handler ---
 app.use(errorHandler);
 
-// --- Cron job example ---
-cron.schedule("0 */3 * * *", async () => {
-  try {
-    console.log("🕒 Running cron job every 3 hours...");
-  } catch (error) {
-    console.error("Error in cron job:", error);
-  }
-});
-require("./controller/cron");
+// --- Cron job (disabled on Vercel) ---
+if (process.env.VERCEL !== "1") {
+  cron.schedule("0 */3 * * *", async () => {
+    try {
+      console.log("🕒 Running cron job every 3 hours...");
+    } catch (error) {
+      console.error("Error in cron job:", error);
+    }
+  });
+  require("./controller/cron");
+}
 
-// --- Start server ---
-app.listen(process.env.PORT, async () => {
-  await initCoreSystems();
-  console.log(`✅ Server running on port ${process.env.PORT}`);
-});
+// --- Start locally, export for Vercel ---
+if (process.env.VERCEL !== "1") {
+  const PORT = process.env.PORT || 9000;
+  app.listen(PORT, async () => {
+    await initCore();
+    console.log(`✅ Server running locally on port ${PORT}`);
+  });
+}
 
 module.exports = app;
