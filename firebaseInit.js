@@ -1,6 +1,6 @@
 // firebaseInit.js
 const admin = require("firebase-admin");
-const serviceAccount = require("./tanu-app-928a8-firebase-adminsdk-fbsvc-6d280bc2ac.json");
+const serviceAccount = require("./tanu-app-928a8-firebase-adminsdk-fbsvc-aba3caeb3f.json");
 
 const initFirebase = () => {
   if (!admin.apps.length) {

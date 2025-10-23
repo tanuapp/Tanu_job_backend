@@ -42,13 +42,15 @@ async function syncClock() {
   return new Promise((resolve) => {
     const timeout = setTimeout(() => {
       console.warn("⚠️ NTP sync timeout — skipped");
+      global.clockOffset = 0;
       resolve();
     }, 4000);
 
     ntpClient.getNetworkTime("pool.ntp.org", 123, (err, date) => {
       clearTimeout(timeout);
-      if (err) {
-        console.error("❌ NTP sync failed:", err.message);
+      if (err || !date) {
+        console.error("❌ NTP sync failed:", err?.message || "No response");
+        global.clockOffset = 0;
         return resolve();
       }
       const diff = date.getTime() - Date.now();
