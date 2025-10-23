@@ -17,7 +17,6 @@ const walletSchema = new Schema(
     currency: {
       type: String,
       default: "MNT",
-      enum: ["MNT", "USD"],
     },
     status: {
       type: String,
@@ -113,11 +112,11 @@ const walletSchema = new Schema(
       type: String,
       default: null,
     },
-    bankNumber: { 
+    bankNumber: {
       type: String,
       default: null,
     },
-    bankOwner: { 
+    bankOwner: {
       type: String,
       default: null,
     },
@@ -145,18 +144,21 @@ walletSchema.pre("save", function (next) {
 // ✅ Method to add transaction
 walletSchema.methods.addTransaction = function (transactionData) {
   this.transactions.push(transactionData);
-  
+
   // Update balance based on transaction type
   if (transactionData.type === "credit" || transactionData.type === "refund") {
     this.balance += transactionData.amount;
     this.totalEarnings += transactionData.amount;
-  } else if (transactionData.type === "debit" || transactionData.type === "withdrawal") {
+  } else if (
+    transactionData.type === "debit" ||
+    transactionData.type === "withdrawal"
+  ) {
     this.balance -= transactionData.amount;
     if (transactionData.type === "withdrawal") {
       this.totalWithdrawals += transactionData.amount;
     }
   }
-  
+
   return this.save();
 };
 
@@ -174,7 +176,10 @@ walletSchema.methods.getTransactionHistory = function (limit = 10, skip = 0) {
 
 // ✅ Static method to find wallet by freelancer ID
 walletSchema.statics.findByFreelancerId = function (freelancerId) {
-  return this.findOne({ freelancerId }).populate("freelancerId", "first_name last_name phone");
+  return this.findOne({ freelancerId }).populate(
+    "freelancerId",
+    "first_name last_name phone"
+  );
 };
 
 // ✅ Index for better performance
