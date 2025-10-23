@@ -32,7 +32,7 @@ const bankData = [
 
 // Helper function to get bank code from corporate data
 const getBankCode = (bankName) => {
-  const bank = bankData.find(b => b.bankName === bankName);
+  const bank = bankData.find((b) => b.bankName === bankName);
   return bank ? bank.code : null;
 };
 
@@ -57,9 +57,9 @@ exports.getAll = asyncHandler(async (req, res, next) => {
 exports.getByFreelancerId = asyncHandler(async (req, res, next) => {
   try {
     const { freelancerId } = req.params;
-    
+
     const wallet = await Wallet.findOne({ freelancerId });
-    
+
     if (!wallet) {
       return res.status(404).json({
         success: false,
@@ -87,7 +87,7 @@ exports.getMyWallet = asyncHandler(async (req, res, next) => {
     }
 
     const wallet = await Wallet.findOne({ freelancerId: req.userId });
-    
+
     if (!wallet) {
       return res.status(404).json({
         success: false,
@@ -188,8 +188,10 @@ exports.update = asyncHandler(async (req, res, next) => {
 // ✅ Get wallet by ID
 exports.get = asyncHandler(async (req, res, next) => {
   try {
-    const wallet = await Wallet.findById(req.params.id)
-      .populate("freelancerId", "first_name last_name phone");
+    const wallet = await Wallet.findById(req.params.id).populate(
+      "freelancerId",
+      "first_name last_name phone"
+    );
 
     if (!wallet) {
       return res.status(404).json({
@@ -232,7 +234,8 @@ exports.deleteModel = asyncHandler(async (req, res, next) => {
 // ✅ Add transaction to wallet
 exports.addTransaction = asyncHandler(async (req, res, next) => {
   try {
-    const { type, amount, description, serviceId, invoiceId, companyId } = req.body;
+    const { type, amount, description, serviceId, invoiceId, companyId } =
+      req.body;
 
     if (!type || !amount || !description) {
       return res.status(400).json({
@@ -287,7 +290,10 @@ exports.getTransactionHistory = asyncHandler(async (req, res, next) => {
       });
     }
 
-    const transactions = wallet.getTransactionHistory(parseInt(limit), parseInt(skip));
+    const transactions = wallet.getTransactionHistory(
+      parseInt(limit),
+      parseInt(skip)
+    );
 
     res.status(200).json({
       success: true,
@@ -399,7 +405,9 @@ exports.withdraw = asyncHandler(async (req, res, next) => {
 exports.getBalance = asyncHandler(async (req, res, next) => {
   try {
     // Find user's wallet
-    const wallet = await Wallet.findOne({ freelancerId: req.userId }).select("balance currency totalEarnings totalWithdrawals");
+    const wallet = await Wallet.findOne({ freelancerId: req.userId }).select(
+      "balance currency totalEarnings totalWithdrawals"
+    );
     if (!wallet) {
       return res.status(404).json({
         success: false,
@@ -485,7 +493,8 @@ exports.updateBankInfo = asyncHandler(async (req, res, next) => {
     if (!wallet.hasBankInfo) {
       return res.status(400).json({
         success: false,
-        message: "Банкны мэдээлэл байхгүй байна. Эхлээд банкны мэдээлэл оруулна уу",
+        message:
+          "Банкны мэдээлэл байхгүй байна. Эхлээд банкны мэдээлэл оруулна уу",
       });
     }
 
@@ -583,7 +592,9 @@ exports.updateStatus = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: `Хэтэвч ${status === "active" ? "идэвхжүүлэгдлээ" : "идэвхгүй болгогдлоо"}`,
+      message: `Хэтэвч ${
+        status === "active" ? "идэвхжүүлэгдлээ" : "идэвхгүй болгогдлоо"
+      }`,
       data: wallet,
     });
   } catch (error) {
