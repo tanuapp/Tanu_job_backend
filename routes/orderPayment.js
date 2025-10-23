@@ -5,7 +5,7 @@ const {
   orderCallback,
   getOrderPaymentStatus,
   getFreelancerWallet,
-} = require("../controllers/orderPaymentController");
+} = require("../controller/orderPaymentController");
 
 router.post("/create/:id", createOrderQpay);
 router.get("/callback/:id", orderCallback);
