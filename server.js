@@ -140,7 +140,7 @@ app.use("/api/v1/blacklist", require("./routes/blackList"));
 app.use("/api/v1/freelancer", require("./routes/freelancer"));
 app.use("/api/v1/order", require("./routes/order"));
 app.use("/api/v1/wallet", require("./routes/wallet"));
-app.use("api.v1/order-qpay", require("./routes/orderPayment"));
+app.use("/api/v1/order-qpay", require("./routes/orderPayment"));
 // --- Static uploads folder (for local only) ---
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
