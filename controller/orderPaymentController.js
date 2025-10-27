@@ -29,15 +29,7 @@ exports.createOrderQpay = asyncHandler(async (req, res) => {
     }
 
     // Calculate amount
-    let amount = 0;
-    if (order.serviceType === "fixed") {
-      amount = Number(order.fixedPrice || 0);
-    } else {
-      const startTime = new Date(order.startTime);
-      const endTime = new Date(order.endTime);
-      const hoursWorked = (endTime - startTime) / (1000 * 60 * 60);
-      amount = Number((order.hourlyRate * hoursWorked).toFixed(0));
-    }
+    let amount = order.price;
 
     // Create or find existing invoice
     let invoice = await OrderInvoice.findOne({ order: req.params.id });
