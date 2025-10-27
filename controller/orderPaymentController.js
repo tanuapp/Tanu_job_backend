@@ -22,12 +22,6 @@ exports.createOrderQpay = asyncHandler(async (req, res) => {
         .json({ success: false, message: "Order not found" });
     }
 
-    if (order.status !== "completed") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Order is not completed yet" });
-    }
-
     // Calculate amount
     let amount = order.price;
 
@@ -287,6 +281,7 @@ exports.orderCallback = asyncHandler(async (req, res) => {
       amount: invoice.amount,
       freelancerAmount: freelancerAmount,
       commissionAmount: commissionAmount,
+      invoiceId: invoice.sender_invoice_id,
     });
 
     return res.status(200).json({
@@ -296,6 +291,7 @@ exports.orderCallback = asyncHandler(async (req, res) => {
       invoice: invoice,
       freelancerAmount: freelancerAmount,
       commissionAmount: commissionAmount,
+      invoiceId: invoice.sender_invoice_id,
     });
   } catch (error) {
     console.error(
