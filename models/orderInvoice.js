@@ -28,7 +28,7 @@ const orderInvoiceSchema = new Schema({
     type: Number,
     default: 0,
   },
-  amount: {
+  amount: {         
     type: Number,
     required: true,
   },
