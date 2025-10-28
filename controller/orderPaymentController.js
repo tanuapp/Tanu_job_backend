@@ -16,9 +16,21 @@ exports.createOrderQpay = asyncHandler(async (req, res) => {
 
     // 🔍 Find the order with full population
     const order = await Order.findById(req.params.id)
-      .populate("user", "first_name last_name phone")
-      .populate("freelancer", "first_name last_name phone")
-      .populate("service", "serviceName price hourlyRate");
+      .populate({
+        path: "user",
+        model: "Customer",
+        select: "first_name last_name phone",
+      })
+      .populate({
+        path: "freelancer",
+        model: "Freelancer",
+        select: "first_name last_name phone",
+      })
+      .populate({
+        path: "service",
+        model: "Service",
+        select: "serviceName price hourlyRate",
+      });
 
     if (!order) {
       console.log("❌ Order not found:", req.params.id);
@@ -30,11 +42,7 @@ exports.createOrderQpay = asyncHandler(async (req, res) => {
     console.log("📦 Order found:", order._id, "User:", order.user?._id);
 
     // 🧮 Calculate total amount (sum of all services)
-    const totalAmount =
-      Array.isArray(order.service) && order.service.length > 0
-        ? order.service.reduce((sum, s) => sum + (s.price || 0), 0)
-        : order.price || 0;
-
+    const totalAmount = order.price;
     if (!totalAmount || totalAmount <= 0) {
       console.log("❌ Invalid order amount:", totalAmount);
       return res
@@ -43,6 +51,7 @@ exports.createOrderQpay = asyncHandler(async (req, res) => {
     }
 
     console.log("💰 Order amount:", totalAmount);
+    console.log("🔍 Order.user:", order.user);
 
     // 🔍 Check existing invoice
     let invoice = await OrderInvoice.findOne({ order: order._id });
@@ -50,16 +59,22 @@ exports.createOrderQpay = asyncHandler(async (req, res) => {
     if (!invoice) {
       console.log("📄 Creating new invoice");
 
+      const rawOrder = await Order.findById(req.params.id).lean();
+      console.log("🧾 Raw Order:", rawOrder);
+
+      const userId = rawOrder.user || rawOrder.customer;
+      if (!userId) {
+        throw new Error("Order has no user or customer field");
+      }
+
       invoice = await OrderInvoice.create({
-        order: order._id,
-        user: order.user?._id || order.user || null,
-        freelancer: order.freelancer?._id || order.freelancer || null,
-        service: Array.isArray(order.service)
-          ? order.service.map((s) => s._id || s)
-          : [],
-        amount: totalAmount,
-        price: totalAmount,
-        discount: order.discount || 0,
+        order: rawOrder._id,
+        user: userId,
+        freelancer: rawOrder.freelancer,
+        service: Array.isArray(rawOrder.service) ? rawOrder.service : [],
+        amount: rawOrder.price,
+        price: rawOrder.price,
+        discount: rawOrder.discount || 0,
         status: "pending",
       });
 
@@ -195,7 +210,7 @@ exports.orderCallback = asyncHandler(async (req, res) => {
       sender_invoice_id: senderInvoiceId,
     })
       .populate("order")
-      .populate("user", "first_name last_name phone", "Customer")
+      .populate("users", "first_name last_name phone", "Customer")
 
       .populate("freelancer", "first_name last_name deviceToken", "Freelancer")
       .session(session);

@@ -9,7 +9,7 @@ const orderInvoiceSchema = new Schema({
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: "Customer",
     required: true,
   },
   freelancer: {
@@ -28,7 +28,7 @@ const orderInvoiceSchema = new Schema({
     type: Number,
     default: 0,
   },
-  amount: {         
+  amount: {
     type: Number,
     required: true,
   },
