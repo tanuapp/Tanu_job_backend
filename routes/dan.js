@@ -11,19 +11,13 @@ const {
   DAN_USERINFO_URL,
 } = process.env;
 
+// ✅ 1. Login — эхний OAuth redirect
 router.get("/login", (req, res) => {
-  const service_structure = [
-    {
-      wsdl: "https://xyp.gov.mn/citizen-1.5.0/ws?WSDL",
-      services: ["WS100101_getCitizenIDCardInfo"],
-    },
-  ];
-
-  const scope = Buffer.from(JSON.stringify(service_structure)).toString(
-    "base64"
-  );
+  // Scope-г хүсвэл customize хийж болно.
+  const scope = "openid profile citizen_info";
   const state = Math.random().toString(36).substring(2, 15);
 
+  // ⚠️ DAN_AUTH_URL заавал https://sso.gov.mn/oauth2/authorize байх ёстой
   const redirectUrl = `${DAN_AUTH_URL}?response_type=code&client_id=${DAN_CLIENT_ID}&redirect_uri=${encodeURIComponent(
     DAN_REDIRECT_URI
   )}&scope=${scope}&state=${state}`;
@@ -32,13 +26,15 @@ router.get("/login", (req, res) => {
   res.redirect(redirectUrl);
 });
 
+// ✅ 2. Callback — code → token → userinfo → redirect to app
 router.get("/callback", async (req, res) => {
-  const { code, state } = req.query;
+  const { code } = req.query;
   if (!code) return res.status(400).send("Missing code");
 
   try {
+    // --- 1️⃣ Authorization Code → Access Token ---
     const tokenRes = await axios.post(
-      DAN_TOKEN_URL,
+      DAN_TOKEN_URL, // https://sso.gov.mn/oauth2/token
       new URLSearchParams({
         grant_type: "authorization_code",
         code,
@@ -50,7 +46,13 @@ router.get("/callback", async (req, res) => {
     );
 
     const access_token = tokenRes.data.access_token;
+    if (!access_token) {
+      throw new Error("Access token not received");
+    }
 
+    console.log("🔑 Access Token acquired");
+
+    // --- 2️⃣ Access Token → Citizen Info ---
     const userInfoRes = await axios.get(DAN_USERINFO_URL, {
       headers: { Authorization: `Bearer ${access_token}` },
     });
@@ -58,17 +60,23 @@ router.get("/callback", async (req, res) => {
     console.log("✅ User Info:", userInfoRes.data);
 
     const citizen = userInfoRes.data?.response ?? {};
-    const redirectClient = `tanuapp://dan-login-success?fullname=${encodeURIComponent(
-      citizen.lastName || ""
-    )}&register_number=${encodeURIComponent(citizen.regnum || "")}&phone=`;
 
+    // --- 3️⃣ Redirect back to mobile app ---
+    const redirectClient = `tanuapp://deeplink/dan?fullname=${encodeURIComponent(
+      citizen.lastName || ""
+    )}&register_number=${encodeURIComponent(citizen.regnum || "")}`;
+
+    console.log("↩️ Redirecting to app:", redirectClient);
     return res.redirect(redirectClient);
   } catch (error) {
     console.error(
-      "❌ DAND callback error:",
+      "❌ DAN callback error:",
       error?.response?.data || error.message
     );
-    res.status(500).json({ error: "SSO.gov.mn authentication failed" });
+    return res.status(500).json({
+      error: "DAN authentication failed",
+      details: error?.response?.data || error.message,
+    });
   }
 });
 

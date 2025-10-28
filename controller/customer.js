@@ -27,12 +27,14 @@ const validatePhone = async (phone) => {
 // Exports
 exports.validatePhone = asyncHandler(async (req, res) => {
   const { phone } = req.body;
+  console.log("✌️phone --->", phone);
 
   if (!phone) {
     return customResponse.error(res, "Утасны дугаараа оруулна уу");
   }
 
   const userExists = await validatePhone(phone);
+  console.log("✌️userExists --->", userExists);
 
   if (!userExists) {
     return customResponse.error(res, "Утас бүртгэлгүй байна");
