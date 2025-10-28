@@ -14,7 +14,7 @@ exports.createOrderQpay = asyncHandler(async (req, res) => {
     const qpay_token = await qpay.makeRequest();
     console.log("✅ QPay token received");
 
-    // Find the order
+    // 🔍 Find the order with full population
     const order = await Order.findById(req.params.id)
       .populate("user", "first_name last_name phone")
       .populate("freelancer", "first_name last_name phone")
@@ -29,25 +29,40 @@ exports.createOrderQpay = asyncHandler(async (req, res) => {
 
     console.log("📦 Order found:", order._id, "User:", order.user?._id);
 
-    // Calculate amount
-    let amount = order.price;
-    console.log("💰 Order amount:", amount);
+    // 🧮 Calculate total amount (sum of all services)
+    const totalAmount =
+      Array.isArray(order.service) && order.service.length > 0
+        ? order.service.reduce((sum, s) => sum + (s.price || 0), 0)
+        : order.price || 0;
 
-    // Create or find existing invoice
-    let invoice = await OrderInvoice.findOne({ order: req.params.id });
+    if (!totalAmount || totalAmount <= 0) {
+      console.log("❌ Invalid order amount:", totalAmount);
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid order amount" });
+    }
+
+    console.log("💰 Order amount:", totalAmount);
+
+    // 🔍 Check existing invoice
+    let invoice = await OrderInvoice.findOne({ order: order._id });
 
     if (!invoice) {
       console.log("📄 Creating new invoice");
+
       invoice = await OrderInvoice.create({
         order: order._id,
-        user: order.user._id,
-        freelancer: order.freelancer._id,
-        service: order.service?._id,
-        amount: amount,
-        price: amount,
+        user: order.user?._id || order.user || null,
+        freelancer: order.freelancer?._id || order.freelancer || null,
+        service: Array.isArray(order.service)
+          ? order.service.map((s) => s._id || s)
+          : [],
+        amount: totalAmount,
+        price: totalAmount,
         discount: order.discount || 0,
-        status: "pending", // ✅ Explicitly set initial status
+        status: "pending",
       });
+
       console.log("✅ Invoice created:", invoice._id);
     } else {
       console.log(
@@ -59,28 +74,22 @@ exports.createOrderQpay = asyncHandler(async (req, res) => {
     }
 
     if (invoice.status === "paid") {
-      console.log("❌ Invoice already paid");
       return res
         .status(400)
         .json({ success: false, message: "Invoice already paid" });
     }
 
-    if (amount <= 0) {
-      console.log("❌ Invalid amount:", amount);
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid order amount" });
-    }
-
-    // ✅ Sender invoice ID
+    // 🧾 Create QPay invoice payload
     const currentDateTime = new Date();
     const randomToo = Math.floor(Math.random() * 99999);
     const sender_invoice_no = `ORDER-${currentDateTime
       .toISOString()
       .replace(/[:.]/g, "-")}-${randomToo}`;
 
-    const serviceName =
-      order.service?.serviceName || order.serviceName || "Үйлчилгээ";
+    const serviceNames =
+      Array.isArray(order.service) && order.service.length > 0
+        ? order.service.map((s) => s.serviceName).join(", ")
+        : "Үйлчилгээ";
 
     const invoicePayload = {
       invoice_code: process.env.invoice_code,
@@ -91,61 +100,58 @@ exports.createOrderQpay = asyncHandler(async (req, res) => {
         phone: `${order.user?.phone || ""}`,
         name: `${order.user?.first_name || ""} ${order.user?.last_name || ""}`,
       },
-      invoice_description: `${serviceName}_ЗАХИАЛГА`,
+      invoice_description: `${serviceNames}_ЗАХИАЛГА`,
       callback_url: `${process.env.callback_url}order/${sender_invoice_no}`,
       lines: [
         {
           tax_product_code: `ORDER-${randomToo}`,
-          line_description: `${serviceName} үйлчилгээ`,
+          line_description: `${serviceNames} үйлчилгээ`,
           line_quantity: 1,
-          line_unit_price: amount,
+          line_unit_price: totalAmount,
         },
       ],
     };
 
+    console.log("📤 Sending QPay Invoice...");
     console.log(
-      "🔗 QPay Callback URL:",
+      "🔗 Callback URL:",
       `${process.env.callback_url}order/${sender_invoice_no}`
     );
-    console.log("📤 Sending to QPay...");
 
     const response = await axios.post(
       `${process.env.qpayUrl}invoice`,
       invoicePayload,
       {
-        headers: {
-          Authorization: `Bearer ${qpay_token.access_token}`,
-        },
+        headers: { Authorization: `Bearer ${qpay_token.access_token}` },
       }
     );
 
-    console.log("✅ QPay Response Status:", response.status);
-    console.log("📄 QPay Invoice ID:", response.data.invoice_id);
-
     if (response.status === 200) {
-      // Update invoice with QPay details
       invoice.sender_invoice_id = sender_invoice_no;
       invoice.qpay_invoice_id = response.data.invoice_id;
-      invoice.status = "pending"; // ✅ Ensure status is set
+      invoice.status = "pending";
       await invoice.save();
 
-      console.log("✅ Invoice updated with QPay details");
+      console.log("✅ QPay invoice created:", response.data.invoice_id);
 
       return res.status(200).json({
         success: true,
-        invoice: invoice,
-        data: response.data,
+        message: "QPay invoice created successfully",
+        invoice,
+        qpay: response.data,
         order: {
           id: order._id,
-          amount: amount,
-          serviceName: serviceName,
+          amount: totalAmount,
+          serviceNames,
         },
       });
     } else {
-      console.log("❌ QPay responded with unexpected status:", response.status);
-      return res
-        .status(500)
-        .json({ success: false, message: "QPay error", data: response.data });
+      console.log("❌ QPay returned non-200:", response.status);
+      return res.status(500).json({
+        success: false,
+        message: "QPay responded with error",
+        data: response.data,
+      });
     }
   } catch (error) {
     console.error("❌ createOrderQpay error:", error.message);
@@ -189,8 +195,9 @@ exports.orderCallback = asyncHandler(async (req, res) => {
       sender_invoice_id: senderInvoiceId,
     })
       .populate("order")
-      .populate("user", "first_name last_name phone email deviceToken")
-      .populate("freelancer", "first_name last_name deviceToken")
+      .populate("user", "first_name last_name phone", "Customer")
+
+      .populate("freelancer", "first_name last_name deviceToken", "Freelancer")
       .session(session);
 
     if (!invoice) {
